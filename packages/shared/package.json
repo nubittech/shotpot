@@ -1,0 +1,12 @@
+{
+  "name": "@receipt/shared",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"shared package ready\"",
+    "lint": "echo \"lint not configured yet\"",
+    "test": "echo \"tests pending\""
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

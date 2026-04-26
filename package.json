@@ -1,0 +1,20 @@
+{
+  "name": "receipt-reward-saas",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev -w @receipt/api",
+    "dev:web": "npm run dev -w @receipt/web --",
+    "dev:worker": "npm run dev -w @receipt/worker",
+    "build": "npm run build -ws",
+    "lint": "npm run lint -ws",
+    "test": "npm run test -ws"
+  },
+  "engines": {
+    "node": ">=20.11.0"
+  }
+}

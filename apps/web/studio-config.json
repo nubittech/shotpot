@@ -1,0 +1,65 @@
+{
+  "name": "Komün Bar",
+  "logoSymbol": "KO",
+  "slotVariant": "v2",
+  "tokenThreshold": 150,
+  "rewards": [
+    {
+      "icon": "🍺",
+      "label": "Bira bizden"
+    },
+    {
+      "icon": "🍷",
+      "label": "Şarap bizden"
+    },
+    {
+      "icon": "🥃",
+      "label": "Shot bizden"
+    },
+    {
+      "icon": "🍸",
+      "label": "Signature martini"
+    },
+    {
+      "icon": "🍹",
+      "label": "Ev kokteyliniz"
+    }
+  ],
+  "rules": [
+    {
+      "name": "Jackpot",
+      "probability": 0.06,
+      "couponCodePrefix": "JACKPOT"
+    },
+    {
+      "name": "Bira bizden",
+      "probability": 0.10800000000000001,
+      "couponCodePrefix": "BEER"
+    },
+    {
+      "name": "Şarap bizden",
+      "probability": 0.10800000000000001,
+      "couponCodePrefix": "WINE"
+    },
+    {
+      "name": "Shot bizden",
+      "probability": 0.10800000000000001,
+      "couponCodePrefix": "SHOT"
+    },
+    {
+      "name": "Signature martini",
+      "probability": 0.10800000000000001,
+      "couponCodePrefix": "MART"
+    },
+    {
+      "name": "Ev kokteyliniz",
+      "probability": 0.10800000000000001,
+      "couponCodePrefix": "CKTL"
+    },
+    {
+      "name": "No Reward",
+      "probability": 0.4,
+      "couponCodePrefix": "LOSE"
+    }
+  ]
+}
