@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
@@ -108,6 +108,14 @@ function totalSymShare(selected: SymId[], symCfg: Partial<Record<SymId, SymCfg>>
 
 /* ─── Main Component ─────────────────────────────────────────── */
 export default function StudioPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0b0b0d", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(244,239,230,0.5)", fontFamily: "Inter, sans-serif" }}>Yükleniyor…</div>}>
+      <StudioInner />
+    </Suspense>
+  );
+}
+
+function StudioInner() {
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("slug");
 
