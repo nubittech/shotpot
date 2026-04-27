@@ -185,7 +185,7 @@ function ScanScreen({
   }
 
   return (
-    <div style={{ ...shell, padding: 0, flexDirection: "column", justifyContent: "flex-start", alignItems: "stretch" }}>
+    <div style={{ ...shell, padding: 0, flexDirection: "column", justifyContent: "flex-start", alignItems: "stretch", background: "#0a0a0c" }}>
       {/* Top bar */}
       <div style={{ width: "100%", padding: "20px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <button onClick={onBack} style={{
@@ -193,36 +193,76 @@ function ScanScreen({
           background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
           color: "#f4efe6", fontSize: 16, cursor: "pointer",
         }}>‹</button>
-        <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>Fişini Tara</div>
+        <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>
+          {scanStage === "idle" ? "Fişini Tara" : scanStage === "camera" ? "Fişi Çerçevele" : scanStage === "processing" ? "Okunuyor…" : "Hata"}
+        </div>
         <div style={{ width: 36 }} />
       </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px 40px" }}>
+      {/* Info text */}
+      {(scanStage === "idle" || scanStage === "camera") && (
+        <p style={{ margin: "0 24px 16px", fontSize: 12, color: "rgba(244,239,230,0.45)", textAlign: "center", lineHeight: 1.5 }}>
+          Fişi çerçevenin içine hizala · Tutar ve tarih görünür olsun · Son 1 saat geçerli
+        </p>
+      )}
 
-        {/* IDLE — prompt to open camera */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", padding: "0 24px 36px" }}>
+
+        {/* IDLE — camera frame with mock receipt */}
         {scanStage === "idle" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 24, width: "100%", maxWidth: 360 }}>
-            <div style={{ fontSize: 48 }}>🧾</div>
-            <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "#f4efe6", marginBottom: 8 }}>Fişini fotoğrafla</div>
-              <p style={{ margin: 0, fontSize: 13, color: "rgba(244,239,230,0.5)", lineHeight: 1.55 }}>
-                Ödeme fişini kamerana hizala. Tutar ve tarih görünür olsun.
-                Sadece son 1 saat içindeki fişler kabul edilir.
-              </p>
+          <>
+            {/* Camera frame */}
+            <div style={{
+              position: "relative", width: "100%", maxWidth: 340, aspectRatio: "3 / 4",
+              borderRadius: 18, overflow: "hidden",
+              background: "linear-gradient(180deg, #1a1810 0%, #0a0a0c 100%)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              {/* Corner brackets */}
+              {(["tl","tr","bl","br"] as const).map((p) => (
+                <div key={p} style={cornerStyle(p)} />
+              ))}
+              {/* Mock receipt */}
+              <div style={{
+                width: "62%", padding: "14px 16px",
+                background: "linear-gradient(180deg, #f4ede0, #e9dfca)",
+                color: "#3a2c14", fontFamily: "monospace", fontSize: 9, lineHeight: 1.6,
+                boxShadow: "0 18px 40px rgba(0,0,0,0.5)", borderRadius: 4,
+                transform: "rotate(-2deg)",
+              }}>
+                <div style={{ textAlign: "center", fontWeight: 800, fontSize: 10, letterSpacing: "0.12em" }}>{venue.name.toUpperCase()}</div>
+                <div style={{ textAlign: "center", fontSize: 8, opacity: 0.6 }}>Karaköy · İstanbul</div>
+                <div style={{ textAlign: "center", fontSize: 8, opacity: 0.5 }}>{new Date().toLocaleDateString("tr-TR")} {new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}</div>
+                <div style={{ borderTop: "1px dashed #3a2c14", margin: "7px 0", opacity: 0.4 }} />
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>1× Old Fashioned</span><span>180</span></div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}><span>1× Negroni</span><span>160</span></div>
+                <div style={{ borderTop: "1px dashed #3a2c14", margin: "7px 0", opacity: 0.4 }} />
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800 }}><span>TOPLAM</span><span>₺ 340.00</span></div>
+                <div style={{ textAlign: "center", marginTop: 7, fontSize: 7, opacity: 0.5 }}>#4821 · teşekkürler</div>
+              </div>
             </div>
+
+            {/* Capture button */}
             <button
               onClick={() => setScanStage("camera")}
-              style={{ ...primaryBtn, width: "100%" }}
               type="button"
-            >
-              📷 Kamerayı Aç
-            </button>
-          </div>
+              style={{
+                width: 72, height: 72, borderRadius: "50%",
+                background: "#ffd84e",
+                border: "5px solid rgba(255,216,78,0.2)",
+                cursor: "pointer",
+                boxShadow: "0 0 32px rgba(255,216,78,0.4)",
+                marginTop: 28,
+              }}
+              aria-label="Kamerayı aç"
+            />
+          </>
         )}
 
         {/* CAMERA — CameraCapture component */}
         {scanStage === "camera" && (
-          <div style={{ width: "100%", maxWidth: 400 }}>
+          <div style={{ width: "100%", maxWidth: 400, flex: 1 }}>
             <CameraCapture onCapture={handleCapture} />
           </div>
         )}
