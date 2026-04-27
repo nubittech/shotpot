@@ -18,7 +18,12 @@ export function CameraCapture({ initialStream, onCapture, onCancel }: CameraCapt
     const video = videoRef.current;
     if (!video) return;
     video.srcObject = initialStream;
-    video.play().then(() => setReady(true)).catch(() => setReady(true));
+    video.play()
+      .then(() => {
+        // Give camera sensor 1s to warm up so first frame isn't dark
+        setTimeout(() => setReady(true), 1000);
+      })
+      .catch(() => setReady(true));
 
     return () => {
       initialStream.getTracks().forEach((t) => t.stop());

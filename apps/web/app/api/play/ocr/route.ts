@@ -119,9 +119,12 @@ export async function POST(req: NextRequest) {
     const extract = await extractReceiptData(b64, mimeType);
 
     // 4) Confidence gate — not a receipt
-    if (extract.confidence < 0.5) {
+    if (extract.confidence < 0.3) {
       return NextResponse.json(
-        { error: "Fiş okunamadı. Lütfen tekrar deneyin.", code: "LOW_CONFIDENCE" },
+        {
+          error: "Fiş tanınamadı. Fişi düz bir yüzeye koy, iyi aydınlatılmış ortamda tüm yazılar görünür olsun ve tekrar dene.",
+          code: "LOW_CONFIDENCE",
+        },
         { status: 422 }
       );
     }
