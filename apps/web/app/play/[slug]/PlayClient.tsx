@@ -144,7 +144,9 @@ function IntroScreen({ venue, onStart }: { venue: PlayBundle["venue"]; onStart: 
 }
 
 /* ─── Scan screen ─── */
-type ScanStage = "idle" | "camera" | "processing" | "verified" | "error";
+type ScanStage = "idle" | "camera" | "captured" | "processing" | "verified" | "error";
+
+type CapturedPayload = { previewUrl: string; hash: string; imageData: string };
 
 type OcrResult = {
   tokens: number;
@@ -164,6 +166,7 @@ function ScanScreen({
   const [scanStage, setScanStage] = useState<ScanStage>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [captured, setCaptured] = useState<CapturedPayload | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
@@ -185,17 +188,25 @@ function ScanScreen({
     setScanStage("idle");
   }
 
-  async function handleCapture(payload: { previewUrl: string; hash: string; imageData: string }) {
+  /** Photo just captured — show it to user, wait for confirmation before scanning */
+  function handleCapture(payload: CapturedPayload) {
     setPreviewUrl(payload.previewUrl);
-    setScanStage("processing");
+    setCaptured(payload);
+    setScanStage("captured");
     setErrorMsg("");
+  }
+
+  /** User pressed "Tara" — send image to OCR with scan animation */
+  async function startScan() {
+    if (!captured) return;
+    setScanStage("processing");
     try {
       const res = await fetch("/api/play/ocr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          imageData: payload.imageData,
-          hash: payload.hash,
+          imageData: captured.imageData,
+          hash: captured.hash,
           slug: venue.slug,
           guestToken,
         }),
@@ -216,6 +227,21 @@ function ScanScreen({
     }
   }
 
+  /** User wants to retake — go back to camera */
+  async function retakePhoto() {
+    setCaptured(null);
+    setPreviewUrl(null);
+    setErrorMsg("");
+    try {
+      const stream = await startCameraStream();
+      setCameraStream(stream);
+      setScanStage("camera");
+    } catch {
+      setErrorMsg("Kamera açılamadı.");
+      setScanStage("error");
+    }
+  }
+
   const currencySymbol = ocrResult?.currency === "USD" ? "$" : ocrResult?.currency === "EUR" ? "€" : "₺";
   const nowStr = new Date().toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -229,7 +255,12 @@ function ScanScreen({
           color: "#f4efe6", fontSize: 16, cursor: "pointer",
         }}>‹</button>
         <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>
-          {scanStage === "idle" ? "Fişini Tara" : scanStage === "camera" ? "Fişi Çerçevele" : scanStage === "processing" ? "Analiz Ediliyor" : scanStage === "verified" ? "Doğrulandı" : "Hata"}
+          {scanStage === "idle" ? "Fişini Tara"
+            : scanStage === "camera" ? "Fişi Çerçevele"
+            : scanStage === "captured" ? "Fişin Hazır"
+            : scanStage === "processing" ? "Analiz Ediliyor"
+            : scanStage === "verified" ? "Doğrulandı"
+            : "Hata"}
         </div>
         <div style={{ width: 36 }} />
       </div>
@@ -243,6 +274,11 @@ function ScanScreen({
       {scanStage === "verified" && (
         <p style={{ margin: "0 24px 10px", fontSize: 12, color: "#4ade80", textAlign: "center", fontWeight: 600 }}>
           Doğrulandı · {ocrResult?.tokens ?? 1} çevirme hakkı kazandın
+        </p>
+      )}
+      {scanStage === "captured" && (
+        <p style={{ margin: "0 24px 16px", fontSize: 12, color: "rgba(244,239,230,0.55)", textAlign: "center", lineHeight: 1.5 }}>
+          Fotoğraf net mi? Tüm yazılar okunuyor mu? · Yeniden çekebilir veya taramaya başlayabilirsin.
         </p>
       )}
       {scanStage === "processing" && (
@@ -316,32 +352,88 @@ function ScanScreen({
           </div>
         )}
 
-        {/* PROCESSING — receipt image + scan line animation */}
+        {/* CAPTURED — show clear photo, user confirms before scanning */}
+        {scanStage === "captured" && previewUrl && (
+          <>
+            <div style={{
+              position: "relative", width: "100%", maxWidth: 340, aspectRatio: "3 / 4",
+              borderRadius: 18, overflow: "hidden",
+              boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
+            }}>
+              {(["tl","tr","bl","br"] as const).map((p) => (
+                <div key={p} style={cornerStyle(p)} />
+              ))}
+              <img src={previewUrl} alt="çekilen fiş" style={{
+                width: "100%", height: "100%", objectFit: "cover", display: "block",
+              }} />
+            </div>
+
+            <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: 340, marginTop: 24 }}>
+              <button
+                onClick={retakePhoto}
+                type="button"
+                style={{
+                  flex: 1, padding: "16px", borderRadius: 14,
+                  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.14)",
+                  color: "#f4efe6", fontSize: 14, fontWeight: 700, cursor: "pointer",
+                }}
+              >
+                ↺ Yeniden Çek
+              </button>
+              <button
+                onClick={startScan}
+                type="button"
+                style={{
+                  flex: 2, padding: "16px", borderRadius: 14,
+                  background: "#ffd84e", border: "none", color: "#111",
+                  fontSize: 14, fontWeight: 800, cursor: "pointer",
+                  boxShadow: "0 10px 28px rgba(255,216,78,0.3)",
+                }}
+              >
+                Taramayı Başlat
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* PROCESSING — captured image clearly visible + scan line + spinner overlay */}
         {scanStage === "processing" && previewUrl && (
-          <div style={{ position: "relative", width: "100%", maxWidth: 340, aspectRatio: "3 / 4", borderRadius: 18, overflow: "hidden" }}>
+          <div style={{ position: "relative", width: "100%", maxWidth: 340, aspectRatio: "3 / 4", borderRadius: 18, overflow: "hidden", boxShadow: "0 12px 32px rgba(0,0,0,0.5)" }}>
             {/* Corner brackets */}
             {(["tl","tr","bl","br"] as const).map((p) => (
               <div key={p} style={cornerStyle(p)} />
             ))}
-            {/* Receipt photo blurred */}
-            <img src={previewUrl} alt="fiş" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "blur(1.5px) brightness(0.7)" }} />
-            {/* Scan line */}
+            {/* Receipt photo CLEARLY visible — user wanted to see what was captured */}
+            <img src={previewUrl} alt="fiş" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+            {/* Soft yellow overlay to indicate scanning mode */}
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "linear-gradient(180deg, rgba(255,216,78,0.06), rgba(255,216,78,0.02))",
+              pointerEvents: "none",
+            }} />
+            {/* Scan line moving up & down */}
             <div style={{
               position: "absolute", left: 0, right: 0, height: 3,
               background: "linear-gradient(90deg, transparent, #ffd84e, transparent)",
-              boxShadow: "0 0 18px 4px rgba(255,216,78,0.6)",
+              boxShadow: "0 0 24px 6px rgba(255,216,78,0.7)",
               animation: "scan-line 1.6s ease-in-out infinite",
+              pointerEvents: "none",
             }} />
-            {/* Spinner overlay */}
+            {/* Subtle spinner badge in bottom-right */}
             <div style={{
-              position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+              position: "absolute", bottom: 12, right: 12,
+              padding: "6px 12px", borderRadius: 999,
+              background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)",
+              display: "flex", alignItems: "center", gap: 8,
+              border: "1px solid rgba(255,216,78,0.3)",
             }}>
               <div style={{
-                width: 56, height: 56, borderRadius: "50%",
-                border: "4px solid rgba(255,216,78,0.15)",
+                width: 14, height: 14, borderRadius: "50%",
+                border: "2px solid rgba(255,216,78,0.2)",
                 borderTopColor: "#ffd84e",
                 animation: "rr-spin 0.75s linear infinite",
               }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#ffd84e", letterSpacing: "0.04em" }}>TARANIYOR</span>
             </div>
           </div>
         )}
