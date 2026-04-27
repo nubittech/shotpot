@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlotMachine } from "../../../components/SlotMachine";
-import { CameraCapture } from "../../../components/CameraCapture";
+import { CameraCapture, startCameraStream } from "../../../components/CameraCapture";
 import type { PlayBundle } from "../../../lib/play";
 
 type SpinResponse = {
@@ -165,6 +165,25 @@ function ScanScreen({
   const [errorMsg, setErrorMsg] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+
+  async function openCamera() {
+    try {
+      // Must be called directly from user gesture — iOS/Chrome enforce this
+      const stream = await startCameraStream();
+      setCameraStream(stream);
+      setScanStage("camera");
+    } catch {
+      setErrorMsg("Kamera açılamadı. Tarayıcı kamera iznini kontrol edin.");
+      setScanStage("error");
+    }
+  }
+
+  function handleCameraCancel() {
+    if (cameraStream) cameraStream.getTracks().forEach((t) => t.stop());
+    setCameraStream(null);
+    setScanStage("idle");
+  }
 
   async function handleCapture(payload: { previewUrl: string; hash: string; imageData: string }) {
     setPreviewUrl(payload.previewUrl);
@@ -271,7 +290,7 @@ function ScanScreen({
 
             {/* Capture button */}
             <button
-              onClick={() => setScanStage("camera")}
+              onClick={openCamera}
               type="button"
               style={{
                 width: 72, height: 72, borderRadius: "50%",
@@ -286,10 +305,14 @@ function ScanScreen({
           </>
         )}
 
-        {/* CAMERA — CameraCapture component (autoStart skips intermediate button) */}
-        {scanStage === "camera" && (
-          <div style={{ width: "100%", maxWidth: 400, flex: 1 }}>
-            <CameraCapture onCapture={handleCapture} autoStart={true} />
+        {/* CAMERA — stream already open from user gesture */}
+        {scanStage === "camera" && cameraStream && (
+          <div style={{ width: "100%", maxWidth: 400, flex: 1, display: "flex", alignItems: "flex-start", paddingTop: 8 }}>
+            <CameraCapture
+              initialStream={cameraStream}
+              onCapture={handleCapture}
+              onCancel={handleCameraCancel}
+            />
           </div>
         )}
 
@@ -370,7 +393,7 @@ function ScanScreen({
             <div style={{ fontSize: 40 }}>⚠️</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#ff7e5a", textAlign: "center" }}>{errorMsg}</div>
             <button
-              onClick={() => { setErrorMsg(""); setScanStage("camera"); }}
+              onClick={() => { setErrorMsg(""); setCameraStream(null); setScanStage("idle"); }}
               style={{ ...primaryBtn, width: "100%" }}
               type="button"
             >
