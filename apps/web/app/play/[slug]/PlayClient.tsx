@@ -286,10 +286,10 @@ function ScanScreen({
           </>
         )}
 
-        {/* CAMERA — CameraCapture component */}
+        {/* CAMERA — CameraCapture component (autoStart skips intermediate button) */}
         {scanStage === "camera" && (
           <div style={{ width: "100%", maxWidth: 400, flex: 1 }}>
-            <CameraCapture onCapture={handleCapture} />
+            <CameraCapture onCapture={handleCapture} autoStart={true} />
           </div>
         )}
 

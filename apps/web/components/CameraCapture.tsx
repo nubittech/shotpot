@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 type CameraCaptureProps = {
   onCapture: (payload: { previewUrl: string; hash: string; imageData: string }) => void;
+  autoStart?: boolean;
 };
 
-export function CameraCapture({ onCapture }: CameraCaptureProps) {
+export function CameraCapture({ onCapture, autoStart = false }: CameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -14,9 +15,13 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
   const [starting, setStarting] = useState(false);
 
   useEffect(() => {
+    if (autoStart) {
+      startCamera();
+    }
     return () => {
       stopStream();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function startCamera() {
@@ -76,24 +81,32 @@ export function CameraCapture({ onCapture }: CameraCaptureProps) {
 
   return (
     <div className="camera-shell">
-      {!stream ? (
+      {!stream && !starting && !error && !autoStart && (
         <>
-          <button className="btn btn-primary" disabled={starting} onClick={startCamera} type="button">
-            {starting ? "Kamera Aciliyor..." : "Fis Icin Kamerayi Ac"}
+          <button className="btn btn-primary" onClick={startCamera} type="button">
+            Fis Icin Kamerayi Ac
           </button>
           <p className="muted">Bu akista galeri secimi yok. Musteri fişi kameradan cekiyor.</p>
         </>
-      ) : (
+      )}
+
+      {starting && (
+        <p className="muted" style={{ textAlign: "center", padding: "2rem" }}>
+          Kamera açılıyor…
+        </p>
+      )}
+
+      {stream && (
         <>
           <div className="camera-frame">
             <video playsInline ref={videoRef} />
           </div>
           <div className="camera-actions">
             <button className="btn btn-primary" onClick={takePhoto} type="button">
-              Fisi Cek
+              Fişi Çek
             </button>
             <button className="btn btn-secondary" onClick={stopStream} type="button">
-              Iptal
+              İptal
             </button>
           </div>
         </>
