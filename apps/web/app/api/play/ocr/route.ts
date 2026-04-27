@@ -118,12 +118,16 @@ export async function POST(req: NextRequest) {
 
     const extract = await extractReceiptData(b64, mimeType);
 
+    // Debug summary — always included so client can show what AI saw
+    const debugInfo = `[AI okudu → güven: ${(extract.confidence * 100).toFixed(0)}% | tutar: ${extract.amount ?? "—"} | tarih: ${extract.datetime ?? "—"}]`;
+
     // 4) Confidence gate — not a receipt
     if (extract.confidence < 0.3) {
       return NextResponse.json(
         {
-          error: "Fiş tanınamadı. Fişi düz bir yüzeye koy, iyi aydınlatılmış ortamda tüm yazılar görünür olsun ve tekrar dene.",
+          error: `Fiş tanınamadı — fotoğraf çok bulanık veya fiş görünmüyor.\n${debugInfo}`,
           code: "LOW_CONFIDENCE",
+          debug: extract,
         },
         { status: 422 }
       );
@@ -132,7 +136,11 @@ export async function POST(req: NextRequest) {
     // 5) Amount required
     if (!extract.amount || extract.amount <= 0) {
       return NextResponse.json(
-        { error: "Fişteki toplam tutar okunamadı.", code: "NO_AMOUNT" },
+        {
+          error: `Fiş okundu ama toplam tutar bulunamadı.\n${debugInfo}`,
+          code: "NO_AMOUNT",
+          debug: extract,
+        },
         { status: 422 }
       );
     }
@@ -147,8 +155,9 @@ export async function POST(req: NextRequest) {
       if (diffMins > 60) {
         return NextResponse.json(
           {
-            error: `Bu fiş ${diffMins} dakika önceye ait. Sadece son 1 saatteki fişler kabul edilir.`,
+            error: `Fiş ${diffMins} dakika önceye ait — sadece son 1 saat geçerli.\n${debugInfo}`,
             code: "EXPIRED_RECEIPT",
+            debug: extract,
           },
           { status: 422 }
         );
