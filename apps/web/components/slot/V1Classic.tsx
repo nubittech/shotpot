@@ -55,7 +55,7 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
         {onBack ? (
           <button onClick={onBack} style={{ width:34,height:34,borderRadius:"50%",background:"rgba(232,200,118,0.08)",border:"1px solid rgba(232,200,118,0.25)",color:"#e8c876",cursor:"pointer",fontSize:14 }}>‹</button>
         ) : <div style={{ width:34 }} />}
-        <div style={{ fontFamily:"'Playfair Display',Georgia,serif",fontSize:16,fontWeight:700,color:"#e8c876",letterSpacing:"0.04em" }}>Jackpot</div>
+        <div style={{ fontFamily:"'Playfair Display',Georgia,serif",fontSize:30,fontWeight:900,color:"#e8c876",letterSpacing:"0.02em",textShadow:"0 2px 12px rgba(232,200,118,0.5),0 0 1px #fff8d0" }}>Jackpot</div>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.12em",color:"#9d7a3a",padding:"6px 10px",borderRadius:12,background:"rgba(232,200,118,0.08)",border:"1px solid rgba(232,200,118,0.15)" }}>{tokens} JETON</div>
       </div>
 

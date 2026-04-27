@@ -62,8 +62,9 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
         {onBack ? (
           <button onClick={onBack} style={{ width:34,height:34,borderRadius:2,background:"transparent",border:"1px solid rgba(202,161,74,0.4)",color:"#caa14a",cursor:"pointer",fontSize:14 }}>‹</button>
         ) : <div style={{ width:34 }} />}
-        <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:13,fontWeight:700,
-          color:"#caa14a",letterSpacing:"0.32em",textTransform:"uppercase" }}>Jackpot</div>
+        <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:28,fontWeight:900,
+          color:"#f5d27a",letterSpacing:"0.2em",textTransform:"uppercase",
+          textShadow:"0 1px 0 #5a4218, 0 0 18px rgba(202,161,74,0.4)" }}>Jackpot</div>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.18em",color:"#caa14a",
           padding:"6px 10px",borderRadius:2,background:"transparent",
           border:"1px solid rgba(202,161,74,0.4)" }}>{tokens} JETON</div>

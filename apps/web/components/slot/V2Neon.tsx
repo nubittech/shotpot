@@ -51,9 +51,9 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
         {onBack ? (
           <button onClick={onBack} style={{ width:34,height:34,borderRadius:"50%",background:"rgba(255,45,138,0.12)",border:"1px solid rgba(255,45,138,0.4)",color:"#ff7ac2",cursor:"pointer",fontSize:14 }}>‹</button>
         ) : <div style={{ width:34 }} />}
-        <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:20,fontWeight:400,
-          color:"#ff7ac2",letterSpacing:"0.18em",
-          textShadow:"0 0 8px #ff2d8a,0 0 16px #ff2d8a",
+        <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:34,fontWeight:400,
+          color:"#ff7ac2",letterSpacing:"0.22em",
+          textShadow:"0 0 12px #ff2d8a,0 0 24px #ff2d8a,0 0 36px rgba(255,45,138,0.6)",
           animation:"neon-flicker 6s linear infinite" }}>JACKPOT</div>
         <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.16em",color:"#00e8ff",
           padding:"6px 10px",borderRadius:12,background:"rgba(0,232,255,0.06)",
