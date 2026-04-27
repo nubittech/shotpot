@@ -190,7 +190,22 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : "unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Anthropic SDK throws an object with status + error body — surface a clean message
+    const raw = e instanceof Error ? e.message : String(e);
+
+    // Billing / quota errors
+    if (raw.includes("credit balance") || raw.includes("billing") || raw.includes("quota")) {
+      return NextResponse.json(
+        { error: "Fiş analizi şu an kullanılamıyor. Lütfen daha sonra tekrar deneyin.", code: "SERVICE_UNAVAILABLE" },
+        { status: 503 }
+      );
+    }
+
+    // Generic fallback — don't leak raw Anthropic JSON to clients
+    console.error("[ocr] unexpected error:", raw);
+    return NextResponse.json(
+      { error: "Bir hata oluştu. Lütfen tekrar deneyin.", code: "INTERNAL_ERROR" },
+      { status: 500 }
+    );
   }
 }
