@@ -65,9 +65,9 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
         <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:28,fontWeight:900,
           color:"#f5d27a",letterSpacing:"0.2em",textTransform:"uppercase",
           textShadow:"0 1px 0 #5a4218, 0 0 18px rgba(202,161,74,0.4)" }}>Jackpot</div>
-        <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.18em",color:"#caa14a",
-          padding:"6px 10px",borderRadius:2,background:"transparent",
-          border:"1px solid rgba(202,161,74,0.4)" }}>{tokens} JETON</div>
+        <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.2em",color:"#f5d27a",
+          padding:"7px 12px",borderRadius:2,background:"rgba(202,161,74,0.06)",
+          border:"1px solid rgba(202,161,74,0.5)" }}>{tokens} JETON</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:16,borderRadius:6,position:"relative",zIndex:2,
@@ -88,8 +88,8 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
             <line x1="90" y1="0" x2="90" y2="14" stroke="rgba(202,161,74,0.4)" strokeWidth="0.5"/>
             <line x1="120" y1="0" x2="130" y2="14" stroke="rgba(202,161,74,0.4)" strokeWidth="0.5"/>
           </svg>
-          <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:9,fontWeight:700,color:"#caa14a",letterSpacing:"0.34em",marginTop:10 }}>EST · MMXXIV</div>
-          <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:20,fontWeight:900,color:"#f5d27a",letterSpacing:"0.18em",textShadow:"0 1px 0 #5a4218" }}>{display}</div>
+          <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:11,fontWeight:700,color:"#caa14a",letterSpacing:"0.32em",marginTop:10 }}>EST · MMXXIV</div>
+          <div style={{ fontFamily:"'Cinzel','Georgia',serif",fontSize:24,fontWeight:900,color:"#f5d27a",letterSpacing:"0.18em",textShadow:"0 1px 0 #5a4218" }}>{display}</div>
         </div>
 
         {/* Reels */}
@@ -122,8 +122,8 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           </div>
         </div>
 
-        <div style={{ marginTop:12,textAlign:"center",fontSize:9,fontWeight:600,letterSpacing:"0.32em",
-          color:"rgba(202,161,74,0.7)",textTransform:"uppercase" }}>
+        <div style={{ marginTop:12,textAlign:"center",fontSize:11,fontWeight:600,letterSpacing:"0.3em",
+          color:"rgba(202,161,74,0.85)",textTransform:"uppercase" }}>
           ✦ ÜÇLÜ EŞLEŞİM ÖDER ✦
         </div>
 

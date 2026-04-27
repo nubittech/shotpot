@@ -55,9 +55,9 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           color:"#ff7ac2",letterSpacing:"0.22em",
           textShadow:"0 0 12px #ff2d8a,0 0 24px #ff2d8a,0 0 36px rgba(255,45,138,0.6)",
           animation:"neon-flicker 6s linear infinite" }}>JACKPOT</div>
-        <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.16em",color:"#00e8ff",
-          padding:"6px 10px",borderRadius:12,background:"rgba(0,232,255,0.06)",
-          border:"1px solid rgba(0,232,255,0.3)",textShadow:"0 0 6px #00e8ff" }}>{tokens} JETON</div>
+        <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.18em",color:"#00e8ff",
+          padding:"7px 12px",borderRadius:12,background:"rgba(0,232,255,0.08)",
+          border:"1px solid rgba(0,232,255,0.4)",textShadow:"0 0 6px #00e8ff" }}>{tokens} JETON</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:14,borderRadius:22,position:"relative",
@@ -71,9 +71,9 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           border:"1.5px solid rgba(0,232,255,0.5)",
           boxShadow:"inset 0 0 18px rgba(0,232,255,0.25),0 0 14px rgba(0,232,255,0.4)",
           display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden" }}>
-          <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:28,fontWeight:400,
+          <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:32,fontWeight:400,
             color:"#fff",letterSpacing:"0.18em",
-            textShadow:"0 0 8px #ff2d8a,0 0 16px #ff2d8a,0 0 28px #ff2d8a",
+            textShadow:"0 0 8px #ff2d8a,0 0 16px #ff2d8a,0 0 32px #ff2d8a",
             animation:"neon-flicker 5s linear infinite" }}>
             {display}
           </div>
@@ -105,8 +105,8 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
         </div>
 
         {/* Pay-table */}
-        <div style={{ marginTop:10,padding:"6px 10px",borderRadius:8,background:"rgba(0,232,255,0.04)",
-          border:"1px solid rgba(0,232,255,0.25)",fontSize:10,fontWeight:600,letterSpacing:"0.14em",
+        <div style={{ marginTop:10,padding:"8px 12px",borderRadius:8,background:"rgba(0,232,255,0.04)",
+          border:"1px solid rgba(0,232,255,0.25)",fontSize:11,fontWeight:600,letterSpacing:"0.14em",
           color:"#00e8ff",textTransform:"uppercase",display:"flex",justifyContent:"space-between",
           textShadow:"0 0 4px rgba(0,232,255,0.5)" }}>
           <span>3 aynı · kazan</span>
@@ -118,10 +118,10 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           <Lever disabled={isAnim || won || lost || !canSpin} onPull={onSpin} palette={LEV} height={200} />
         </div>
 
-        <div style={{ marginTop:14,height:18,borderRadius:4,background:"rgba(0,0,0,0.7)",
+        <div style={{ marginTop:14,height:22,borderRadius:4,background:"rgba(0,0,0,0.7)",
           border:"1px solid rgba(255,45,138,0.3)",boxShadow:"inset 0 0 6px rgba(255,45,138,0.4)",
           display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:8,color:"#ff7ac2",fontWeight:700,letterSpacing:"0.24em",
+          fontSize:10,color:"#ff7ac2",fontWeight:700,letterSpacing:"0.24em",
           textShadow:"0 0 4px #ff2d8a" }}>FİŞ · DOĞRULANDI</div>
       </div>
 

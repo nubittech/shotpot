@@ -187,15 +187,15 @@ function IntroScreen({ venue, theme, onStart }: { venue: PlayBundle["venue"]; th
   return (
     <div style={shell(theme)}>
       <div style={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: theme.accent, textTransform: "uppercase", marginBottom: 14, fontFamily: theme.font }}>
+        <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", color: theme.accent, textTransform: "uppercase", marginBottom: 16, fontFamily: theme.font }}>
           Receipt Reward
         </div>
-        <h1 style={{ margin: 0, fontSize: 34, fontWeight: 900, letterSpacing: "-0.02em", color: theme.text, fontFamily: theme.font }}>{venue.name}</h1>
-        <p style={{ margin: "16px 0 32px", fontSize: 14, color: theme.muted, lineHeight: 1.55 }}>
+        <h1 style={{ margin: 0, fontSize: "clamp(32px, 9vw, 42px)", fontWeight: 900, letterSpacing: "-0.02em", color: theme.text, fontFamily: theme.font, lineHeight: 1.05 }}>{venue.name}</h1>
+        <p style={{ margin: "18px 0 36px", fontSize: 15, color: theme.muted, lineHeight: 1.55 }}>
           Hesabını ödedikten sonra fişini tara, jackpot çark döndürme hakkı kazan.
         </p>
         <button onClick={onStart} style={primaryBtn(theme)}>Fişimi Tara</button>
-        <p style={{ marginTop: 22, fontSize: 11, color: theme.muted, letterSpacing: "0.04em", opacity: 0.6 }}>
+        <p style={{ marginTop: 24, fontSize: 12, color: theme.muted, letterSpacing: "0.04em", opacity: 0.55 }}>
           /play/{venue.slug}
         </p>
       </div>
@@ -335,9 +335,9 @@ function ScanScreen({
         <button onClick={onBack} style={{
           width: 36, height: 36, borderRadius: "50%",
           background: `rgba(255,255,255,0.04)`, border: `1px solid ${theme.border}`,
-          color: theme.accent, fontSize: 16, cursor: "pointer",
+          color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1,
         }}>‹</button>
-        <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em", color: theme.text, fontFamily: theme.font }}>
+        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", color: theme.text, fontFamily: theme.font }}>
           {scanStage === "idle" ? "Fişini Tara"
             : scanStage === "captured" ? "Fişin Hazır"
             : scanStage === "processing" ? "Analiz Ediliyor"
@@ -350,22 +350,22 @@ function ScanScreen({
       {/* Info text — single line so layout stays compact */}
       <div style={{ flexShrink: 0, padding: "0 24px 10px", minHeight: 18 }}>
         {scanStage === "idle" && (
-          <p style={{ margin: 0, fontSize: 11, color: theme.muted, textAlign: "center", lineHeight: 1.4 }}>
+          <p style={{ margin: 0, fontSize: 13, color: theme.muted, textAlign: "center", lineHeight: 1.4 }}>
             Sarı düğmeye bas · Kamera açılır · Fiş son 1 saat geçerli
           </p>
         )}
         {scanStage === "captured" && (
-          <p style={{ margin: 0, fontSize: 11, color: theme.muted, textAlign: "center", lineHeight: 1.4 }}>
+          <p style={{ margin: 0, fontSize: 13, color: theme.muted, textAlign: "center", lineHeight: 1.4 }}>
             Fotoğraf net mi? Yeniden çek veya taramaya başla.
           </p>
         )}
         {scanStage === "processing" && (
-          <p style={{ margin: 0, fontSize: 11, color: theme.muted, textAlign: "center" }}>
+          <p style={{ margin: 0, fontSize: 13, color: theme.muted, textAlign: "center" }}>
             AI fişini analiz ediyor…
           </p>
         )}
         {scanStage === "verified" && (
-          <p style={{ margin: 0, fontSize: 11, color: "#4ade80", textAlign: "center", fontWeight: 700 }}>
+          <p style={{ margin: 0, fontSize: 13, color: "#4ade80", textAlign: "center", fontWeight: 700 }}>
             Doğrulandı · {ocrResult?.tokens ?? 1} çevirme hakkı kazandın
           </p>
         )}
@@ -438,9 +438,9 @@ function ScanScreen({
                 onClick={retakePhoto}
                 type="button"
                 style={{
-                  flex: 1, padding: "14px", borderRadius: 12,
+                  flex: 1, padding: "16px", borderRadius: 12,
                   background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`,
-                  color: theme.text, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                  color: theme.text, fontSize: 15, fontWeight: 700, cursor: "pointer",
                 }}
               >
                 ↺ Yeniden Çek
@@ -449,9 +449,9 @@ function ScanScreen({
                 onClick={startScan}
                 type="button"
                 style={{
-                  flex: 2, padding: "14px", borderRadius: 12,
+                  flex: 2, padding: "16px", borderRadius: 12,
                   background: theme.btnBg, border: "none", color: theme.btnText,
-                  fontSize: 13, fontWeight: 800, cursor: "pointer",
+                  fontSize: 15, fontWeight: 800, cursor: "pointer",
                   boxShadow: `0 10px 28px ${theme.glow}`,
                 }}
               >
@@ -495,7 +495,7 @@ function ScanScreen({
                 borderTopColor: theme.accent,
                 animation: "rr-spin 0.75s linear infinite",
               }} />
-              <span style={{ fontSize: 11, fontWeight: 700, color: theme.accent, letterSpacing: "0.06em" }}>TARANIYOR</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: theme.accent, letterSpacing: "0.08em" }}>TARANIYOR</span>
             </div>
           </div>
         )}
@@ -531,8 +531,8 @@ function ScanScreen({
                 { label: "AUTH",  value: "PASSED", green: true },
               ].map(({ label, value, accent, green }) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.14em", color: theme.muted }}>{label}</span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: green ? "#4ade80" : accent ? theme.accent : theme.text }}>{value}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: theme.muted }}>{label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: green ? "#4ade80" : accent ? theme.accent : theme.text }}>{value}</span>
                 </div>
               ))}
             </div>
@@ -543,7 +543,7 @@ function ScanScreen({
         {scanStage === "error" && (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, width: "min(82vw, 360px)" }}>
             <div style={{ fontSize: 38 }}>⚠️</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#ff7e5a", textAlign: "center", whiteSpace: "pre-line", lineHeight: 1.5 }}>{errorMsg}</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#ff7e5a", textAlign: "center", whiteSpace: "pre-line", lineHeight: 1.55 }}>{errorMsg}</div>
             <button
               onClick={() => { setErrorMsg(""); setCaptured(null); setPreviewUrl(null); setScanStage("idle"); }}
               style={{ ...primaryBtn(theme), width: "100%" }}
@@ -604,9 +604,9 @@ function CouponScreen({
         <button onClick={onBack} style={{
           width: 36, height: 36, borderRadius: "50%",
           background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`,
-          color: theme.accent, fontSize: 16, cursor: "pointer",
+          color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1,
         }}>‹</button>
-        <div style={{ fontSize: 14, fontWeight: 700, color: theme.text, fontFamily: theme.font }}>Kuponun</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: theme.text, fontFamily: theme.font, letterSpacing: "0.02em" }}>Kuponun</div>
         <div style={{ width: 36 }} />
       </div>
 
@@ -638,7 +638,7 @@ function CouponScreen({
           {coupon.rewardLabel}
         </h1>
 
-        <p style={{ margin: 0, fontSize: 12, color: theme.muted, textAlign: "center", maxWidth: 320, lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: 14, color: theme.muted, textAlign: "center", maxWidth: 340, lineHeight: 1.55 }}>
           Bu kodu garsona göster. Garson "Kullanıldı" işaretledikten sonra ödülünü alabilirsin.
         </p>
 
@@ -649,22 +649,22 @@ function CouponScreen({
           border: `1.5px dashed ${theme.border}`,
           borderRadius: 18, position: "relative",
         }}>
-          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: theme.muted, textTransform: "uppercase", textAlign: "center", fontFamily: theme.font }}>
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.18em", color: theme.muted, textTransform: "uppercase", textAlign: "center", fontFamily: theme.font }}>
             {venue.name}
           </div>
           <div style={{
-            marginTop: 12, padding: "16px 12px",
+            marginTop: 14, padding: "18px 12px",
             background: "rgba(0,0,0,0.5)", borderRadius: 10,
-            fontFamily: "monospace", fontSize: 22, fontWeight: 800,
+            fontFamily: "monospace", fontSize: 26, fontWeight: 800,
             color: theme.accent, letterSpacing: "0.16em", textAlign: "center",
             border: `1px solid ${theme.border}`,
           }}>
             {coupon.code}
           </div>
           <button onClick={copy} style={{
-            marginTop: 12, width: "100%", padding: "10px",
+            marginTop: 14, width: "100%", padding: "12px",
             background: "transparent", border: `1px solid ${theme.border}`,
-            borderRadius: 10, color: theme.accent, fontSize: 12, fontWeight: 700, cursor: "pointer",
+            borderRadius: 10, color: theme.accent, fontSize: 13, fontWeight: 700, cursor: "pointer",
           }}>
             {copied ? "✓ Kopyalandı" : "Kodu Kopyala"}
           </button>
@@ -696,9 +696,9 @@ function shell(theme: Theme): React.CSSProperties {
 
 function primaryBtn(theme: Theme): React.CSSProperties {
   return {
-    padding: "16px 28px", borderRadius: 14,
+    padding: "17px 28px", borderRadius: 14,
     background: theme.btnBg, border: "none", color: theme.btnText,
-    fontSize: 14, fontWeight: 800, cursor: "pointer", letterSpacing: "0.02em",
+    fontSize: 16, fontWeight: 800, cursor: "pointer", letterSpacing: "0.02em",
     width: "100%", boxShadow: `0 10px 28px ${theme.glow}`,
   };
 }

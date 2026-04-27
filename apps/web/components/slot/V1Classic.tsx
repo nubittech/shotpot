@@ -56,7 +56,7 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
           <button onClick={onBack} style={{ width:34,height:34,borderRadius:"50%",background:"rgba(232,200,118,0.08)",border:"1px solid rgba(232,200,118,0.25)",color:"#e8c876",cursor:"pointer",fontSize:14 }}>‹</button>
         ) : <div style={{ width:34 }} />}
         <div style={{ fontFamily:"'Playfair Display',Georgia,serif",fontSize:30,fontWeight:900,color:"#e8c876",letterSpacing:"0.02em",textShadow:"0 2px 12px rgba(232,200,118,0.5),0 0 1px #fff8d0" }}>Jackpot</div>
-        <div style={{ fontSize:10,fontWeight:700,letterSpacing:"0.12em",color:"#9d7a3a",padding:"6px 10px",borderRadius:12,background:"rgba(232,200,118,0.08)",border:"1px solid rgba(232,200,118,0.15)" }}>{tokens} JETON</div>
+        <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.14em",color:"#e8c876",padding:"7px 12px",borderRadius:12,background:"rgba(232,200,118,0.1)",border:"1px solid rgba(232,200,118,0.25)" }}>{tokens} JETON</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:14,borderRadius:22,position:"relative",
@@ -75,9 +75,9 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
           boxShadow:"inset 0 2px 4px rgba(255,255,255,0.25),inset 0 -3px 6px rgba(0,0,0,0.45),0 0 14px rgba(200,30,53,0.5)",
           display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden" }}>
           <BulbRow />
-          <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:22,fontWeight:900,
+          <div style={{ fontFamily:"'Bebas Neue','Impact',sans-serif",fontSize:26,fontWeight:900,
             color:"#fff8d0",letterSpacing:"0.06em",
-            textShadow:"0 0 10px rgba(255,200,120,0.8),2px 2px 0 #5a0a14" }}>
+            textShadow:"0 0 12px rgba(255,200,120,0.85),2px 2px 0 #5a0a14" }}>
             {display}
           </div>
         </div>
@@ -109,8 +109,8 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
         </div>
 
         {/* Pay-table */}
-        <div style={{ marginTop:10,padding:"6px 10px",borderRadius:8,background:"rgba(0,0,0,0.35)",
-          border:"1px solid rgba(232,200,118,0.25)",fontSize:10,fontWeight:600,
+        <div style={{ marginTop:10,padding:"8px 12px",borderRadius:8,background:"rgba(0,0,0,0.35)",
+          border:"1px solid rgba(232,200,118,0.25)",fontSize:11,fontWeight:600,
           letterSpacing:"0.12em",color:"#e8c876",textTransform:"uppercase",
           display:"flex",justifyContent:"space-between" }}>
           <span>3 aynı · kazan</span>
@@ -123,11 +123,11 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
         </div>
 
         {/* Coin slot */}
-        <div style={{ marginTop:14,height:18,borderRadius:4,
+        <div style={{ marginTop:14,height:22,borderRadius:4,
           background:"linear-gradient(180deg,#1a0804,#3a1a08)",
           border:"1.5px solid #5a2a08",boxShadow:"inset 0 2px 3px rgba(0,0,0,0.7)",
           display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:8,color:"#9d7a3a",fontWeight:700,letterSpacing:"0.2em" }}>
+          fontSize:10,color:"#caa14a",fontWeight:700,letterSpacing:"0.22em" }}>
           FİŞ DOĞRULANDI
         </div>
       </div>
