@@ -144,7 +144,14 @@ function IntroScreen({ venue, onStart }: { venue: PlayBundle["venue"]; onStart: 
 }
 
 /* ─── Scan screen ─── */
-type ScanStage = "idle" | "camera" | "processing" | "error";
+type ScanStage = "idle" | "camera" | "processing" | "verified" | "error";
+
+type OcrResult = {
+  tokens: number;
+  receiptId: string;
+  amount: number;
+  currency: string;
+};
 
 function ScanScreen({
   venue, guestToken, onComplete, onBack,
@@ -156,8 +163,11 @@ function ScanScreen({
 }) {
   const [scanStage, setScanStage] = useState<ScanStage>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
 
   async function handleCapture(payload: { previewUrl: string; hash: string; imageData: string }) {
+    setPreviewUrl(payload.previewUrl);
     setScanStage("processing");
     setErrorMsg("");
     try {
@@ -177,12 +187,18 @@ function ScanScreen({
         setScanStage("error");
         return;
       }
-      onComplete(data.tokens as number, data.receiptId as string);
+      setOcrResult({ tokens: data.tokens, receiptId: data.receiptId, amount: data.amount, currency: data.currency ?? "TRY" });
+      setScanStage("verified");
+      // Auto-advance to slot after 2.2s
+      setTimeout(() => onComplete(data.tokens, data.receiptId), 2200);
     } catch {
       setErrorMsg("Bağlantı hatası. Tekrar dene.");
       setScanStage("error");
     }
   }
+
+  const currencySymbol = ocrResult?.currency === "USD" ? "$" : ocrResult?.currency === "EUR" ? "€" : "₺";
+  const nowStr = new Date().toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
   return (
     <div style={{ ...shell, padding: 0, flexDirection: "column", justifyContent: "flex-start", alignItems: "stretch", background: "#0a0a0c" }}>
@@ -194,7 +210,7 @@ function ScanScreen({
           color: "#f4efe6", fontSize: 16, cursor: "pointer",
         }}>‹</button>
         <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>
-          {scanStage === "idle" ? "Fişini Tara" : scanStage === "camera" ? "Fişi Çerçevele" : scanStage === "processing" ? "Okunuyor…" : "Hata"}
+          {scanStage === "idle" ? "Fişini Tara" : scanStage === "camera" ? "Fişi Çerçevele" : scanStage === "processing" ? "Analiz Ediliyor" : scanStage === "verified" ? "Doğrulandı" : "Hata"}
         </div>
         <div style={{ width: 36 }} />
       </div>
@@ -203,6 +219,16 @@ function ScanScreen({
       {(scanStage === "idle" || scanStage === "camera") && (
         <p style={{ margin: "0 24px 16px", fontSize: 12, color: "rgba(244,239,230,0.45)", textAlign: "center", lineHeight: 1.5 }}>
           Fişi çerçevenin içine hizala · Tutar ve tarih görünür olsun · Son 1 saat geçerli
+        </p>
+      )}
+      {scanStage === "verified" && (
+        <p style={{ margin: "0 24px 10px", fontSize: 12, color: "#4ade80", textAlign: "center", fontWeight: 600 }}>
+          Doğrulandı · {ocrResult?.tokens ?? 1} çevirme hakkı kazandın
+        </p>
+      )}
+      {scanStage === "processing" && (
+        <p style={{ margin: "0 24px 10px", fontSize: 12, color: "rgba(244,239,230,0.45)", textAlign: "center" }}>
+          AI fişini analiz ediyor…
         </p>
       )}
 
@@ -267,17 +293,74 @@ function ScanScreen({
           </div>
         )}
 
-        {/* PROCESSING — spinner */}
-        {scanStage === "processing" && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+        {/* PROCESSING — receipt image + scan line animation */}
+        {scanStage === "processing" && previewUrl && (
+          <div style={{ position: "relative", width: "100%", maxWidth: 340, aspectRatio: "3 / 4", borderRadius: 18, overflow: "hidden" }}>
+            {/* Corner brackets */}
+            {(["tl","tr","bl","br"] as const).map((p) => (
+              <div key={p} style={cornerStyle(p)} />
+            ))}
+            {/* Receipt photo blurred */}
+            <img src={previewUrl} alt="fiş" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "blur(1.5px) brightness(0.7)" }} />
+            {/* Scan line */}
             <div style={{
-              width: 52, height: 52, borderRadius: "50%",
-              border: "4px solid rgba(255,216,78,0.15)",
-              borderTopColor: "#ffd84e",
-              animation: "rr-spin 0.75s linear infinite",
+              position: "absolute", left: 0, right: 0, height: 3,
+              background: "linear-gradient(90deg, transparent, #ffd84e, transparent)",
+              boxShadow: "0 0 18px 4px rgba(255,216,78,0.6)",
+              animation: "scan-line 1.6s ease-in-out infinite",
             }} />
-            <div style={{ fontSize: 14, fontWeight: 600, color: "rgba(244,239,230,0.7)" }}>Fiş okunuyor…</div>
-            <div style={{ fontSize: 12, color: "rgba(244,239,230,0.35)" }}>AI fişi analiz ediyor</div>
+            {/* Spinner overlay */}
+            <div style={{
+              position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: "50%",
+                border: "4px solid rgba(255,216,78,0.15)",
+                borderTopColor: "#ffd84e",
+                animation: "rr-spin 0.75s linear infinite",
+              }} />
+            </div>
+          </div>
+        )}
+
+        {/* VERIFIED — receipt + green check + summary card */}
+        {scanStage === "verified" && previewUrl && (
+          <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Receipt with green check */}
+            <div style={{ position: "relative", width: "100%", aspectRatio: "3 / 4", borderRadius: 18, overflow: "hidden" }}>
+              <img src={previewUrl} alt="fiş" style={{ width: "100%", height: "100%", objectFit: "cover", filter: "brightness(0.55)" }} />
+              {/* Green check circle */}
+              <div style={{
+                position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <div style={{
+                  width: 80, height: 80, borderRadius: "50%",
+                  background: "radial-gradient(circle, #22c55e 0%, #16a34a 100%)",
+                  boxShadow: "0 0 40px rgba(34,197,94,0.6)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 36, animation: "pop-in 0.3s cubic-bezier(0.34,1.56,0.64,1)",
+                }}>✓</div>
+              </div>
+            </div>
+            {/* Summary card */}
+            <div style={{
+              padding: "16px 20px", borderRadius: 16,
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+              display: "grid", gap: 10,
+            }}>
+              {[
+                { label: "VENUE", value: venue.name },
+                { label: "DATE",  value: nowStr },
+                { label: "TOTAL", value: `${currencySymbol} ${ocrResult?.amount?.toFixed(2) ?? "—"}`, accent: true },
+                { label: "AUTH",  value: "PASSED", green: true },
+              ].map(({ label, value, accent, green }) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", color: "rgba(244,239,230,0.35)" }}>{label}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: green ? "#4ade80" : accent ? "#ffd84e" : "#f4efe6" }}>{value}</span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
@@ -299,6 +382,15 @@ function ScanScreen({
 
       <style>{`
         @keyframes rr-spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
+        @keyframes scan-line {
+          0%   { top: 10%; opacity: 1; }
+          50%  { top: 85%; opacity: 1; }
+          100% { top: 10%; opacity: 0.3; }
+        }
+        @keyframes pop-in {
+          from { transform: scale(0.4); opacity: 0; }
+          to   { transform: scale(1);   opacity: 1; }
+        }
       `}</style>
     </div>
   );
