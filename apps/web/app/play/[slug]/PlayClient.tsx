@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlotMachine } from "../../../components/SlotMachine";
-import { CameraCapture, startCameraStream } from "../../../components/CameraCapture";
 import type { PlayBundle } from "../../../lib/play";
 
 type SpinResponse = {
@@ -144,7 +143,7 @@ function IntroScreen({ venue, onStart }: { venue: PlayBundle["venue"]; onStart: 
 }
 
 /* ─── Scan screen ─── */
-type ScanStage = "idle" | "camera" | "captured" | "processing" | "verified" | "error";
+type ScanStage = "idle" | "captured" | "processing" | "verified" | "error";
 
 type CapturedPayload = { previewUrl: string; hash: string; imageData: string };
 
@@ -168,35 +167,43 @@ function ScanScreen({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [captured, setCaptured] = useState<CapturedPayload | null>(null);
   const [ocrResult, setOcrResult] = useState<OcrResult | null>(null);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  async function openCamera() {
+  /** Trigger native iOS/Android camera via hidden file input */
+  function openNativeCamera() {
+    setErrorMsg("");
+    fileInputRef.current?.click();
+  }
+
+  /** File input change — process the photo from native camera */
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // reset so same file can be picked again
+    if (!file) return;
+
     try {
-      // Must be called directly from user gesture — iOS/Chrome enforce this
-      const stream = await startCameraStream();
-      setCameraStream(stream);
-      setScanStage("camera");
+      const arrayBuf = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuf);
+      const hash = Array.from(new Uint8Array(hashBuffer))
+        .slice(0, 12)
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      const blob = new Blob([arrayBuf], { type: file.type || "image/jpeg" });
+      const previewUrl = URL.createObjectURL(blob);
+      const imageData = await blobToDataUrl(blob);
+
+      const payload: CapturedPayload = { previewUrl, hash, imageData };
+      setPreviewUrl(previewUrl);
+      setCaptured(payload);
+      setScanStage("captured");
     } catch {
-      setErrorMsg("Kamera açılamadı. Tarayıcı kamera iznini kontrol edin.");
+      setErrorMsg("Fotoğraf işlenemedi. Tekrar dene.");
       setScanStage("error");
     }
   }
 
-  function handleCameraCancel() {
-    if (cameraStream) cameraStream.getTracks().forEach((t) => t.stop());
-    setCameraStream(null);
-    setScanStage("idle");
-  }
-
-  /** Photo just captured — show it to user, wait for confirmation before scanning */
-  function handleCapture(payload: CapturedPayload) {
-    setPreviewUrl(payload.previewUrl);
-    setCaptured(payload);
-    setScanStage("captured");
-    setErrorMsg("");
-  }
-
-  /** User pressed "Tara" — send image to OCR with scan animation */
+  /** User pressed "Taramayı Başlat" — send image to OCR with scan animation */
   async function startScan() {
     if (!captured) return;
     setScanStage("processing");
@@ -219,7 +226,6 @@ function ScanScreen({
       }
       setOcrResult({ tokens: data.tokens, receiptId: data.receiptId, amount: data.amount, currency: data.currency ?? "TRY" });
       setScanStage("verified");
-      // Auto-advance to slot after 2.2s
       setTimeout(() => onComplete(data.tokens, data.receiptId), 2200);
     } catch {
       setErrorMsg("Bağlantı hatası. Tekrar dene.");
@@ -227,19 +233,13 @@ function ScanScreen({
     }
   }
 
-  /** User wants to retake — go back to camera */
-  async function retakePhoto() {
+  /** User wants to retake — open native camera again */
+  function retakePhoto() {
     setCaptured(null);
     setPreviewUrl(null);
     setErrorMsg("");
-    try {
-      const stream = await startCameraStream();
-      setCameraStream(stream);
-      setScanStage("camera");
-    } catch {
-      setErrorMsg("Kamera açılamadı.");
-      setScanStage("error");
-    }
+    setScanStage("idle");
+    setTimeout(() => fileInputRef.current?.click(), 50);
   }
 
   const currencySymbol = ocrResult?.currency === "USD" ? "$" : ocrResult?.currency === "EUR" ? "€" : "₺";
@@ -247,6 +247,15 @@ function ScanScreen({
 
   return (
     <div style={{ ...shell, padding: 0, flexDirection: "column", justifyContent: "flex-start", alignItems: "stretch", background: "#0a0a0c" }}>
+      {/* Hidden native camera input — opens iOS/Android camera app */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
       {/* Top bar */}
       <div style={{ width: "100%", padding: "20px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <button onClick={onBack} style={{
@@ -256,7 +265,6 @@ function ScanScreen({
         }}>‹</button>
         <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.01em" }}>
           {scanStage === "idle" ? "Fişini Tara"
-            : scanStage === "camera" ? "Fişi Çerçevele"
             : scanStage === "captured" ? "Fişin Hazır"
             : scanStage === "processing" ? "Analiz Ediliyor"
             : scanStage === "verified" ? "Doğrulandı"
@@ -266,9 +274,9 @@ function ScanScreen({
       </div>
 
       {/* Info text */}
-      {(scanStage === "idle" || scanStage === "camera") && (
+      {scanStage === "idle" && (
         <p style={{ margin: "0 24px 16px", fontSize: 12, color: "rgba(244,239,230,0.45)", textAlign: "center", lineHeight: 1.5 }}>
-          Fişi çerçevenin içine hizala · Tutar ve tarih görünür olsun · Son 1 saat geçerli
+          Sarı düğmeye bas · Kamera açılır · Fişi çek · Son 1 saat geçerli
         </p>
       )}
       {scanStage === "verified" && (
@@ -324,9 +332,9 @@ function ScanScreen({
               </div>
             </div>
 
-            {/* Capture button */}
+            {/* Capture button — opens native camera via hidden file input */}
             <button
-              onClick={openCamera}
+              onClick={openNativeCamera}
               type="button"
               style={{
                 width: 72, height: 72, borderRadius: "50%",
@@ -339,17 +347,6 @@ function ScanScreen({
               aria-label="Kamerayı aç"
             />
           </>
-        )}
-
-        {/* CAMERA — stream already open from user gesture */}
-        {scanStage === "camera" && cameraStream && (
-          <div style={{ width: "100%", maxWidth: 400, flex: 1, display: "flex", alignItems: "flex-start", paddingTop: 8 }}>
-            <CameraCapture
-              initialStream={cameraStream}
-              onCapture={handleCapture}
-              onCancel={handleCameraCancel}
-            />
-          </div>
         )}
 
         {/* CAPTURED — show clear photo, user confirms before scanning */}
@@ -485,7 +482,7 @@ function ScanScreen({
             <div style={{ fontSize: 40 }}>⚠️</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#ff7e5a", textAlign: "center" }}>{errorMsg}</div>
             <button
-              onClick={() => { setErrorMsg(""); setCameraStream(null); setScanStage("idle"); }}
+              onClick={() => { setErrorMsg(""); setCaptured(null); setPreviewUrl(null); setScanStage("idle"); }}
               style={{ ...primaryBtn, width: "100%" }}
               type="button"
             >
@@ -611,4 +608,16 @@ function cornerStyle(pos: "tl" | "tr" | "bl" | "br"): React.CSSProperties {
   if (pos === "tr") return { ...base, top: off, right: off, borderTopWidth: thick, borderRightWidth: thick };
   if (pos === "bl") return { ...base, bottom: off, left: off, borderBottomWidth: thick, borderLeftWidth: thick };
   return { ...base, bottom: off, right: off, borderBottomWidth: thick, borderRightWidth: thick };
+}
+
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") { resolve(reader.result); return; }
+      reject(new Error("Failed to read blob as data URL"));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error("FileReader failed"));
+    reader.readAsDataURL(blob);
+  });
 }
