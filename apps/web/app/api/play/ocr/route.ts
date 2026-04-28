@@ -165,10 +165,34 @@ export async function POST(req: NextRequest) {
     }
     // If no datetime on receipt — we still accept but note it
 
-    // 7) Calculate tokens
+    // 7) Semantic dedup — reject if same venue + same date + same amount already recorded
+    //    This catches the same receipt photographed from a different angle (different hash).
+    if (extract.datetime && extract.amount) {
+      const receiptDate = extract.datetime.slice(0, 10); // "YYYY-MM-DD"
+      const amountCents = Math.round(extract.amount * 100);
+      const { data: semanticDup } = await sb
+        .from("receipts")
+        .select("id")
+        .eq("venue_id", v.id)
+        .eq("receipt_date", receiptDate)
+        .eq("amount_cents", amountCents)
+        .maybeSingle();
+
+      if (semanticDup) {
+        return NextResponse.json(
+          { error: `Bu fiş bugün zaten kullanıldı (${extract.amount} ${v.currency}, ${receiptDate}).\n${debugInfo}`, code: "DUPLICATE" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // 8) Calculate tokens
     const tokens = Math.max(1, Math.floor(extract.amount / v.token_threshold));
 
-    // 8) Insert receipt row
+    // 9) Insert receipt row
+    const receiptDate = extract.datetime ? extract.datetime.slice(0, 10) : null;
+    const amountCents = extract.amount ? Math.round(extract.amount * 100) : null;
+
     const { data: insertedReceipt, error: insErr } = await sb.from("receipts").insert({
       venue_id: v.id,
       guest_token: guestToken || null,
@@ -186,9 +210,18 @@ export async function POST(req: NextRequest) {
       }),
       valid: true,
       reject_reason: null,
+      receipt_date: receiptDate,
+      amount_cents: amountCents,
     }).select("id").single();
 
     if (insErr || !insertedReceipt) {
+      // Handle unique constraint violation (race condition — two concurrent scans of same receipt)
+      if (insErr?.code === "23505") {
+        return NextResponse.json(
+          { error: `Bu fiş zaten kullanıldı.\n${debugInfo}`, code: "DUPLICATE" },
+          { status: 409 }
+        );
+      }
       return NextResponse.json({ error: insErr?.message ?? "receipt insert failed" }, { status: 500 });
     }
 
