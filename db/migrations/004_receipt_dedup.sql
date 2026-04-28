@@ -18,10 +18,11 @@ UPDATE receipts
   WHERE issued_at IS NOT NULL AND receipt_date IS NULL;
 
 -- Unique index: same venue + same calendar date + same amount in cents = same receipt
--- Partial index: only applies when both fields are present (AI successfully parsed them)
+-- Partial index: only applies when both fields are present AND amount > 0
+-- (amount_cents = 0 rows are test/invalid data and excluded from dedup)
 CREATE UNIQUE INDEX IF NOT EXISTS receipts_semantic_dedup_idx
   ON receipts (venue_id, receipt_date, amount_cents)
-  WHERE receipt_date IS NOT NULL AND amount_cents IS NOT NULL;
+  WHERE receipt_date IS NOT NULL AND amount_cents IS NOT NULL AND amount_cents > 0;
 
 COMMENT ON COLUMN receipts.receipt_date  IS 'Calendar date extracted from receipt (for semantic dedup)';
 COMMENT ON COLUMN receipts.amount_cents  IS 'Total amount × 100 as integer (for exact semantic dedup)';
