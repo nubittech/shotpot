@@ -17,9 +17,26 @@ UPDATE receipts
   SET receipt_date = (issued_at AT TIME ZONE 'UTC')::date
   WHERE issued_at IS NOT NULL AND receipt_date IS NULL;
 
+-- Remove duplicate rows before creating unique index.
+-- Keep the earliest receipt (lowest created_at) per (venue_id, receipt_date, amount_cents).
+DELETE FROM receipts
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id,
+           ROW_NUMBER() OVER (
+             PARTITION BY venue_id, receipt_date, amount_cents
+             ORDER BY created_at ASC
+           ) AS rn
+    FROM receipts
+    WHERE receipt_date IS NOT NULL
+      AND amount_cents IS NOT NULL
+      AND amount_cents > 0
+  ) ranked
+  WHERE rn > 1
+);
+
 -- Unique index: same venue + same calendar date + same amount in cents = same receipt
 -- Partial index: only applies when both fields are present AND amount > 0
--- (amount_cents = 0 rows are test/invalid data and excluded from dedup)
 CREATE UNIQUE INDEX IF NOT EXISTS receipts_semantic_dedup_idx
   ON receipts (venue_id, receipt_date, amount_cents)
   WHERE receipt_date IS NOT NULL AND amount_cents IS NOT NULL AND amount_cents > 0;
