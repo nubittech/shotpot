@@ -1,0 +1,198 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { createClient } from "../../../lib/supabase/browser";
+import type { CustomerPro, Coupon } from "../../../lib/supabase/types";
+
+type CouponStatus = "active" | "redeemed" | "expired";
+
+function couponStatus(c: Coupon): CouponStatus {
+  if (c.redeemed_at) return "redeemed";
+  if (c.expires_at && new Date(c.expires_at) < new Date()) return "expired";
+  return "active";
+}
+
+const LOYALTY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+  bronze: { label: "Bronz",  emoji: "🥉", color: "#cd7f32" },
+  silver: { label: "Gümüş", emoji: "🥈", color: "#a8a9ad" },
+  gold:   { label: "Altın",  emoji: "🥇", color: "#ffd700" },
+};
+
+export default function ProfilePage() {
+  const router = useRouter();
+  const params = useParams<{ slug: string }>();
+  const slug = params.slug;
+
+  const [loading, setLoading] = useState(true);
+  const [customer, setCustomer] = useState<CustomerPro | null>(null);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [filter, setFilter] = useState<CouponStatus | "all">("all");
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const sb = createClient();
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) { router.push(`/play/${slug}`); return; }
+      setUserEmail(user.email ?? "");
+
+      // Fetch customer via API (uses service role for RLS bypass)
+      const res = await fetch("/api/play/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      if (!res.ok) { router.push(`/play/${slug}`); return; }
+      const { customer: c } = await res.json() as { customer: CustomerPro };
+      setCustomer(c);
+
+      // Fetch coupons for this customer
+      const res2 = await fetch(`/api/profile/coupons?customerId=${c.id}`);
+      if (res2.ok) {
+        const data = await res2.json() as { coupons: Coupon[] };
+        setCoupons(data.coupons ?? []);
+      }
+
+      setLoading(false);
+    }
+    load();
+  }, [slug, router]);
+
+  async function handleSignOut() {
+    const sb = createClient();
+    await sb.auth.signOut();
+    router.push(`/play/${slug}`);
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0a0a0c", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 32, height: 32, border: "3px solid rgba(255,255,255,0.1)", borderTopColor: "#ffd84e", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    );
+  }
+
+  if (!customer) return null;
+
+  const loyalty = LOYALTY_LABELS[customer.loyalty_tier] ?? LOYALTY_LABELS.bronze;
+  const filtered = filter === "all" ? coupons : coupons.filter((c) => couponStatus(c) === filter);
+  const activeCnt = coupons.filter((c) => couponStatus(c) === "active").length;
+  const redeemedCnt = coupons.filter((c) => couponStatus(c) === "redeemed").length;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+      {/* Header */}
+      <div style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={() => router.push(`/play/${slug}`)} style={ghostBtn}>‹ Oyuna Dön</button>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#ffd84e" }}>Profilim</div>
+        <button onClick={handleSignOut} style={{ ...ghostBtn, color: "rgba(244,239,230,0.4)" }}>Çıkış</button>
+      </div>
+
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "24px 16px" }}>
+
+        {/* Profile card */}
+        <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "24px 20px", marginBottom: 20 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+            {/* Avatar */}
+            <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #ffd84e, #ff8c42)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, fontWeight: 800, color: "#111", flexShrink: 0 }}>
+              {(customer.full_name ?? userEmail).slice(0, 1).toUpperCase()}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: "#f4efe6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {customer.full_name ?? "İsimsiz Üye"}
+              </div>
+              <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", marginTop: 2 }}>{userEmail}</div>
+            </div>
+            {/* Loyalty badge */}
+            <div style={{ padding: "4px 10px", borderRadius: 999, background: "rgba(255,255,255,0.06)", border: `1px solid ${loyalty.color}40`, fontSize: 12, fontWeight: 700, color: loyalty.color, flexShrink: 0 }}>
+              {loyalty.emoji} {loyalty.label}
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            {[
+              { label: "Ziyaret", value: customer.total_visits },
+              { label: "Aktif Kupon", value: activeCnt },
+              { label: "Kullanıldı", value: redeemedCnt },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: 12, padding: "12px 8px", textAlign: "center" }}>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#ffd84e" }}>{value}</div>
+                <div style={{ fontSize: 11, color: "rgba(244,239,230,0.45)", marginTop: 2, fontWeight: 600 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {customer.total_spend > 0 && (
+            <div style={{ marginTop: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(255,216,78,0.06)", border: "1px solid rgba(255,216,78,0.15)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", fontWeight: 600 }}>Toplam Harcama</span>
+              <span style={{ fontSize: 15, fontWeight: 800, color: "#ffd84e" }}>
+                ₺{customer.total_spend.toLocaleString("tr-TR", { minimumFractionDigits: 0 })}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Coupon list */}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Kuponlarım</h2>
+            <div style={{ display: "flex", gap: 6 }}>
+              {(["all", "active", "redeemed", "expired"] as const).map((f) => (
+                <button key={f} onClick={() => setFilter(f)} style={{
+                  padding: "5px 10px", borderRadius: 999, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  background: filter === f ? "#ffd84e" : "rgba(255,255,255,0.06)",
+                  color: filter === f ? "#111" : "rgba(244,239,230,0.6)",
+                  border: "none",
+                }}>
+                  {f === "all" ? "Tümü" : f === "active" ? "Aktif" : f === "redeemed" ? "Kullanıldı" : "Süresi Geçti"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {filtered.length === 0 ? (
+            <div style={{ padding: "36px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.35)", fontSize: 14 }}>
+              {filter === "active" ? "Aktif kuponun yok — fiş tarayarak kazan!" : "Bu kategoride kupon bulunamadı."}
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {filtered.map((c) => {
+                const status = couponStatus(c);
+                const statusColor = status === "active" ? "#4ade80" : status === "redeemed" ? "rgba(244,239,230,0.35)" : "#ff8060";
+                return (
+                  <div key={c.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${status === "active" ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: status === "expired" ? 0.55 : 1 }}>
+                    <div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: "#f4efe6", marginBottom: 4 }}>{c.reward_label}</div>
+                      <div style={{ fontFamily: "monospace", fontSize: 12, color: "rgba(244,239,230,0.5)", letterSpacing: "0.12em" }}>{c.code}</div>
+                      <div style={{ fontSize: 11, color: "rgba(244,239,230,0.35)", marginTop: 4 }}>
+                        {new Date(c.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: statusColor, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0, marginLeft: 12 }}>
+                      {status === "active" ? "✓ Aktif" : status === "redeemed" ? "Kullanıldı" : "Süresi Geçti"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div style={{ marginTop: 32, padding: "0 4px", display: "flex", justifyContent: "center" }}>
+          <button onClick={handleSignOut} style={{ fontSize: 12, color: "rgba(244,239,230,0.3)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
+            Hesabımdan çıkış yap
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const ghostBtn: React.CSSProperties = {
+  background: "none", border: "none", cursor: "pointer",
+  fontSize: 13, fontWeight: 600, color: "rgba(244,239,230,0.6)", padding: "6px 0",
+};

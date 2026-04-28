@@ -18,7 +18,7 @@ export default async function DashboardPage() {
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const venues = (venuesRaw ?? []) as Array<{ id: string; slug: string; name: string; plan: string; active: boolean; created_at: string }>;
+  const venues = (venuesRaw ?? []) as Array<{ id: string; slug: string; name: string; plan: string; tier: string; active: boolean; created_at: string }>;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
@@ -59,6 +59,10 @@ export default async function DashboardPage() {
                   <CopyLinkButton slug={v.slug} />
                   <Link href={`/play/${v.slug}`} target="_blank" style={secondaryLink}>Önizle</Link>
                   <Link href={`/scan?venue=${v.slug}`} style={secondaryLink}>Garson</Link>
+                  <Link href={`/dashboard/analytics/${v.slug}`} style={secondaryLink}>Analitik</Link>
+                  {v.tier === "pro" && (
+                    <Link href={`/dashboard/customers/${v.slug}`} style={{ ...secondaryLink, color: "#a78bfa", borderColor: "rgba(167,139,250,0.3)" }}>Müşteriler</Link>
+                  )}
                   <Link href={`/studio?slug=${v.slug}`} style={primaryLink}>Düzenle</Link>
                 </div>
               </div>

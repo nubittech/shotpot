@@ -11,6 +11,7 @@ type OcrRequest = {
   hash: string;        // SHA-256 fingerprint from client
   slug: string;
   guestToken: string;
+  customerId?: string; // Pro tier: link receipt to customer account
 };
 
 type ReceiptExtract = {
@@ -70,7 +71,7 @@ If this is NOT a receipt image, set confidence to 0.1 or lower.`,
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as OcrRequest;
-    const { imageData, hash, slug, guestToken } = body;
+    const { imageData, hash, slug, guestToken, customerId } = body;
 
     if (!imageData || !hash || !slug) {
       return NextResponse.json({ error: "imageData, hash and slug required" }, { status: 400 });
@@ -196,6 +197,7 @@ export async function POST(req: NextRequest) {
     const { data: insertedReceipt, error: insErr } = await sb.from("receipts").insert({
       venue_id: v.id,
       guest_token: guestToken || null,
+      customer_id: customerId || null,
       amount: extract.amount,
       tokens_awarded: tokens,
       fingerprint: hash,

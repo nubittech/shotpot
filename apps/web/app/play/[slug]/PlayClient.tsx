@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlotMachine } from "../../../components/SlotMachine";
+import { createClient } from "../../../lib/supabase/browser";
 import type { PlayBundle } from "../../../lib/play";
 import type { SlotVariantDB } from "../../../lib/supabase/types";
 
@@ -14,7 +15,7 @@ type SpinResponse = {
   animationHint: "standard" | "win" | "jackpot";
 };
 
-type Stage = "intro" | "scan" | "play" | "coupon";
+type Stage = "intro" | "auth" | "scan" | "play" | "coupon";
 
 /* ─── Theme palettes per slot variant ─── */
 type Theme = {
@@ -88,6 +89,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const router = useRouter();
   const variant = (config.variant ?? "v1") as SlotVariantDB;
   const theme = THEMES[variant] ?? THEMES.v1;
+  const isPro = (venue as unknown as { tier?: string }).tier === "pro";
 
   const [stage, setStage] = useState<Stage>("intro");
   const [tokens, setTokens] = useState(0);
@@ -95,10 +97,30 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [result, setResult] = useState<SpinResponse | null>(null);
   const [guestToken, setGuestToken] = useState("");
   const [receiptId, setReceiptId] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
 
   useEffect(() => {
     setGuestToken(getOrCreateGuestToken());
   }, []);
+
+  // Pro venues: check if user is logged in and has a customer record
+  useEffect(() => {
+    if (!isPro) return;
+    const sb = createClient();
+    sb.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return; // not logged in — auth gate shows on scan start
+      // Upsert customer record (creates if first visit)
+      const res = await fetch("/api/play/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: venue.slug }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { customer: { id: string } };
+        setCustomerId(data.customer.id);
+      }
+    });
+  }, [isPro, venue.slug]);
 
   async function pullLever() {
     if (spinning || tokens < 1) return;
@@ -135,7 +157,30 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   /* ─── Stages ─── */
   if (stage === "intro") {
-    return <IntroScreen venue={venue} theme={theme} onStart={() => setStage("scan")} />;
+    return (
+      <IntroScreen
+        venue={venue}
+        theme={theme}
+        isPro={isPro}
+        customerId={customerId}
+        onStart={() => {
+          if (isPro && !customerId) { setStage("auth"); return; }
+          setStage("scan");
+        }}
+        onProfile={() => router.push(`/profile/${venue.slug}`)}
+      />
+    );
+  }
+
+  if (stage === "auth") {
+    return (
+      <CustomerAuthScreen
+        venue={venue}
+        theme={theme}
+        onBack={() => setStage("intro")}
+        onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }}
+      />
+    );
   }
 
   if (stage === "scan") {
@@ -144,6 +189,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
         venue={venue}
         theme={theme}
         guestToken={guestToken}
+        customerId={customerId}
         onComplete={handleScanComplete}
         onBack={() => setStage("intro")}
       />
@@ -183,18 +229,38 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 }
 
 /* ─── Intro screen ─── */
-function IntroScreen({ venue, theme, onStart }: { venue: PlayBundle["venue"]; theme: Theme; onStart: () => void }) {
+function IntroScreen({ venue, theme, isPro, customerId, onStart, onProfile }: {
+  venue: PlayBundle["venue"]; theme: Theme;
+  isPro: boolean; customerId: string | null;
+  onStart: () => void; onProfile: () => void;
+}) {
   return (
     <div style={shell(theme)}>
       <div style={{ width: "100%", maxWidth: 380, textAlign: "center" }}>
+        {/* Pro: logged-in badge */}
+        {isPro && customerId && (
+          <button onClick={onProfile} style={{
+            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 18,
+            padding: "6px 14px", borderRadius: 999,
+            background: `rgba(255,255,255,0.06)`, border: `1px solid ${theme.border}`,
+            color: theme.accent, fontSize: 12, fontWeight: 700, cursor: "pointer",
+            letterSpacing: "0.06em",
+          }}>
+            👤 Profilim
+          </button>
+        )}
         <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", color: theme.accent, textTransform: "uppercase", marginBottom: 16, fontFamily: theme.font }}>
           Receipt Reward
         </div>
         <h1 style={{ margin: 0, fontSize: "clamp(32px, 9vw, 42px)", fontWeight: 900, letterSpacing: "-0.02em", color: theme.text, fontFamily: theme.font, lineHeight: 1.05 }}>{venue.name}</h1>
         <p style={{ margin: "18px 0 36px", fontSize: 15, color: theme.muted, lineHeight: 1.55 }}>
-          Hesabını ödedikten sonra fişini tara, jackpot çark döndürme hakkı kazan.
+          {isPro
+            ? "Hesabını ödedikten sonra fişini tara, jackpot çark döndürme hakkı kazan. Kuponların profilinde kayıtlı."
+            : "Hesabını ödedikten sonra fişini tara, jackpot çark döndürme hakkı kazan."}
         </p>
-        <button onClick={onStart} style={primaryBtn(theme)}>Fişimi Tara</button>
+        <button onClick={onStart} style={primaryBtn(theme)}>
+          {isPro && !customerId ? "Giriş Yap & Fişimi Tara" : "Fişimi Tara"}
+        </button>
         <p style={{ marginTop: 24, fontSize: 12, color: theme.muted, letterSpacing: "0.04em", opacity: 0.55 }}>
           /play/{venue.slug}
         </p>
@@ -216,11 +282,12 @@ type OcrResult = {
 };
 
 function ScanScreen({
-  venue, theme, guestToken, onComplete, onBack,
+  venue, theme, guestToken, customerId, onComplete, onBack,
 }: {
   venue: PlayBundle["venue"];
   theme: Theme;
   guestToken: string;
+  customerId: string | null;
   onComplete: (tokens: number, receiptId: string) => void;
   onBack: () => void;
 }) {
@@ -275,6 +342,7 @@ function ScanScreen({
           hash: captured.hash,
           slug: venue.slug,
           guestToken,
+          customerId: customerId ?? undefined,
         }),
       });
       const data = await res.json();
@@ -685,6 +753,158 @@ function CouponScreen({
   );
 }
 
+/* ─── Customer Auth Screen (Pro venues) ─── */
+function CustomerAuthScreen({ venue, theme, onBack, onSuccess }: {
+  venue: PlayBundle["venue"]; theme: Theme;
+  onBack: () => void;
+  onSuccess: (customerId: string) => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [authStage, setAuthStage] = useState<"form" | "sent" | "busy">("form");
+  const [err, setErr] = useState("");
+
+  async function handleSend(e: React.FormEvent) {
+    e.preventDefault();
+    if (!consent) { setErr("Devam edebilmek için KVKK onayı gereklidir."); return; }
+    setErr("");
+    setAuthStage("busy");
+
+    const sb = createClient();
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname)}`;
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
+    });
+
+    if (error) {
+      setErr(error.message);
+      setAuthStage("form");
+      return;
+    }
+
+    // Save name+consent for after magic-link return
+    if (fullName) sessionStorage.setItem("rr_pending_name", fullName);
+    sessionStorage.setItem("rr_pending_consent", "1");
+    setAuthStage("sent");
+  }
+
+  // On mount: if user is already logged in (returned from magic link), fetch/create customer
+  useEffect(() => {
+    const sb = createClient();
+    sb.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const pendingName = sessionStorage.getItem("rr_pending_name") ?? undefined;
+      const pendingConsent = sessionStorage.getItem("rr_pending_consent") === "1";
+      sessionStorage.removeItem("rr_pending_name");
+      sessionStorage.removeItem("rr_pending_consent");
+
+      const res = await fetch("/api/play/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug: venue.slug,
+          full_name: pendingName,
+          consent_marketing: pendingConsent,
+          consent_kvkk: pendingConsent,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json() as { customer: { id: string } };
+        onSuccess(data.customer.id);
+      }
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", overflow: "hidden" }}>
+      {/* Top bar */}
+      <div style={{ flexShrink: 0, padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1 }}>‹</button>
+        <div style={{ fontSize: 16, fontWeight: 700, color: theme.text, fontFamily: theme.font }}>{venue.name}</div>
+        <div style={{ width: 36 }} />
+      </div>
+
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 28px" }}>
+        {authStage === "sent" ? (
+          <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
+            <div style={{ fontSize: 56, marginBottom: 16 }}>📬</div>
+            <h2 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 800, color: theme.text }}>E-posta Gönderildi</h2>
+            <p style={{ margin: "0 0 24px", fontSize: 14, color: theme.muted, lineHeight: 1.6 }}>
+              <strong style={{ color: theme.accent }}>{email}</strong> adresine giriş linki gönderdik. Linke tıklayınca otomatik giriş yapılır.
+            </p>
+            <button onClick={() => setAuthStage("form")} style={{ ...secondaryBtn(theme), width: "100%" }}>
+              E-posta değiştir
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSend} style={{ width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.2em", color: theme.accent, textTransform: "uppercase", marginBottom: 10, fontFamily: theme.font }}>Üye Girişi</div>
+              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: theme.text }}>Hesabına Giriş Yap</h2>
+              <p style={{ margin: "8px 0 0", fontSize: 13, color: theme.muted }}>E-postana sihirli link gönderiyoruz — parola yok.</p>
+            </div>
+
+            {/* Name */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>Ad Soyad</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Ahmet Yılmaz"
+                style={{ ...inputStyle(theme) }}
+              />
+            </div>
+
+            {/* Email */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>E-posta *</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="ornek@email.com"
+                style={{ ...inputStyle(theme) }}
+              />
+            </div>
+
+            {/* KVKK consent */}
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                style={{ marginTop: 2, width: 16, height: 16, accentColor: theme.accent, flexShrink: 0 }}
+              />
+              <span style={{ fontSize: 12, color: theme.muted, lineHeight: 1.5 }}>
+                <strong style={{ color: theme.accent }}>{venue.name}</strong> tarafından kampanya ve kupon bilgilendirmesi almayı, kişisel verilerimin işlenmesini kabul ediyorum. (KVKK)
+              </span>
+            </label>
+
+            {err && (
+              <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,100,80,0.1)", border: "1px solid rgba(255,100,80,0.3)", color: "#ff8060", fontSize: 13 }}>
+                {err}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={authStage === "busy" || !email}
+              style={{ ...primaryBtn(theme), opacity: authStage === "busy" || !email ? 0.6 : 1 }}
+            >
+              {authStage === "busy" ? "Gönderiliyor…" : "Giriş Linki Gönder"}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ─── Themed style helpers ─── */
 function shell(theme: Theme): React.CSSProperties {
   return {
@@ -700,6 +920,23 @@ function primaryBtn(theme: Theme): React.CSSProperties {
     background: theme.btnBg, border: "none", color: theme.btnText,
     fontSize: 16, fontWeight: 800, cursor: "pointer", letterSpacing: "0.02em",
     width: "100%", boxShadow: `0 10px 28px ${theme.glow}`,
+  };
+}
+
+function secondaryBtn(theme: Theme): React.CSSProperties {
+  return {
+    padding: "13px 20px", borderRadius: 12,
+    background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`,
+    color: theme.text, fontSize: 14, fontWeight: 700, cursor: "pointer",
+  };
+}
+
+function inputStyle(theme: Theme): React.CSSProperties {
+  return {
+    width: "100%", boxSizing: "border-box",
+    background: "rgba(255,255,255,0.05)", border: `1px solid ${theme.border}`,
+    borderRadius: 10, padding: "12px 14px",
+    color: theme.text, fontSize: 14, outline: "none",
   };
 }
 
