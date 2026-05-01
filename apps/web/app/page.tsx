@@ -92,7 +92,9 @@ export default async function HomePage() {
               <li>✓ Garson redemption paneli</li>
               <li>✓ Temel istatistikler</li>
             </ul>
-            <Link href="/signup" style={{ ...secondaryBtn, marginTop: 20, width: "100%", display: "block", textAlign: "center", padding: "12px" }}>Başla</Link>
+            <Link href={user ? "/dashboard" : "/signup?plan=kampanya"} style={{ ...secondaryBtn, marginTop: 20, width: "100%", display: "block", textAlign: "center", padding: "12px" }}>
+              {user ? "Panelde Başla" : "Ücretsiz Başla"}
+            </Link>
           </div>
 
           {/* Pro */}
@@ -114,7 +116,9 @@ export default async function HomePage() {
               <li>✓ Detaylı analytics dashboard</li>
               <li>✓ CSV export</li>
             </ul>
-            <Link href="/signup" style={{ ...primaryBtn, marginTop: 20, width: "100%", display: "block", textAlign: "center", padding: "12px" }}>Pro Hesap Aç</Link>
+            <Link href={user ? "/dashboard" : "/signup?plan=pro"} style={{ ...primaryBtn, marginTop: 20, width: "100%", display: "block", textAlign: "center", padding: "12px" }}>
+              {user ? "Panelde Pro'ya Geç" : "Pro Hesap Aç"}
+            </Link>
           </div>
         </div>
       </section>

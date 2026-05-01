@@ -63,6 +63,7 @@ export default async function DashboardPage() {
                   {v.tier === "pro" && (
                     <Link href={`/dashboard/customers/${v.slug}`} style={{ ...secondaryLink, color: "#a78bfa", borderColor: "rgba(167,139,250,0.3)" }}>Müşteriler</Link>
                   )}
+                  <Link href={`/dashboard/billing/${v.slug}`} style={{ ...secondaryLink, color: "#ffd84e", borderColor: "rgba(255,216,78,0.25)" }}>💳 Plan</Link>
                   <Link href={`/studio?slug=${v.slug}`} style={primaryLink}>Düzenle</Link>
                 </div>
               </div>
