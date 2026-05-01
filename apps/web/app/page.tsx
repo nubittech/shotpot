@@ -127,10 +127,15 @@ export default async function HomePage() {
       <footer id="contact" style={{ padding: "60px 24px 40px", textAlign: "center", borderTop: "1px solid rgba(255,255,255,0.06)", marginTop: 60 }}>
         <div style={{ fontSize: 14, fontWeight: 800, color: "#ffd84e", marginBottom: 6 }}>Shotpot</div>
         <p style={{ fontSize: 13, color: "rgba(255,248,224,0.5)", margin: "0 0 14px" }}>
-          Receipt Reward · Müşteri sadakati için oyunlaştırma platformu
+          Receipt Reward · Gamified loyalty platform for bars &amp; restaurants
         </p>
+        <div style={{ display: "flex", gap: 20, justifyContent: "center", marginBottom: 14 }}>
+          <Link href="/terms"   style={{ fontSize: 12, color: "rgba(255,248,224,0.4)", textDecoration: "none" }}>Terms of Service</Link>
+          <Link href="/privacy" style={{ fontSize: 12, color: "rgba(255,248,224,0.4)", textDecoration: "none" }}>Privacy Policy</Link>
+          <Link href="/refund"  style={{ fontSize: 12, color: "rgba(255,248,224,0.4)", textDecoration: "none" }}>Refund Policy</Link>
+        </div>
         <p style={{ fontSize: 12, color: "rgba(255,248,224,0.3)", margin: 0 }}>
-          © {new Date().getFullYear()} · İletişim: <a href="mailto:hello@nubit.tech" style={{ color: "#ffd84e", textDecoration: "none" }}>hello@nubit.tech</a>
+          © {new Date().getFullYear()} Nubit Technology · <a href="mailto:hello@nubit.tech" style={{ color: "#ffd84e", textDecoration: "none" }}>hello@nubit.tech</a>
         </p>
       </footer>
     </div>
