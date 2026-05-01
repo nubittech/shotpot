@@ -162,6 +162,7 @@ export interface Database {
       campaigns:           { Row: Campaign;          Insert: Partial<Campaign>;          Update: Partial<Campaign>; };
       customers:           { Row: CustomerPro;       Insert: Partial<CustomerPro>;       Update: Partial<CustomerPro>; };
       marketing_campaigns: { Row: MarketingCampaign; Insert: Partial<MarketingCampaign>; Update: Partial<MarketingCampaign>; };
+      // Note: `campaigns` table holds spin-reward configs (migration 002 schema)
       campaign_deliveries: { Row: CampaignDelivery;  Insert: Partial<CampaignDelivery>;  Update: Partial<CampaignDelivery>; };
       receipts:            { Row: Receipt;           Insert: Partial<Receipt>;           Update: Partial<Receipt>; };
       spins:               { Row: Spin;              Insert: Partial<Spin>;              Update: Partial<Spin>; };

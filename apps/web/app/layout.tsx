@@ -11,8 +11,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Receipt Reward SaaS",
-  description: "MVP frontend for gamified receipt-based rewards"
+  title: "Shotpot — Jackpot for Bars",
+  description: "Fişini tara, jackpot çevir, kupon kazan. Bar & restoranlar için sadakat oyunu.",
+  manifest: "/manifest.json",
+  themeColor: "#ffd84e",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Shotpot",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

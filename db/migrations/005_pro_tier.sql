@@ -76,7 +76,7 @@ ALTER TABLE coupons
 CREATE INDEX IF NOT EXISTS coupons_customer_idx ON coupons (customer_id) WHERE customer_id IS NOT NULL;
 
 -- ─── 4) Campaigns ───────────────────────────────────────────────
-CREATE TABLE IF NOT EXISTS campaigns (
+CREATE TABLE IF NOT EXISTS marketing_campaigns (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   venue_id        uuid NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
   title           text NOT NULL,
@@ -92,12 +92,12 @@ CREATE TABLE IF NOT EXISTS campaigns (
   created_by      uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at      timestamptz NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS campaigns_venue_idx ON campaigns (venue_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS marketing_campaigns_venue_idx ON marketing_campaigns (venue_id, created_at DESC);
 
 -- ─── 5) Campaign deliveries (per-customer tracking) ─────────────
 CREATE TABLE IF NOT EXISTS campaign_deliveries (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id     uuid NOT NULL REFERENCES campaigns(id) ON DELETE CASCADE,
+  campaign_id     uuid NOT NULL REFERENCES marketing_campaigns(id) ON DELETE CASCADE,
   customer_id     uuid NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
   delivered_at    timestamptz NOT NULL DEFAULT now(),
   opened_at       timestamptz,
@@ -110,7 +110,7 @@ CREATE INDEX IF NOT EXISTS cd_campaign_idx ON campaign_deliveries (campaign_id);
 
 -- ─── 6) RLS: customers can only see their own data ──────────────
 ALTER TABLE customers              ENABLE ROW LEVEL SECURITY;
-ALTER TABLE campaigns              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE marketing_campaigns    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE campaign_deliveries    ENABLE ROW LEVEL SECURITY;
 
 -- Customer reads its own row
@@ -136,5 +136,5 @@ CREATE POLICY cd_self_read ON campaign_deliveries
 -- UPDATE venues SET tier = 'pro' WHERE slug = 'komun-bar';
 
 COMMENT ON TABLE customers           IS 'Pro tier customer accounts; one per (venue, person)';
-COMMENT ON TABLE campaigns           IS 'Marketing campaigns sent by venue to customers';
+COMMENT ON TABLE marketing_campaigns IS 'Marketing campaigns sent by venue to customers';
 COMMENT ON TABLE campaign_deliveries IS 'Per-customer campaign delivery + engagement tracking';

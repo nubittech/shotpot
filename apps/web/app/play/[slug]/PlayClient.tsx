@@ -131,7 +131,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       const res = await fetch("/api/play/spin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: venue.slug, guestToken, receiptId }),
+        body: JSON.stringify({ slug: venue.slug, guestToken, receiptId, customerId: customerId ?? undefined }),
       });
       await new Promise((r) => setTimeout(r, 1600));
 

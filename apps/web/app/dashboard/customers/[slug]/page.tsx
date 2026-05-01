@@ -62,6 +62,20 @@ export default async function CustomersPage({ params }: Params) {
 
   return (
     <Shell title="Müşteriler" venueName={v.name} slug={v.slug}>
+      {/* Action bar */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14, gap: 8 }}>
+        <a
+          href={`/api/dashboard/customers/export?slug=${v.slug}`}
+          download
+          style={{ padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(244,239,230,0.85)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
+        >
+          📥 CSV İndir
+        </a>
+        <Link href={`/dashboard/campaigns/${v.slug}`} style={{ padding: "8px 14px", borderRadius: 10, background: "#a78bfa", color: "#111", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
+          📨 Kampanya Gönder
+        </Link>
+      </div>
+
       {/* KPI row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
         {[

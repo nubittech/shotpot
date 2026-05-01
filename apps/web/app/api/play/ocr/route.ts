@@ -227,6 +227,35 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: insErr?.message ?? "receipt insert failed" }, { status: 500 });
     }
 
+    // 10) Update customer stats + loyalty tier (Pro tier only, fire-and-forget)
+    if (customerId) {
+      const { data: cust } = await sb
+        .from("customers")
+        .select("total_visits, total_spend, loyalty_tier")
+        .eq("id", customerId)
+        .maybeSingle();
+
+      if (cust) {
+        const c = cust as { total_visits: number; total_spend: number; loyalty_tier: string };
+        const newVisits = c.total_visits + 1;
+        const newSpend  = Number(c.total_spend) + Number(extract.amount);
+        // Loyalty: bronze < 5 visits, silver 5-19, gold 20+
+        let newTier = c.loyalty_tier;
+        if (newVisits >= 20)      newTier = "gold";
+        else if (newVisits >= 5)  newTier = "silver";
+
+        await sb
+          .from("customers")
+          .update({
+            total_visits: newVisits,
+            total_spend: newSpend,
+            loyalty_tier: newTier,
+            last_visit_at: new Date().toISOString(),
+          })
+          .eq("id", customerId);
+      }
+    }
+
     return NextResponse.json({
       ok: true,
       receiptId: (insertedReceipt as { id: string }).id,

@@ -7,6 +7,22 @@ import type { CustomerPro, Coupon } from "../../../lib/supabase/types";
 
 type CouponStatus = "active" | "redeemed" | "expired";
 
+type Notification = {
+  id: string;
+  delivered_at: string;
+  opened_at: string | null;
+  redeemed_at: string | null;
+  coupon_id: string | null;
+  marketing_campaigns: {
+    title: string;
+    body: string;
+    reward_label: string | null;
+    image_url: string | null;
+  } | null;
+};
+
+type Tab = "coupons" | "notifications";
+
 function couponStatus(c: Coupon): CouponStatus {
   if (c.redeemed_at) return "redeemed";
   if (c.expires_at && new Date(c.expires_at) < new Date()) return "expired";
@@ -27,7 +43,9 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [customer, setCustomer] = useState<CustomerPro | null>(null);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<CouponStatus | "all">("all");
+  const [tab, setTab] = useState<Tab>("coupons");
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
@@ -47,11 +65,18 @@ export default function ProfilePage() {
       const { customer: c } = await res.json() as { customer: CustomerPro };
       setCustomer(c);
 
-      // Fetch coupons for this customer
-      const res2 = await fetch(`/api/profile/coupons?customerId=${c.id}`);
+      // Fetch coupons + notifications in parallel
+      const [res2, res3] = await Promise.all([
+        fetch(`/api/profile/coupons?customerId=${c.id}`),
+        fetch(`/api/profile/notifications?customerId=${c.id}`),
+      ]);
       if (res2.ok) {
         const data = await res2.json() as { coupons: Coupon[] };
         setCoupons(data.coupons ?? []);
+      }
+      if (res3.ok) {
+        const data = await res3.json() as { notifications: Notification[] };
+        setNotifications(data.notifications ?? []);
       }
 
       setLoading(false);
@@ -135,7 +160,74 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Coupon list */}
+        {/* Tab switcher */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 18, padding: 4, background: "rgba(255,255,255,0.03)", borderRadius: 12 }}>
+          <button onClick={() => setTab("coupons")} style={{
+            flex: 1, padding: "10px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", border: "none",
+            background: tab === "coupons" ? "#ffd84e" : "transparent",
+            color: tab === "coupons" ? "#111" : "rgba(244,239,230,0.6)",
+          }}>
+            🎟 Kuponlarım ({activeCnt})
+          </button>
+          <button onClick={() => setTab("notifications")} style={{
+            flex: 1, padding: "10px", borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: "pointer", border: "none",
+            background: tab === "notifications" ? "#a78bfa" : "transparent",
+            color: tab === "notifications" ? "#111" : "rgba(244,239,230,0.6)",
+            position: "relative",
+          }}>
+            📬 Bildirimler ({notifications.filter((n) => !n.opened_at).length > 0 ? notifications.length : notifications.length})
+            {notifications.filter((n) => !n.opened_at).length > 0 && (
+              <span style={{ position: "absolute", top: 4, right: 8, width: 8, height: 8, background: "#ff4040", borderRadius: "50%" }} />
+            )}
+          </button>
+        </div>
+
+        {/* Notifications tab */}
+        {tab === "notifications" && (
+          <div>
+            {notifications.length === 0 ? (
+              <div style={{ padding: "36px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.35)", fontSize: 14 }}>
+                Henüz bildirim yok. Kampanyalar burada görünecek.
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {notifications.map((n) => {
+                  const camp = n.marketing_campaigns;
+                  if (!camp) return null;
+                  const unread = !n.opened_at;
+                  return (
+                    <div key={n.id} onClick={async () => {
+                      if (!n.opened_at) {
+                        await fetch("/api/profile/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deliveryId: n.id }) });
+                        setNotifications((arr) => arr.map((x) => x.id === n.id ? { ...x, opened_at: new Date().toISOString() } : x));
+                      }
+                    }} style={{
+                      background: "rgba(255,255,255,0.04)",
+                      border: `1px solid ${unread ? "rgba(167,139,250,0.4)" : "rgba(255,255,255,0.06)"}`,
+                      borderRadius: 14, padding: "16px 18px", cursor: "pointer",
+                      position: "relative",
+                    }}>
+                      {unread && <div style={{ position: "absolute", top: 14, right: 14, width: 8, height: 8, background: "#a78bfa", borderRadius: "50%" }} />}
+                      <div style={{ fontSize: 14, fontWeight: 800, color: "#f4efe6", marginBottom: 4, paddingRight: 16 }}>{camp.title}</div>
+                      <div style={{ fontSize: 13, color: "rgba(244,239,230,0.7)", lineHeight: 1.5, marginBottom: 8 }}>{camp.body}</div>
+                      {camp.reward_label && (
+                        <div style={{ display: "inline-block", padding: "4px 10px", borderRadius: 8, background: "rgba(167,139,250,0.15)", border: "1px solid rgba(167,139,250,0.4)", fontSize: 11, fontWeight: 700, color: "#a78bfa", marginBottom: 6 }}>
+                          🎁 {camp.reward_label}
+                        </div>
+                      )}
+                      <div style={{ fontSize: 10, color: "rgba(244,239,230,0.4)", marginTop: 4 }}>
+                        {new Date(n.delivered_at).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Coupons tab */}
+        {tab === "coupons" && (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Kuponlarım</h2>
@@ -180,6 +272,7 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
+        )}
 
         {/* Footer */}
         <div style={{ marginTop: 32, padding: "0 4px", display: "flex", justifyContent: "center" }}>
