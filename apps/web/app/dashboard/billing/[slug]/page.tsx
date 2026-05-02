@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import { BillingClient } from "./BillingClient";
+import { PADDLE_CLIENT_TOKEN, PADDLE_ENVIRONMENT, PADDLE_PRICE_IDS } from "../../../../lib/paddle";
 
 type Props = { params: { slug: string }; searchParams: { success?: string; cancelled?: string } };
 
@@ -23,7 +24,7 @@ export default async function BillingPage({ params, searchParams }: Props) {
 
   const v = venue as {
     id: string; name: string; slug: string;
-    plan: string; tier: string;
+    plan: string | null; tier: string;
     stripe_customer_id: string | null;
     stripe_subscription_id: string | null;
     subscription_status: string | null;
@@ -32,18 +33,16 @@ export default async function BillingPage({ params, searchParams }: Props) {
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
-      {/* Header */}
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "16px 24px", display: "flex", alignItems: "center", gap: 16 }}>
         <Link href="/dashboard" style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", fontWeight: 600, textDecoration: "none" }}>‹ Dashboard</Link>
         <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.1)" }} />
-        <div style={{ fontSize: 14, fontWeight: 700, color: "#ffd84e" }}>Ödeme & Plan</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#ffd84e" }}>Plan & Ödeme</div>
         <div style={{ fontSize: 13, color: "rgba(244,239,230,0.4)" }}>— {v.name}</div>
       </header>
 
-      {/* Success / cancelled banners */}
       {searchParams.success && (
         <div style={{ background: "rgba(74,222,128,0.1)", borderBottom: "1px solid rgba(74,222,128,0.25)", padding: "14px 24px", textAlign: "center", color: "#4ade80", fontSize: 14, fontWeight: 700 }}>
-          ✓ Aboneliğin başarıyla aktifleştirildi! Plan değişikliği birkaç saniye içinde yansır.
+          ✓ Aboneliğin aktifleştirildi! Plan birkaç saniye içinde yansır.
         </div>
       )}
       {searchParams.cancelled && (
@@ -55,10 +54,16 @@ export default async function BillingPage({ params, searchParams }: Props) {
       <BillingClient
         venueId={v.id}
         venueName={v.name}
+        userEmail={user.email ?? ""}
         currentPlan={v.plan ?? ""}
         subscriptionStatus={v.subscription_status}
         planExpiresAt={v.plan_expires_at}
-        hasStripeCustomer={!!v.stripe_customer_id}
+        hasPaddleCustomer={!!v.stripe_customer_id}
+        paddleSubscriptionId={v.stripe_subscription_id}
+        paddleClientToken={PADDLE_CLIENT_TOKEN}
+        paddleEnvironment={PADDLE_ENVIRONMENT}
+        priceKampanya={PADDLE_PRICE_IDS.kampanya}
+        pricePro={PADDLE_PRICE_IDS.pro}
       />
     </div>
   );
