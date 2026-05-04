@@ -5,89 +5,399 @@ import { getServiceClient } from "../../lib/supabase/server";
 import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 
+/* ── Design tokens (from Jackpot styles.css) ── */
+const T = {
+  bg0: "#08050a", bg1: "#110a08", bg2: "#1a0f0a",
+  line: "rgba(232,200,118,0.12)", lineStrong: "rgba(232,200,118,0.28)",
+  brass300: "#e8c876", brass400: "#c89a4a", brass500: "#8b6a30",
+  ink100: "#fff8e8", ink200: "#f0e0c0", ink300: "#c8b890",
+  ink400: "#8b7d5e", ink500: "#5a4f3a",
+  green: "#7be38a", ember: "#ff8a4a", emberR: "#c81e35",
+};
+
+type Venue = {
+  id: string; slug: string; name: string;
+  plan: string; tier: string; active: boolean; created_at: string;
+};
+
 export default async function DashboardPage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login?next=/dashboard");
 
-  // Use service client to also see venues regardless of RLS quirks
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
-    .from("venues")
-    .select("*")
+    .from("venues").select("*")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
-  const venues = (venuesRaw ?? []) as Array<{ id: string; slug: string; name: string; plan: string; tier: string; active: boolean; created_at: string }>;
+  const venues = (venuesRaw ?? []) as Venue[];
+  const initials = (user.email ?? "?").slice(0, 1).toUpperCase();
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
-      <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "16px 32px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <div style={{ fontWeight: 800, fontSize: 15, color: "#ffd84e" }}>Receipt Reward</div>
-          <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.1)" }} />
-          <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)" }}>Dashboard</div>
+    <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+
+      {/* ═══════ SIDEBAR ═══════ */}
+      <aside style={{
+        background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
+        borderRight: `1px solid ${T.line}`,
+        padding: "24px 16px",
+        display: "flex", flexDirection: "column",
+        position: "sticky", top: 0, height: "100vh", overflowY: "auto",
+      }}>
+        {/* Brand */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 24px" }}>
+          <div style={{
+            width: 30, height: 30, borderRadius: 8,
+            background: "linear-gradient(160deg, #e8c876, #5a3414)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 14, fontWeight: 900, color: "#1a0f06",
+            fontFamily: "'Playfair Display', serif",
+          }}>J</div>
+          <span style={{ fontWeight: 700, fontSize: 14, color: T.ink100 }}>Jackpot</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-          <span style={{ fontSize: 12, color: "rgba(244,239,230,0.5)" }}>{user.email}</span>
+
+        {/* Workspace nav */}
+        <SideSection label="Workspace" />
+        <SideLink href="/dashboard" active label="İşletmelerim" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="2" width="6" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="10" y="2" width="6" height="4" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="2" y="11" width="6" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="10" y="8" width="6" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        }/>
+        <SideLink href="/dashboard" label="Analitik" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        }/>
+        <SideLink href="/dashboard" label="Müşteriler" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <circle cx="13" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M11 16c0-2 1-3 2.5-3s2.5 1 2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        }/>
+        <SideLink href="/dashboard" label="Kuponlar" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        }/>
+
+        {/* Account nav */}
+        <SideSection label="Hesap" />
+        {venues[0] && <SideLink href={`/dashboard/billing/${venues[0].slug}`} label="Plan & Faturalama" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        }/>}
+        <SideLink href="/dashboard" label="Yardım & Destek" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        }/>
+
+        {/* Account footer */}
+        <div style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: "50%",
+              background: "linear-gradient(160deg, #c89a4a, #5a3414)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontFamily: "'Playfair Display', serif", fontWeight: 900,
+              color: "#1a0f06", fontSize: 13, flexShrink: 0,
+            }}>{initials}</div>
+            <div>
+              <div style={{ color: T.ink100, fontWeight: 600, fontSize: 13, lineHeight: 1.1 }}>{user.email?.split("@")[0]}</div>
+              <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} mekan</div>
+            </div>
+          </div>
           <LogoutButton />
         </div>
-      </header>
+      </aside>
 
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "40px 24px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-          <h1 style={{ margin: 0, fontSize: 26, fontWeight: 800 }}>İşletmelerim</h1>
-          <Link href="/studio" style={primaryLink}>+ Yeni İşletme</Link>
-        </div>
+      {/* ═══════ MAIN ═══════ */}
+      <main style={{ background: T.bg0, minWidth: 0 }}>
 
-        {venues.length === 0 ? (
-          <div style={{ padding: 40, textAlign: "center", border: "1px dashed rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(244,239,230,0.55)" }}>
-            <p style={{ margin: 0, fontSize: 14 }}>Henüz işletme kurmadın.</p>
-            <Link href="/studio" style={{ ...primaryLink, marginTop: 16, display: "inline-block" }}>İlk işletmeni kur →</Link>
+        {/* Topbar */}
+        <header style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "18px 32px",
+          borderBottom: `1px solid ${T.line}`,
+          background: "rgba(8,5,10,0.6)",
+          backdropFilter: "blur(16px)",
+          position: "sticky", top: 0, zIndex: 30,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.ink400 }}>
+            <span style={{ color: T.ink300 }}>Workspace</span>
+            <span style={{ color: T.ink500 }}>/</span>
+            <span style={{ color: T.ink100 }}>İşletmelerim</span>
           </div>
-        ) : (
-          <div style={{ display: "grid", gap: 12 }}>
-            {venues.map((v) => (
-              <div key={v.id} style={cardStyle}>
-                <div>
-                  <div style={{ fontSize: 16, fontWeight: 700 }}>{v.name}</div>
-                  <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 4 }}>
-                    /play/{v.slug} · {v.plan === "kampanya" ? "Kampanya" : "İşletme"} · {v.active ? "aktif" : "pasif"}
-                  </div>
-                </div>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                  <CopyLinkButton slug={v.slug} />
-                  <Link href={`/play/${v.slug}`} target="_blank" style={secondaryLink}>Önizle</Link>
-                  <Link href={`/scan?venue=${v.slug}`} style={secondaryLink}>Garson</Link>
-                  <Link href={`/dashboard/analytics/${v.slug}`} style={secondaryLink}>Analitik</Link>
-                  {v.tier === "pro" && (
-                    <Link href={`/dashboard/customers/${v.slug}`} style={{ ...secondaryLink, color: "#a78bfa", borderColor: "rgba(167,139,250,0.3)" }}>Müşteriler</Link>
-                  )}
-                  <Link href={`/dashboard/billing/${v.slug}`} style={{ ...secondaryLink, color: "#ffd84e", borderColor: "rgba(255,216,78,0.25)" }}>💳 Plan</Link>
-                  <Link href={`/studio?slug=${v.slug}`} style={primaryLink}>Düzenle</Link>
-                </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <IconBtn title="Arama">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            </IconBtn>
+          </div>
+        </header>
+
+        <div style={{ padding: "36px 32px 64px" }}>
+
+          {/* Page header */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+            <div>
+              <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: T.brass300, textTransform: "uppercase" }}>
+                Workspace · {user.email?.split("@")[0]}
               </div>
-            ))}
+              <h1 style={{ margin: "6px 0 0", fontFamily: "'Playfair Display', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 900, color: T.ink100, lineHeight: 1 }}>
+                İşletmelerim
+              </h1>
+            </div>
+            <Link href="/studio" style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "12px 22px", borderRadius: 999, border: "none",
+              background: "linear-gradient(160deg, #f0d690 0%, #c89a4a 50%, #8b6a30 100%)",
+              color: "#1a0f06", fontWeight: 700, fontSize: 14, textDecoration: "none",
+              boxShadow: "inset 0 1px 0 rgba(255,244,212,0.6), inset 0 -1px 0 rgba(74,52,20,0.5), 0 8px 20px -8px rgba(232,200,118,0.5)",
+            }}>
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Yeni İşletme
+            </Link>
           </div>
-        )}
+
+          {/* KPI strip — mocked totals across venues */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
+            <KpiCard label="Toplam mekan" value={String(venues.length)} delta="" />
+            <KpiCard label="Aktif mekan" value={String(venues.filter(v => v.active).length)} delta="" />
+            <KpiCard label="Pro plan" value={String(venues.filter(v => v.tier === "pro").length)} delta="" />
+            <KpiCard label="Kampanya" value={String(venues.filter(v => v.tier !== "pro").length)} delta="" />
+          </div>
+
+          {/* Main layout: venue list + activity sidebar */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "flex-start" }}>
+
+            {/* Venue list */}
+            <div>
+              {venues.length === 0 ? (
+                <Link href="/studio" style={{
+                  display: "block", border: `2px dashed ${T.lineStrong}`,
+                  borderRadius: 18, padding: 28, textAlign: "center",
+                  color: T.ink400, textDecoration: "none",
+                  transition: "all 0.15s",
+                }}>
+                  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" style={{ marginBottom: 8 }}>
+                    <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3"/>
+                    <path d="M16 11v10M11 16h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>İlk mekanını ekle</div>
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Ücretsiz, 5 dakikada hazır</div>
+                </Link>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  {venues.map((v) => (
+                    <div key={v.id} style={{
+                      background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
+                      border: `1px solid ${T.line}`,
+                      borderRadius: 18, padding: "22px 24px",
+                      display: "flex", alignItems: "center", gap: 22,
+                      flexWrap: "wrap",
+                    }}>
+                      {/* Cover glyph */}
+                      <div style={{
+                        width: 80, height: 80, flexShrink: 0, borderRadius: 14,
+                        background: `linear-gradient(160deg, ${T.bg2}, ${T.bg0})`,
+                        border: `1px solid ${T.lineStrong}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <span style={{
+                          fontFamily: "'Playfair Display', serif", fontWeight: 900,
+                          color: T.brass300, fontSize: 32,
+                          textShadow: "0 2px 4px rgba(0,0,0,0.6)",
+                        }}>{v.name.slice(0, 1).toUpperCase()}</span>
+                      </div>
+
+                      {/* Meta */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h2 style={{ margin: "0 0 6px", fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 20, color: T.ink100, letterSpacing: "-0.005em" }}>
+                          {v.name}
+                        </h2>
+                        <div style={{ color: T.ink400, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", color: T.ink300 }}>/play/{v.slug}</span>
+                          <span style={{ color: T.ink500 }}>·</span>
+                          <span>{v.plan === "kampanya" ? "Kampanya" : "İşletme"}</span>
+                          <span style={{ color: T.ink500 }}>·</span>
+                          <StatusPill active={v.active} />
+                        </div>
+                        <div style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300 }}>
+                          <span style={{ color: T.ink400 }}>{v.tier === "pro" ? "Pro" : "Standard"} plan</span>
+                          <span>{new Date(v.created_at).toLocaleDateString("tr-TR", { month: "short", year: "numeric" })} tarihinden beri</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                        <CopyLinkButton slug={v.slug} />
+                        <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />
+                        <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />
+                        <ABtn href={`/dashboard/analytics/${v.slug}`} label="Analitik" icon="chart" />
+                        {v.tier === "pro" && (
+                          <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
+                        )}
+                        <ABtn href={`/dashboard/billing/${v.slug}`} label="Plan" icon="card" variant="brass" />
+                        <ABtn href={`/studio?slug=${v.slug}`} label="Düzenle" icon="edit" variant="gold" />
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* New venue card */}
+                  <Link href="/studio" style={{
+                    display: "block", border: `2px dashed ${T.lineStrong}`,
+                    borderRadius: 18, padding: 24, textAlign: "center",
+                    color: T.ink400, textDecoration: "none",
+                  }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ marginBottom: 6 }}>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3"/>
+                      <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>Yeni mekan ekle</div>
+                    <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Ücretsiz, 5 dakikada hazır</div>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Activity sidebar */}
+            <aside style={{
+              background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
+              border: `1px solid ${T.line}`,
+              borderRadius: 16, padding: 22,
+              position: "sticky", top: 96,
+            }}>
+              <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: "0.18em", color: T.brass300, margin: "0 0 16px" }}>
+                Canlı akış
+              </h3>
+              {venues.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>İlk mekanını oluşturduktan sonra burada gerçek zamanlı aktiviteni göreceksin.</p>
+              ) : (
+                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>Gerçek zamanlı aktivite akışı yakında eklenecek.</p>
+              )}
+            </aside>
+          </div>
+        </div>
       </main>
     </div>
   );
 }
 
-const cardStyle: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between", alignItems: "center",
-  padding: "18px 22px", borderRadius: 14,
-  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
-};
+/* ── Sub-components ── */
 
-const primaryLink: React.CSSProperties = {
-  padding: "8px 14px", borderRadius: 10, background: "#ffd84e", color: "#111",
-  fontSize: 12, fontWeight: 700, textDecoration: "none",
-};
+function SideSection({ label }: { label: string }) {
+  return (
+    <div style={{
+      color: "#5a4f3a", textTransform: "uppercase",
+      letterSpacing: "0.18em", fontSize: 11,
+      fontFamily: "'Bebas Neue', sans-serif",
+      padding: "16px 12px 8px",
+    }}>{label}</div>
+  );
+}
 
-const secondaryLink: React.CSSProperties = {
-  padding: "8px 14px", borderRadius: 10,
-  background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-  color: "rgba(244,239,230,0.85)", fontSize: 12, fontWeight: 600, textDecoration: "none",
-};
+function SideLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active?: boolean }) {
+  return (
+    <Link href={href} style={{
+      display: "flex", alignItems: "center", gap: 12,
+      padding: active ? "10px 10px 10px 10px" : "10px 12px",
+      borderRadius: 10, textDecoration: "none",
+      fontSize: 14, fontWeight: 500, marginBottom: 2,
+      color: active ? "#e8c876" : "#c8b890",
+      background: active
+        ? "linear-gradient(90deg, rgba(232,200,118,0.14), rgba(232,200,118,0.04))"
+        : "transparent",
+      borderLeft: active ? "2px solid #e8c876" : "2px solid transparent",
+    }}>
+      {icon}
+      {label}
+    </Link>
+  );
+}
+
+function IconBtn({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div title={title} style={{
+      width: 36, height: 36, borderRadius: 10,
+      background: "#110a08", border: "1px solid rgba(232,200,118,0.12)",
+      color: "#c8b890", display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: "pointer",
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function KpiCard({ label, value, delta }: { label: string; value: string; delta: string }) {
+  return (
+    <div style={{
+      background: `linear-gradient(180deg, #110a08 0%, #08050a 100%)`,
+      border: "1px solid rgba(232,200,118,0.12)",
+      borderRadius: 16, padding: 22, position: "relative", overflow: "hidden",
+    }}>
+      <div style={{ color: "#8b7d5e", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Bebas Neue', sans-serif" }}>
+        {label}
+      </div>
+      <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 36, color: "#fff8e8", lineHeight: 1, marginTop: 10 }}>
+        {value}
+      </div>
+      {delta && <div style={{ marginTop: 8, fontSize: 12, color: "#7be38a" }}>{delta}</div>}
+    </div>
+  );
+}
+
+function StatusPill({ active }: { active: boolean }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 6,
+      fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
+      color: active ? "#7be38a" : "#8b7d5e",
+      padding: "3px 8px", borderRadius: 999,
+      background: active ? "rgba(123,227,138,0.08)" : "rgba(255,255,255,0.03)",
+      border: `1px solid ${active ? "rgba(123,227,138,0.25)" : "rgba(255,255,255,0.08)"}`,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "#7be38a" : "#5a4f3a", flexShrink: 0 }} />
+      {active ? "Aktif" : "Pasif"}
+    </span>
+  );
+}
+
+function ABtn({ href, label, icon: _icon, variant, target }: { href: string; label: string; icon: string; variant?: "gold"|"purple"|"brass"; target?: string }) {
+  const variantStyles: React.CSSProperties =
+    variant === "gold"
+      ? { background: "linear-gradient(160deg, #f0d690 0%, #c89a4a 100%)", color: "#1a0f06", border: "none", fontWeight: 700, boxShadow: "inset 0 1px 0 rgba(255,244,212,0.6), 0 4px 12px -4px rgba(232,200,118,0.4)" }
+      : variant === "purple"
+      ? { color: "#c8a8ff", borderColor: "rgba(200,168,255,0.3)" }
+      : variant === "brass"
+      ? { color: "#e8c876", borderColor: "rgba(232,200,118,0.28)" }
+      : {};
+
+  return (
+    <Link href={href} target={target} style={{
+      padding: "9px 14px", borderRadius: 999,
+      background: variant === "gold" ? undefined : "#110a08",
+      border: `1px solid rgba(232,200,118,0.12)`,
+      color: "#f0e0c0", fontSize: 13, fontWeight: 500,
+      cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 6,
+      textDecoration: "none", whiteSpace: "nowrap",
+      ...variantStyles,
+    }}>
+      {label}
+    </Link>
+  );
+}

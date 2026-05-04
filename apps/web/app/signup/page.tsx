@@ -39,7 +39,7 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell title="Kaydol" sub="İşletme paneli için yeni hesap oluştur.">
+    <AuthShell title="Mekanını bağla." sub="5 dakikada hesap. İlk 30 gün ücretsiz, kart bilgisi gerekmez." mode="signup">
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
         <Field label="E-posta">
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />

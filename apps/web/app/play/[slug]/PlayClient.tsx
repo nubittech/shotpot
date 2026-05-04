@@ -38,6 +38,9 @@ type Theme = {
   ctaBorder: string;
   glow: string;
   jackpotGlow: string;
+  jackpotHi: string;
+  jackpotLo: string;
+  jackpotRim: string;
   /* button */
   btnBg: string;
   btnText: string;
@@ -57,49 +60,55 @@ const THEMES: Record<SlotVariantDB, Theme> = {
 
   /* ── A · Brass & Walnut ── */
   v1: {
-    bg:              "radial-gradient(ellipse 120% 80% at 50% 0%, #2c1a08 0%, #170d04 55%, #0c0502 100%)",
+    bg:              "radial-gradient(140% 100% at 50% 0%, #2a1a0d 0%, #14090a 60%, #0a0608 100%)",
     cardBg:          "rgba(255,220,140,0.05)",
-    ctaCardBg:       "linear-gradient(145deg, #3d2209 0%, #261405 100%)",
+    ctaCardBg:       "linear-gradient(135deg, #a05a18 0%, #f0b94a 100%)",
     ctaCardBgIdle:   "rgba(255,220,140,0.04)",
-    navBg:           "rgba(10,5,1,0.97)",
+    navBg:           "rgba(10,10,14,0.95)",
     text:            "#f5e6c8",
     muted:           "rgba(220,185,110,0.55)",
-    ctaText:         "#f5e6c8",
-    ctaMuted:        "rgba(220,185,110,0.6)",
-    accent:          "#d4a843",
-    accent2:         "#c03030",
-    border:          "rgba(212,168,67,0.22)",
-    ctaBorder:       "rgba(212,168,67,0.35)",
-    glow:            "rgba(212,168,67,0.28)",
-    jackpotGlow:     "rgba(212,168,67,0.55)",
-    btnBg:           "#d4a843",
-    btnText:         "#1a0c02",
+    ctaText:         "#1a0802",
+    ctaMuted:        "rgba(0,0,0,0.55)",
+    accent:          "#e8c876",
+    accent2:         "#c81e35",
+    border:          "rgba(232,200,118,0.18)",
+    ctaBorder:       "#5a2a08",
+    glow:            "rgba(240,185,74,0.28)",
+    jackpotGlow:     "rgba(240,185,74,0.55)",
+    jackpotHi:       "#f0b94a",
+    jackpotLo:       "#a05a18",
+    jackpotRim:      "#5a2a08",
+    btnBg:           "#e8c876",
+    btnText:         "#1a0802",
     fontDisplay:     "'Playfair Display', Georgia, serif",
     fontLabel:       "'Playfair Display', Georgia, serif",
     nameTransform:   "capitalize",
     nameSize:        "clamp(32px, 9vw, 48px)",
     labelText:       "TONIGHT AT",
-    receiptTint:     "linear-gradient(180deg,rgba(212,168,67,0.07),rgba(192,48,48,0.03))",
-    jackpotBg:       "radial-gradient(circle at 38% 32%, #e8c060, #a07020)",
+    receiptTint:     "linear-gradient(180deg,rgba(240,185,74,0.07),rgba(200,30,53,0.03))",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #f0b94a 0%, #a05a18 100%)",
   },
 
   /* ── B · Neon Noir ── */
   v2: {
-    bg:              "linear-gradient(175deg, #12002a 0%, #0a0016 60%, #000010 100%)",
+    bg:              "radial-gradient(140% 100% at 50% 0%, #1a0228 0%, #0a0014 60%, #050008 100%)",
     cardBg:          "rgba(255,45,138,0.06)",
-    ctaCardBg:       "linear-gradient(135deg, #c4006a 0%, #7b00c8 100%)",
+    ctaCardBg:       "linear-gradient(135deg, #7e1cf5 0%, #ff2d8a 100%)",
     ctaCardBgIdle:   "rgba(255,45,138,0.05)",
-    navBg:           "rgba(4,0,12,0.98)",
+    navBg:           "rgba(10,10,14,0.95)",
     text:            "#fce8ff",
     muted:           "rgba(0,232,255,0.6)",
     ctaText:         "#ffffff",
-    ctaMuted:        "rgba(255,255,255,0.7)",
+    ctaMuted:        "rgba(255,255,255,0.65)",
     accent:          "#ff2d8a",
     accent2:         "#00e8ff",
     border:          "rgba(255,45,138,0.3)",
-    ctaBorder:       "none",
+    ctaBorder:       "#22002e",
     glow:            "rgba(255,45,138,0.45)",
     jackpotGlow:     "rgba(255,45,138,0.7)",
+    jackpotHi:       "#ff2d8a",
+    jackpotLo:       "#7e1cf5",
+    jackpotRim:      "#22002e",
     btnBg:           "#ff2d8a",
     btnText:         "#ffffff",
     fontDisplay:     "'Bebas Neue', 'Impact', sans-serif",
@@ -108,35 +117,38 @@ const THEMES: Record<SlotVariantDB, Theme> = {
     nameSize:        "clamp(36px, 11vw, 56px)",
     labelText:       "NEON ROOM",
     receiptTint:     "linear-gradient(180deg,rgba(255,45,138,0.1),rgba(0,232,255,0.05))",
-    jackpotBg:       "radial-gradient(circle at 38% 32%, #ff4da6, #9900dd)",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #ff2d8a 0%, #7e1cf5 100%)",
   },
 
   /* ── C · Speakeasy Deco ── */
   v3: {
-    bg:              "radial-gradient(ellipse 100% 70% at 50% 20%, #1c1508 0%, #0e0b04 60%, #050402 100%)",
-    cardBg:          "rgba(200,158,60,0.06)",
-    ctaCardBg:       "linear-gradient(150deg, #2e2206 0%, #1a1403 100%)",
-    ctaCardBgIdle:   "rgba(200,158,60,0.04)",
-    navBg:           "rgba(4,3,1,0.98)",
-    text:            "#f0d98a",
-    muted:           "rgba(200,158,60,0.5)",
-    ctaText:         "#f0d98a",
-    ctaMuted:        "rgba(200,158,60,0.65)",
-    accent:          "#c89e3c",
-    accent2:         "#e8d080",
-    border:          "rgba(200,158,60,0.25)",
-    ctaBorder:       "rgba(200,158,60,0.4)",
-    glow:            "rgba(200,158,60,0.25)",
-    jackpotGlow:     "rgba(200,158,60,0.5)",
-    btnBg:           "#c89e3c",
+    bg:              "radial-gradient(140% 100% at 50% 0%, #1a1408 0%, #0a0805 60%, #050402 100%)",
+    cardBg:          "rgba(202,161,74,0.06)",
+    ctaCardBg:       "linear-gradient(135deg, #8a6e2a 0%, #f5d27a 100%)",
+    ctaCardBgIdle:   "rgba(202,161,74,0.04)",
+    navBg:           "rgba(10,10,14,0.95)",
+    text:            "#f0e8b8",
+    muted:           "rgba(202,161,74,0.5)",
+    ctaText:         "#1a1403",
+    ctaMuted:        "rgba(0,0,0,0.55)",
+    accent:          "#caa14a",
+    accent2:         "#f5d27a",
+    border:          "rgba(202,161,74,0.28)",
+    ctaBorder:       "#1a1408",
+    glow:            "rgba(202,161,74,0.25)",
+    jackpotGlow:     "rgba(202,161,74,0.55)",
+    jackpotHi:       "#f5d27a",
+    jackpotLo:       "#8a6e2a",
+    jackpotRim:      "#1a1408",
+    btnBg:           "#caa14a",
     btnText:         "#1a1403",
     fontDisplay:     "'Cinzel', 'Trajan Pro', Georgia, serif",
     fontLabel:       "'Cinzel', Georgia, serif",
     nameTransform:   "uppercase",
     nameSize:        "clamp(28px, 8vw, 44px)",
     labelText:       "MEMBERS FLOOR",
-    receiptTint:     "linear-gradient(180deg,rgba(200,158,60,0.07),rgba(232,208,128,0.03))",
-    jackpotBg:       "radial-gradient(circle at 38% 32%, #e0bc50, #906c18)",
+    receiptTint:     "linear-gradient(180deg,rgba(202,161,74,0.07),rgba(245,210,122,0.03))",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #f5d27a 0%, #8a6e2a 100%)",
   },
 };
 
@@ -271,17 +283,15 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
 
         {/* ── CTA card ── */}
         <button onClick={onJackpot} style={{
-          width: "100%", textAlign: "left", cursor: "pointer", border: "none",
+          width: "100%", textAlign: "left", cursor: "pointer",
+          border: tokens > 0 ? `1.5px solid ${theme.jackpotRim}` : `1px solid ${theme.border}`,
           background: tokens > 0 ? theme.ctaCardBg : theme.ctaCardBgIdle,
-          outline: tokens > 0 ? "none" : `1px solid ${theme.border}`,
           borderRadius: 18, padding: "22px 22px 20px", marginBottom: 26,
-          boxShadow: tokens > 0 ? `0 12px 40px ${theme.glow}` : "none",
+          boxShadow: tokens > 0
+            ? `0 0 28px 2px ${theme.jackpotGlow}, 0 10px 30px rgba(0,0,0,0.4)`
+            : "none",
           position: "relative", overflow: "hidden",
         }}>
-          {/* Deco border for v1/v3 when active */}
-          {tokens > 0 && theme.ctaBorder !== "none" && (
-            <div style={{ position: "absolute", inset: 0, borderRadius: 18, border: `1px solid ${theme.ctaBorder}`, pointerEvents: "none" }} />
-          )}
 
           <div style={{
             fontSize: 10, fontWeight: 800, letterSpacing: "0.24em",
@@ -337,11 +347,28 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
       <style>{`
         ::-webkit-scrollbar { display: none; }
         @keyframes pulse-glow {
-          0%,100% { box-shadow: 0 0 24px ${theme.jackpotGlow}, 0 4px 16px rgba(0,0,0,0.5); }
-          50%      { box-shadow: 0 0 44px ${theme.jackpotGlow}, 0 4px 24px rgba(0,0,0,0.6); }
+          0%,100% { box-shadow: 0 0 24px 4px ${theme.jackpotGlow}, 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.4); }
+          50%      { box-shadow: 0 0 44px 8px ${theme.jackpotGlow}, 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.4); }
         }
       `}</style>
     </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   JACKPOT ICON — slot machine with 7-7-7
+═══════════════════════════════════════════════ */
+function JackpotIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="6" width="22" height="16" rx="2" fill="#1a1208" stroke="#fff" strokeWidth="0.8" opacity="0.9"/>
+      <rect x="5.5" y="9" width="4.5" height="10" rx="0.6" fill="#fff8e0"/>
+      <rect x="11.75" y="9" width="4.5" height="10" rx="0.6" fill="#fff8e0"/>
+      <rect x="18" y="9" width="4.5" height="10" rx="0.6" fill="#fff8e0"/>
+      <text x="7.75" y="17" textAnchor="middle" fontFamily="'Bowlby One SC',sans-serif" fontSize="9" fill="#c81e35" fontWeight="900">7</text>
+      <text x="14" y="17" textAnchor="middle" fontFamily="'Bowlby One SC',sans-serif" fontSize="9" fill="#c81e35" fontWeight="900">7</text>
+      <text x="20.25" y="17" textAnchor="middle" fontFamily="'Bowlby One SC',sans-serif" fontSize="9" fill="#c81e35" fontWeight="900">7</text>
+    </svg>
   );
 }
 
@@ -357,36 +384,41 @@ function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }
   return (
     <div style={{
       position: "absolute", bottom: 0, left: 0, right: 0,
-      height: 82, background: theme.navBg,
-      borderTop: `1px solid ${theme.border}`,
-      backdropFilter: "blur(24px)",
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 40px 8px", zIndex: 50,
+      background: "linear-gradient(180deg, rgba(10,10,14,0) 0%, rgba(10,10,14,0.95) 30%)",
+      backdropFilter: "blur(20px)",
+      WebkitBackdropFilter: "blur(20px)",
+      display: "flex", alignItems: "flex-end", justifyContent: "space-around",
+      padding: "10px 8px 28px", zIndex: 50,
     }}>
       {/* Home */}
       <NavIcon label="Home" color={theme.text} active>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
-          <path d="M3 12L12 3L21 12V21H15V15H9V21H3V12Z" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
         </svg>
       </NavIcon>
 
-      {/* JACKPOT — center */}
+      {/* JACKPOT — center raised */}
       <button onClick={onJackpot} style={{
-        width: 64, height: 64, borderRadius: "50%",
-        background: theme.jackpotBg,
-        border: "none",
-        cursor: "pointer",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 1,
-        flexShrink: 0, marginBottom: 10,
-        animation: hasTokens ? "pulse-glow 2s ease-in-out infinite" : "none",
-        boxShadow: hasTokens
-          ? `0 0 28px ${theme.jackpotGlow}, 0 4px 16px rgba(0,0,0,0.5)`
-          : `0 4px 16px rgba(0,0,0,0.4)`,
+        appearance: "none", border: "none", background: "transparent",
+        padding: 0, cursor: "pointer",
+        display: "flex", flexDirection: "column", alignItems: "center",
+        transform: "translateY(-18px)",
       }}>
-        <span style={{ fontSize: 22, lineHeight: 1 }}>🎰</span>
-        <span style={{ fontSize: 7, fontWeight: 900, color: theme.btnText, letterSpacing: "0.12em", fontFamily: theme.fontLabel }}>
-          JACKPOT
-        </span>
+        <div style={{
+          width: 60, height: 60, borderRadius: "50%",
+          background: `radial-gradient(circle at 35% 30%, ${theme.jackpotHi} 0%, ${theme.jackpotLo} 100%)`,
+          border: `2px solid ${theme.jackpotRim}`,
+          boxShadow: `0 0 24px 4px ${theme.jackpotGlow}, 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.4)`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          animation: "pulse-glow 2.4s ease-in-out infinite",
+        }}>
+          <JackpotIcon />
+        </div>
+        <span style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
+          color: theme.jackpotHi, marginTop: 6, textTransform: "uppercase",
+          textShadow: `0 0 8px ${theme.jackpotGlow}`,
+        }}>JACKPOT</span>
       </button>
 
       {/* Me */}
@@ -394,14 +426,14 @@ function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }
         background: "none", border: "none",
         cursor: showProfile ? "pointer" : "default",
         display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
-        color: showProfile ? theme.accent : theme.muted,
-        opacity: isPro ? 1 : 0.3, padding: "4px 0",
+        color: showProfile ? theme.accent : "#7d7869",
+        padding: "4px 10px",
       }}>
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20C4 17 7.58 14 12 14C16.42 14 20 17 20 20" strokeLinecap="round" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" strokeLinecap="round" />
         </svg>
-        <span style={{ fontSize: 10, fontWeight: 700, fontFamily: theme.fontLabel, letterSpacing: "0.06em" }}>Me</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.04em" }}>Me</span>
       </button>
     </div>
   );

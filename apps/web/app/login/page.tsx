@@ -55,7 +55,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthShell title="Giriş Yap" sub="İşletme paneline erişmek için.">
+    <AuthShell title="Tekrar hoş geldin." sub="Bar yönetim paneline giriş yapın. Kuponlar, müşteriler, analitik — hepsi tek yerde." mode="login">
       <Suspense fallback={<div style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>Yükleniyor…</div>}>
         <LoginForm />
       </Suspense>
