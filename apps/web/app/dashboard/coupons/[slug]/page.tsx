@@ -20,15 +20,22 @@ export default async function CouponsPage({ params }: Params) {
   if (!user) redirect("/login?next=/dashboard");
 
   const svc = getServiceClient();
+  const { data: venuesRaw } = await svc
+    .from("venues")
+    .select("id, name, slug, tier")
+    .eq("owner_user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  const venues = (venuesRaw ?? []) as { id: string; name: string; slug: string; tier: string }[];
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, slug")
+    .select("id, name, slug, tier")
     .eq("slug", params.slug)
     .eq("owner_user_id", user.id)
     .maybeSingle();
 
   if (!venue) redirect("/dashboard");
-  const v = venue as { id: string; name: string; slug: string };
+  const v = venue as { id: string; name: string; slug: string; tier: string };
 
   const { data: couponsRaw } = await svc
     .from("coupons")
@@ -51,8 +58,12 @@ export default async function CouponsPage({ params }: Params) {
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "#f4efe6", fontSize: 13 }}>Kuponlar</span>
         <div style={{ flex: 1 }} />
-        <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>Analitik</Link>
-        <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
+        {v.tier === "pro" && (
+          <>
+            <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>Analitik</Link>
+            <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
+          </>
+        )}
         <Link href="/dashboard" style={navLink}>Dashboard</Link>
       </header>
 
@@ -64,6 +75,28 @@ export default async function CouponsPage({ params }: Params) {
           </div>
           <Link href={`/scan?venue=${v.slug}`} style={primaryLink}>Garson Kullanım Ekranı</Link>
         </div>
+
+        {venues.length > 1 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 24 }}>
+            {venues.map((venueOption) => {
+              const activeVenue = venueOption.slug === v.slug;
+              return (
+                <Link key={venueOption.id} href={`/dashboard/coupons/${venueOption.slug}`} style={{
+                  padding: "9px 13px",
+                  borderRadius: 999,
+                  textDecoration: "none",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  color: activeVenue ? "#1a0f06" : "rgba(244,239,230,0.72)",
+                  background: activeVenue ? "linear-gradient(160deg, #f0d690 0%, #c89a4a 100%)" : "rgba(255,255,255,0.04)",
+                  border: activeVenue ? "none" : "1px solid rgba(255,255,255,0.08)",
+                }}>
+                  {venueOption.name}
+                </Link>
+              );
+            })}
+          </div>
+        )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
           <Kpi label="Toplam" value={coupons.length} color="#ffd84e" />
