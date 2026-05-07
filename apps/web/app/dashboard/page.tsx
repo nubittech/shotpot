@@ -34,8 +34,9 @@ export default async function DashboardPage() {
   const venues = (venuesRaw ?? []) as Venue[];
   const initials = (user.email ?? "?").slice(0, 1).toUpperCase();
   const primaryVenue = venues[0];
-  const analyticsHref = primaryVenue ? `/dashboard/analytics/${primaryVenue.slug}` : "/dashboard";
-  const customersHref = primaryVenue ? `/dashboard/customers/${primaryVenue.slug}` : "/dashboard";
+  const primaryProVenue = venues.find((venue) => venue.tier === "pro");
+  const analyticsHref = primaryProVenue ? `/dashboard/analytics/${primaryProVenue.slug}` : "/dashboard";
+  const customersHref = primaryProVenue ? `/dashboard/customers/${primaryProVenue.slug}` : "/dashboard";
   const couponsHref = primaryVenue ? `/dashboard/coupons/${primaryVenue.slug}` : "/dashboard";
   const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
 
@@ -72,19 +73,23 @@ export default async function DashboardPage() {
             <rect x="10" y="8" width="6" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         }/>
-        <SideLink href={analyticsHref} label="Analitik" icon={
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        }/>
-        <SideLink href={customersHref} label="Müşteriler" icon={
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-            <circle cx="13" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M11 16c0-2 1-3 2.5-3s2.5 1 2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-        }/>
+        {primaryProVenue && (
+          <>
+            <SideLink href={analyticsHref} label="Analitik" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }/>
+            <SideLink href={customersHref} label="Müşteriler" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <circle cx="13" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M11 16c0-2 1-3 2.5-3s2.5 1 2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }/>
+          </>
+        )}
         <SideLink href={couponsHref} label="Kuponlar" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
@@ -253,9 +258,11 @@ export default async function DashboardPage() {
                         <CopyLinkButton slug={v.slug} />
                         <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />
                         <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />
-                        <ABtn href={`/dashboard/analytics/${v.slug}`} label="Analitik" icon="chart" />
                         {v.tier === "pro" && (
-                          <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
+                          <>
+                            <ABtn href={`/dashboard/analytics/${v.slug}`} label="Analitik" icon="chart" />
+                            <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
+                          </>
                         )}
                         <ABtn href={`/dashboard/billing/${v.slug}`} label="Plan" icon="card" variant="brass" />
                         <ABtn href={`/studio?slug=${v.slug}`} label="Düzenle" icon="edit" variant="gold" />
