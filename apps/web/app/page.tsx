@@ -405,20 +405,49 @@ export default async function HomePage() {
       {/* ═══════ PRICING ═══════ */}
       <section id="pricing" style={{ padding: "100px 0" }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
-          <div style={{ textAlign: "center", marginBottom: 64 }}>
+          <div style={{ textAlign: "center", marginBottom: 48 }}>
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>Fiyatlandırma</div>
             <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100 }}>Basit, şeffaf fiyatlar</h2>
             <p style={{ margin: "18px auto 0", maxWidth: 520, fontSize: 17, color: C.i300, lineHeight: 1.6 }}>
               İlk 30 gün ücretsiz. Kart bilgisi istemiyoruz.
             </p>
+            {/* Period toggle */}
+            <div style={{ display: "inline-flex", marginTop: 28, background: "rgba(232,200,118,0.06)", border: `1px solid ${C.line}`, borderRadius: 12, padding: 4, gap: 3 }}>
+              <style>{`
+                .period-btn{padding:8px 22px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;background:transparent;color:#8b7d5e}
+                .period-btn.active{background:rgba(232,200,118,0.14);color:#e8c876}
+              `}</style>
+              <button className="period-btn active" id="btn-monthly" onClick={() => {
+                document.getElementById("btn-monthly")?.classList.add("active");
+                document.getElementById("btn-annual")?.classList.remove("active");
+                (document.querySelectorAll(".price-monthly") as NodeListOf<HTMLElement>).forEach(el => el.style.display = "block");
+                (document.querySelectorAll(".price-annual") as NodeListOf<HTMLElement>).forEach(el => el.style.display = "none");
+              }} type="button">Aylık</button>
+              <button className="period-btn" id="btn-annual" onClick={() => {
+                document.getElementById("btn-annual")?.classList.add("active");
+                document.getElementById("btn-monthly")?.classList.remove("active");
+                (document.querySelectorAll(".price-monthly") as NodeListOf<HTMLElement>).forEach(el => el.style.display = "none");
+                (document.querySelectorAll(".price-annual") as NodeListOf<HTMLElement>).forEach(el => el.style.display = "block");
+              }} type="button">
+                Yıllık <span style={{ fontSize: 10, color: "#4ade80", marginLeft: 4 }}>%58 ucuz</span>
+              </button>
+            </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, maxWidth: 760, margin: "0 auto" }}>
-            {/* Kampanya */}
+            {/* Standart */}
             <div style={{ background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`, border: `1px solid ${C.line}`, borderRadius: 20, padding: "32px 28px" }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: C.i400, textTransform: "uppercase", marginBottom: 8 }}>Kampanya</div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
-                $14<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/ay</span>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: C.i400, textTransform: "uppercase", marginBottom: 8 }}>Standart</div>
+              <div className="price-monthly" style={{ display: "block" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
+                  $5<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/ay</span>
+                </div>
+              </div>
+              <div className="price-annual" style={{ display: "none" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
+                  $20<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/yıl</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#4ade80", marginTop: 2 }}>$1.67/ay eşdeğeri</div>
               </div>
               <p style={{ fontSize: 14, color: C.i400, margin: "14px 0 24px", lineHeight: 1.55 }}>Anonim oyun akışı. Müşteri hesabı yok, basit kupon dağıtımı.</p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: C.i300 }}>
@@ -449,12 +478,20 @@ export default async function HomePage() {
                 <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: C.b300, textTransform: "uppercase" }}>Pro</div>
                 <span style={{ padding: "3px 10px", borderRadius: 999, background: C.b300, color: "#1a0f06", fontSize: 10, fontWeight: 800 }}>POPÜLER</span>
               </div>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
-                $36<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/ay</span>
+              <div className="price-monthly" style={{ display: "block" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
+                  $10<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/ay</span>
+                </div>
+              </div>
+              <div className="price-annual" style={{ display: "none" }}>
+                <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
+                  $50<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>/yıl</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#4ade80", marginTop: 2 }}>$4.17/ay eşdeğeri</div>
               </div>
               <p style={{ fontSize: 14, color: C.i400, margin: "14px 0 24px", lineHeight: 1.55 }}>Müşteri hesabı + sadakat sistemi + kampanya gönderimi.</p>
               <ul style={{ listStyle: "none", padding: 0, margin: "0 0 24px", display: "flex", flexDirection: "column", gap: 10, fontSize: 14, color: C.i300 }}>
-                {["Kampanya planındaki her şey","Müşteri hesapları (e-posta giriş)","Profil + kupon geçmişi","Sadakat seviyesi","Kampanya gönderici","Detaylı analytics","CSV export"].map(f => (
+                {["Standart planındaki her şey","Müşteri hesapları (e-posta giriş)","Profil + kupon geçmişi","Sadakat seviyesi","Kampanya gönderici","Detaylı analytics","CSV export"].map(f => (
                   <li key={f} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ color: C.b300, fontWeight: 700 }}>✓</span> {f}
                   </li>
