@@ -107,6 +107,19 @@ function totalSymShare(selected: SymId[], symCfg: Partial<Record<SymId, SymCfg>>
   return selected.reduce((s, id) => s + (symCfg[id]?.share ?? 0), 0);
 }
 
+function planLabel(plan: State["plan"]) {
+  return plan === "kampanya" ? "Kampanya" : "İşletme";
+}
+
+function billingLabel(cycle: State["billingCycle"]) {
+  return cycle === "yearly" ? "Yıllık" : "Aylık";
+}
+
+function planPrice(plan: State["plan"], cycle: State["billingCycle"]) {
+  if (plan === "kampanya") return cycle === "yearly" ? "$20/yıl" : "$5/ay";
+  return cycle === "yearly" ? "$50/yıl" : "$10/ay";
+}
+
 /* ─── Main Component ─────────────────────────────────────────── */
 export default function StudioPage() {
   return (
@@ -257,6 +270,9 @@ function StudioInner() {
         logoSymbol: st.name.slice(0, 2).toUpperCase() || "??",
         slotVariant: st.variant,
         tokenThreshold: st.tokenThreshold,
+        plan: st.plan,
+        billingCycle: st.billingCycle,
+        planPrice: planPrice(st.plan, st.billingCycle),
         rewards: probabilities.symbols.map(({ id }) => ({
           icon: symEmoji(id),
           label: st.symCfg[id]?.reward ?? id,
@@ -852,10 +868,12 @@ function StepPreview({
   onBack: () => void;
 }) {
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
+  const selectedPlanLabel = `${planLabel(st.plan)} · ${billingLabel(st.billingCycle)}`;
+  const selectedPlanPrice = planPrice(st.plan, st.billingCycle);
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
-      <StepHeader title="Önizleme & Kaydet" sub="Konfigürasyonunu gözden geçir ve kaydet." />
+      <StepHeader title="Önizleme & Kaydet" sub="Konfigürasyonunu gözden geçir. Paddle kurulunca bu adım seçilen paketin ödeme ekranına yönlenecek." />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Left: summary */}
@@ -865,8 +883,9 @@ function StepPreview({
             <Row label="Müşteri linki" val={`/play/${st.slug}`} accent />
             <Row
               label="Abonelik"
-              val={`${st.plan === "kampanya" ? "Kampanya" : "İşletme"} · ${st.billingCycle === "yearly" ? "Yıllık" : "Aylık"}`}
+              val={selectedPlanLabel}
             />
+            <Row label="Ücret" val={selectedPlanPrice} accent />
             <Row label="Para birimi" val={`${CURRENCY_META[st.currency].symbol} ${st.currency}`} />
             <Row label="Jeton eşiği" val={`Her ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} = 1 jeton`} />
             <Row label="Zaman dilimi" val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />
@@ -911,7 +930,7 @@ function StepPreview({
 
       {saved && (
         <div style={{ padding: "14px 20px", borderRadius: 14, background: "rgba(142,242,161,0.1)", border: "1px solid rgba(142,242,161,0.2)", color: "#8ef2a1", fontWeight: 600, fontSize: 14 }}>
-          ✓ Konfigürasyon kaydedildi. İşletme paneli hazır.
+          ✓ Konfigürasyon kaydedildi. Seçilen paket: {selectedPlanLabel} · {selectedPlanPrice}. Paddle kurulunca ödeme ekranına buradan yönlendireceğiz.
         </div>
       )}
 
@@ -923,8 +942,11 @@ function StepPreview({
           style={{ ...primaryBtn, opacity: saving || saved ? 0.7 : 1, flex: 1 }}
           type="button"
         >
-          {saving ? "Kaydediliyor…" : saved ? "✓ Kaydedildi" : "Konfigürasyonu Kaydet"}
+          {saving ? "Kaydediliyor…" : saved ? "✓ Kaydedildi" : "Kaydet ve Ödemeye Geç"}
         </button>
+      </div>
+      <div style={{ marginTop: -20, color: "rgba(244,239,230,0.38)", fontSize: 12, lineHeight: 1.5 }}>
+        Ödeme yönlendirmesi Paddle kurulumu tamamlanınca aktif olacak. Şimdilik işletme konfigürasyonu ve seçilen paket kaydedilir.
       </div>
     </div>
   );
