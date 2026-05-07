@@ -78,6 +78,7 @@ type State = {
   name: string;
   slug: string;
   plan: "kampanya" | "isletme";
+  billingCycle: "monthly" | "yearly";
   currency: Currency;
   receiptMode: ReceiptMode;
   timezone: string;
@@ -125,6 +126,7 @@ function StudioInner() {
     name: "",
     slug: "",
     plan: "kampanya",
+    billingCycle: "monthly",
     currency: "TRY",
     receiptMode: "ocr",
     timezone: "Europe/Istanbul",
@@ -185,6 +187,7 @@ function StudioInner() {
           name:           (v as { name?: string }).name           ?? prev.name,
           slug:           (v as { slug?: string }).slug           ?? prev.slug,
           plan:           ((v as { plan?: string }).plan as State["plan"]) ?? prev.plan,
+          billingCycle:   ((v as { billingCycle?: string }).billingCycle as State["billingCycle"]) ?? prev.billingCycle,
           currency:       ((v as { currency?: string }).currency as Currency) ?? prev.currency,
           receiptMode:    ((v as { receiptMode?: string }).receiptMode as ReceiptMode) ?? prev.receiptMode,
           timezone:       (v as { timezone?: string }).timezone   ?? prev.timezone,
@@ -274,6 +277,7 @@ function StudioInner() {
         slug: st.slug,
         name: st.name || "İşletme",
         plan: st.plan,
+        billingCycle: st.billingCycle,
         currency: st.currency,
         receiptMode: st.receiptMode,
         timezone: st.timezone,
@@ -468,6 +472,10 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
   const meta = CURRENCY_META[st.currency];
   const exampleAmount = st.currency === "TRY" ? 225 : st.currency === "USD" ? 15 : 12;
   const exampleTokens = Math.floor(exampleAmount / st.tokenThreshold);
+  const planPrices: Record<State["plan"], Record<State["billingCycle"], string>> = {
+    kampanya: { monthly: "$5/ay", yearly: "$20/yıl" },
+    isletme: { monthly: "$10/ay", yearly: "$50/yıl" },
+  };
 
   function handleCurrencyChange(c: Currency) {
     update({
@@ -499,26 +507,47 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
             style={{ ...inputStyle, fontFamily: "monospace", fontSize: 12 }}
           />
         </Field>
-        <Field label="Abonelik Tipi" hint="Kampanya: anonim · İşletme: müşteri kayıtlı">
-          <div style={{ display: "flex", gap: 8 }}>
-            {(["kampanya", "isletme"] as const).map((p) => (
-              <button
-                key={p}
-                onClick={() => update({ plan: p })}
-                type="button"
-                style={{
-                  flex: 1, padding: "10px 14px", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer",
-                  background: st.plan === p ? "rgba(255,216,78,0.12)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${st.plan === p ? "#ffd84e" : "rgba(255,255,255,0.1)"}`,
-                  color: st.plan === p ? "#ffd84e" : "rgba(244,239,230,0.7)",
-                }}
-              >
-                {p === "kampanya" ? "Kampanya · $5/mo" : "İşletme · $10/mo"}
-              </button>
-            ))}
+        <Field
+          label="Abonelik Tipi"
+          hint={`Seçili paket: ${st.plan === "kampanya" ? "Kampanya" : "İşletme"} · ${planPrices[st.plan][st.billingCycle]}`}
+        >
+          <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8 }}>
+              {(["monthly", "yearly"] as const).map((cycle) => (
+                <button
+                  key={cycle}
+                  onClick={() => update({ billingCycle: cycle })}
+                  type="button"
+                  style={{
+                    flex: 1, padding: "9px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer",
+                    background: st.billingCycle === cycle ? "rgba(255,216,78,0.12)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${st.billingCycle === cycle ? "#ffd84e" : "rgba(255,255,255,0.1)"}`,
+                    color: st.billingCycle === cycle ? "#ffd84e" : "rgba(244,239,230,0.65)",
+                  }}
+                >
+                  {cycle === "monthly" ? "Aylık" : "Yıllık"}
+                </button>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              {(["kampanya", "isletme"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => update({ plan: p })}
+                  type="button"
+                  style={{
+                    flex: 1, padding: "12px 14px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                    background: st.plan === p ? "rgba(255,216,78,0.12)" : "rgba(255,255,255,0.04)",
+                    border: `1px solid ${st.plan === p ? "#ffd84e" : "rgba(255,255,255,0.1)"}`,
+                    color: st.plan === p ? "#ffd84e" : "rgba(244,239,230,0.7)",
+                  }}
+                >
+                  {p === "kampanya" ? "Kampanya" : "İşletme"} · {planPrices[p][st.billingCycle]}
+                </button>
+              ))}
+            </div>
           </div>
         </Field>
-
         {/* Currency selector */}
         <Field label="Para Birimi" hint="Fişten okunan tutar bu para biriminde değerlendirilecek.">
           <div style={{ display: "flex", gap: 8 }}>
@@ -834,7 +863,10 @@ function StepPreview({
           <SummaryCard title="İşletme">
             <Row label="Adı" val={st.name} />
             <Row label="Müşteri linki" val={`/play/${st.slug}`} accent />
-            <Row label="Plan" val={st.plan === "kampanya" ? "Kampanya · $5/mo" : "İşletme · $10/mo"} />
+            <Row
+              label="Abonelik"
+              val={`${st.plan === "kampanya" ? "Kampanya" : "İşletme"} · ${st.billingCycle === "yearly" ? "Yıllık" : "Aylık"}`}
+            />
             <Row label="Para birimi" val={`${CURRENCY_META[st.currency].symbol} ${st.currency}`} />
             <Row label="Jeton eşiği" val={`Her ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} = 1 jeton`} />
             <Row label="Zaman dilimi" val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />

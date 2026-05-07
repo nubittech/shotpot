@@ -33,6 +33,11 @@ export default async function DashboardPage() {
 
   const venues = (venuesRaw ?? []) as Venue[];
   const initials = (user.email ?? "?").slice(0, 1).toUpperCase();
+  const primaryVenue = venues[0];
+  const analyticsHref = primaryVenue ? `/dashboard/analytics/${primaryVenue.slug}` : "/dashboard";
+  const customersHref = primaryVenue ? `/dashboard/customers/${primaryVenue.slug}` : "/dashboard";
+  const couponsHref = primaryVenue ? `/dashboard/coupons/${primaryVenue.slug}` : "/dashboard";
+  const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
@@ -67,12 +72,12 @@ export default async function DashboardPage() {
             <rect x="10" y="8" width="6" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         }/>
-        <SideLink href="/dashboard" label="Analitik" icon={
+        <SideLink href={analyticsHref} label="Analitik" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         }/>
-        <SideLink href="/dashboard" label="Müşteriler" icon={
+        <SideLink href={customersHref} label="Müşteriler" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -80,7 +85,7 @@ export default async function DashboardPage() {
             <path d="M11 16c0-2 1-3 2.5-3s2.5 1 2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         }/>
-        <SideLink href="/dashboard" label="Kuponlar" icon={
+        <SideLink href={couponsHref} label="Kuponlar" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -89,13 +94,13 @@ export default async function DashboardPage() {
 
         {/* Account nav */}
         <SideSection label="Hesap" />
-        {venues[0] && <SideLink href={`/dashboard/billing/${venues[0].slug}`} label="Plan & Faturalama" icon={
+        <SideLink href={billingHref} label="Plan & Faturalama" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-        }/>}
-        <SideLink href="/dashboard" label="Yardım & Destek" icon={
+        }/>
+        <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Destek" label="Yardım & Destek" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>

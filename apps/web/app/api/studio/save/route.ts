@@ -6,6 +6,7 @@ type SavePayload = {
   slug: string;
   name: string;
   plan?: "kampanya" | "isletme";
+  billingCycle?: "monthly" | "yearly";
   currency?: "TRY" | "USD" | "EUR";
   receiptMode?: "ocr" | "qr" | "both";
   timezone?: string;
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
         slug,
         name: body.name,
         plan: body.plan ?? "kampanya",
+        billing_cycle: body.billingCycle ?? "monthly",
         currency: body.currency ?? "TRY",
         receipt_mode: body.receiptMode ?? "ocr",
         timezone: body.timezone ?? "Europe/Istanbul",
