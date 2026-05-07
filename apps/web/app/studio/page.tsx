@@ -867,6 +867,7 @@ function StepPreview({
   onSave: () => void;
   onBack: () => void;
 }) {
+  const [showPaymentDemo, setShowPaymentDemo] = useState(false);
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
   const selectedPlanLabel = `${planLabel(st.plan)} · ${billingLabel(st.billingCycle)}`;
   const selectedPlanPrice = planPrice(st.plan, st.billingCycle);
@@ -929,21 +930,57 @@ function StepPreview({
       </div>
 
       {saved && (
-        <div style={{ padding: "14px 20px", borderRadius: 14, background: "rgba(142,242,161,0.1)", border: "1px solid rgba(142,242,161,0.2)", color: "#8ef2a1", fontWeight: 600, fontSize: 14 }}>
-          ✓ Konfigürasyon kaydedildi. Seçilen paket: {selectedPlanLabel} · {selectedPlanPrice}. Paddle kurulunca ödeme ekranına buradan yönlendireceğiz.
+        <div style={{ padding: 20, borderRadius: 16, background: "rgba(142,242,161,0.08)", border: "1px solid rgba(142,242,161,0.22)", color: "#8ef2a1" }}>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>✓ Konfigürasyon kaydedildi</div>
+          <div style={{ marginTop: 6, color: "rgba(210,255,218,0.78)", fontSize: 13, lineHeight: 1.45 }}>
+            Seçilen paket: <strong>{selectedPlanLabel} · {selectedPlanPrice}</strong>. Paddle kurulunca bu adım gerçek ödeme ekranına yönlenecek.
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
+            <a href="/dashboard" style={successActionPrimary}>Dashboard&apos;a Git</a>
+            <button onClick={() => setShowPaymentDemo((v) => !v)} type="button" style={successActionSecondary}>
+              {showPaymentDemo ? "Ödeme Demosunu Gizle" : "Ödeme Demosu"}
+            </button>
+            <a href={`/play/${st.slug}`} target="_blank" rel="noreferrer" style={successActionSecondary}>Müşteri Sayfası</a>
+          </div>
+        </div>
+      )}
+
+      {saved && showPaymentDemo && (
+        <div style={{ borderRadius: 18, border: "1px solid rgba(255,216,78,0.24)", background: "linear-gradient(180deg, rgba(255,216,78,0.08), rgba(255,255,255,0.03))", padding: 22 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
+            <div>
+              <div style={{ color: "#ffd84e", fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase" }}>Paddle Checkout Demo</div>
+              <div style={{ marginTop: 6, color: "#f4efe6", fontSize: 20, fontWeight: 850 }}>{selectedPlanLabel}</div>
+            </div>
+            <div style={{ color: "#ffd84e", fontSize: 24, fontWeight: 900 }}>{selectedPlanPrice}</div>
+          </div>
+          <div style={{ display: "grid", gap: 10, color: "rgba(244,239,230,0.62)", fontSize: 13 }}>
+            <div style={demoRow}><span>İşletme</span><strong>{st.name || "İşletme"}</strong></div>
+            <div style={demoRow}><span>Plan</span><strong>{selectedPlanLabel}</strong></div>
+            <div style={demoRow}><span>Ödeme sağlayıcı</span><strong>Paddle</strong></div>
+          </div>
+          <button disabled type="button" style={{ ...primaryBtn, width: "100%", marginTop: 18, opacity: 0.65, cursor: "not-allowed" }}>
+            Paddle kurulunca ödeme burada açılacak
+          </button>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 12 }}>
-        <button onClick={onBack} style={secondaryBtn} type="button">← Geri</button>
-        <button
-          onClick={onSave}
-          disabled={saving || saved}
-          style={{ ...primaryBtn, opacity: saving || saved ? 0.7 : 1, flex: 1 }}
-          type="button"
-        >
-          {saving ? "Kaydediliyor…" : saved ? "✓ Kaydedildi" : "Kaydet ve Ödemeye Geç"}
-        </button>
+        <button onClick={onBack} style={secondaryBtn} type="button">{saved ? "← Düzenlemeye Devam Et" : "← Geri"}</button>
+        {saved ? (
+          <a href="/dashboard" style={{ ...primaryBtn, flex: 1, textAlign: "center", textDecoration: "none" }}>
+            Dashboard&apos;a Git
+          </a>
+        ) : (
+          <button
+            onClick={onSave}
+            disabled={saving}
+            style={{ ...primaryBtn, opacity: saving ? 0.7 : 1, flex: 1 }}
+            type="button"
+          >
+            {saving ? "Kaydediliyor…" : "Kaydet ve Ödemeye Geç"}
+          </button>
+        )}
       </div>
       <div style={{ marginTop: -20, color: "rgba(244,239,230,0.38)", fontSize: 12, lineHeight: 1.5 }}>
         Ödeme yönlendirmesi Paddle kurulumu tamamlanınca aktif olacak. Şimdilik işletme konfigürasyonu ve seçilen paket kaydedilir.
@@ -1092,6 +1129,36 @@ const secondaryBtn: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
   cursor: "pointer",
+};
+
+const successActionPrimary: React.CSSProperties = {
+  padding: "9px 14px",
+  borderRadius: 10,
+  background: "#8ef2a1",
+  color: "#08110b",
+  fontSize: 12,
+  fontWeight: 800,
+  textDecoration: "none",
+};
+
+const successActionSecondary: React.CSSProperties = {
+  padding: "9px 14px",
+  borderRadius: 10,
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(142,242,161,0.22)",
+  color: "#c7ffd0",
+  fontSize: 12,
+  fontWeight: 750,
+  textDecoration: "none",
+  cursor: "pointer",
+};
+
+const demoRow: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  gap: 16,
+  padding: "10px 0",
+  borderBottom: "1px solid rgba(255,255,255,0.06)",
 };
 
 /* ─── Helpers ────────────────────────────────────────────────── */
