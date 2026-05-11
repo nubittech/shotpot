@@ -72,8 +72,23 @@ a{text-decoration:none;}
   .nav-links-wrap{display:none!important;}
 }
 @media(max-width:560px){
+  nav .container{height:auto!important;min-height:60px;gap:12px;padding:10px 18px!important;}
+  nav .container > div:last-child{gap:8px!important;}
+  .btn-ghost,.btn-primary{padding:9px 12px!important;font-size:12px!important;}
+  .hero-section{padding:48px 0 70px!important;}
+  .hero-grid{gap:36px!important;}
+  .hero-copy h1{font-size:42px!important;line-height:0.96!important;}
+  .hero-copy p{font-size:15px!important;line-height:1.55!important;margin-top:20px!important;}
+  .hero-actions{margin-top:28px!important;display:grid!important;grid-template-columns:1fr!important;}
+  .hero-actions a{justify-content:center!important;width:100%;}
+  .hero-metrics{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin-top:26px!important;}
+  .hero-metric-divider{display:none!important;}
+  .slot-stage{max-width:286px!important;aspect-ratio:1 / 1.05!important;}
+  .slot-stage [data-slot-cabinet]{padding:18px!important;border-radius:22px!important;}
+  .slot-stage [data-slot-lever]{display:none!important;}
   .benefits-grid,.stats-grid,.flow,.foot-grid{grid-template-columns:1fr!important;}
   .flow-line{display:none!important;}
+  section{padding-top:68px!important;padding-bottom:68px!important;}
   .cta-band{padding:40px 24px!important;}
   .container{padding:0 20px!important;}
 }
@@ -134,11 +149,11 @@ export default async function HomePage() {
       </nav>
 
       {/* ═══════ HERO ═══════ */}
-      <section style={{ padding: "80px 0 120px", position: "relative", overflow: "hidden" }}>
+      <section className="hero-section" style={{ padding: "80px 0 120px", position: "relative", overflow: "hidden" }}>
         <div className="container hero-grid" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 60, alignItems: "center" }}>
 
           {/* Left copy */}
-          <div>
+          <div className="hero-copy">
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>
               Barlar için sadakat çarkı · B2B
             </div>
@@ -152,7 +167,7 @@ export default async function HomePage() {
               slot makinesini çevirir; kazandığı ikram sadece sizin barınızda geçerlidir.
               Sadakat — eğlenceli, şeffaf, anında.
             </p>
-            <div style={{ display: "flex", gap: 14, marginTop: 40, flexWrap: "wrap" }}>
+            <div className="hero-actions" style={{ display: "flex", gap: 14, marginTop: 40, flexWrap: "wrap" }}>
               <Link href="/signup" className="btn-primary-lg">
                 Mekanını bağla
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L8 4m3 3L8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -162,11 +177,11 @@ export default async function HomePage() {
                 Nasıl çalışır
               </a>
             </div>
-            <div style={{ marginTop: 36, display: "flex", gap: 24, alignItems: "center", color: C.i400, fontSize: 13, flexWrap: "wrap" }}>
+            <div className="hero-metrics" style={{ marginTop: 36, display: "flex", gap: 24, alignItems: "center", color: C.i400, fontSize: 13, flexWrap: "wrap" }}>
               <div><strong style={{ color: C.b300, fontWeight: 700 }}>40+</strong> bar İstanbul&apos;da</div>
-              <div style={{ width: 1, height: 20, background: C.lineS }} />
+              <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
               <div><strong style={{ color: C.b300, fontWeight: 700 }}>%34</strong> ortalama tekrar ziyaret</div>
-              <div style={{ width: 1, height: 20, background: C.lineS }} />
+              <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
               <div><strong style={{ color: C.b300, fontWeight: 700 }}>0₺</strong> kurulum ücreti</div>
             </div>
           </div>
@@ -192,7 +207,7 @@ export default async function HomePage() {
             ))}
 
             {/* Cabinet */}
-            <div style={{
+            <div data-slot-cabinet style={{
               position: "absolute", inset: 0,
               borderRadius: 28,
               background: "linear-gradient(160deg, #4a2e14 0%, #2a1808 50%, #1a0f06 100%)",
@@ -282,7 +297,7 @@ export default async function HomePage() {
               </div>
 
               {/* Lever */}
-              <div style={{ position: "absolute", right: -16, top: "28%", width: 28, height: 90, zIndex: 5 }}>
+              <div data-slot-lever style={{ position: "absolute", right: -16, top: "28%", width: 28, height: 90, zIndex: 5 }}>
                 <div style={{
                   position: "absolute", left: 6, top: 0, width: 14, height: "100%",
                   background: `linear-gradient(90deg, #4a3414 0%, #8b6a30 50%, #4a3414 100%)`,

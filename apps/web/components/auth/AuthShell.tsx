@@ -18,13 +18,75 @@ export function AuthShell({
   mode?: "login" | "signup";
 }) {
   return (
-    <div style={{
+    <div className="auth-shell" style={{
       minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr",
       background: T.bg0, color: T.ink200,
       fontFamily: "var(--font-inter), Inter, system-ui, sans-serif",
     }}>
+      <style>{`
+        @media (max-width: 860px) {
+          .auth-shell {
+            display: block !important;
+            min-height: 100svh !important;
+            overflow-x: hidden;
+          }
+          .auth-visual {
+            min-height: auto !important;
+            padding: 22px 20px 18px !important;
+            border-right: 0 !important;
+            border-bottom: 1px solid rgba(232,200,118,0.18) !important;
+          }
+          .auth-visual-center {
+            display: none !important;
+          }
+          .auth-visual-footer {
+            display: none !important;
+          }
+          .auth-main {
+            min-height: auto !important;
+            padding: 22px 20px 30px !important;
+            overflow: visible !important;
+          }
+          .auth-topbar {
+            margin-bottom: 30px !important;
+            gap: 14px !important;
+            align-items: flex-start !important;
+          }
+          .auth-topbar > span {
+            max-width: 150px;
+            text-align: right;
+            line-height: 1.35;
+          }
+          .auth-form-wrap {
+            max-width: none !important;
+            margin: 0 !important;
+          }
+          .auth-form-wrap h1 {
+            font-size: 42px !important;
+          }
+          .auth-form-wrap p {
+            margin-bottom: 24px !important;
+            font-size: 14px !important;
+          }
+          .auth-copyright {
+            padding-top: 28px !important;
+          }
+        }
+        @media (max-width: 420px) {
+          .auth-topbar {
+            flex-direction: column !important;
+          }
+          .auth-topbar > span {
+            max-width: none;
+            text-align: left;
+          }
+          .auth-form-wrap h1 {
+            font-size: 36px !important;
+          }
+        }
+      `}</style>
       {/* ══ LEFT: Visual ══ */}
-      <aside style={{
+      <aside className="auth-visual" style={{
         background: `
           radial-gradient(60% 80% at 30% 20%, rgba(232,200,118,0.18), transparent 70%),
           radial-gradient(40% 60% at 80% 80%, rgba(200,30,53,0.16), transparent 70%),
@@ -60,7 +122,7 @@ export function AuthShell({
         </Link>
 
         {/* Center content */}
-        <div style={{ position: "relative", zIndex: 2 }}>
+        <div className="auth-visual-center" style={{ position: "relative", zIndex: 2 }}>
           {/* Mini slot machine */}
           <div style={{
             marginTop: 80, display: "flex", gap: 8,
@@ -126,7 +188,7 @@ export function AuthShell({
         </div>
 
         {/* Footer stats */}
-        <div style={{
+        <div className="auth-visual-footer" style={{
           display: "flex", gap: 28, color: T.ink500, fontSize: 12,
           paddingTop: 24, borderTop: `1px solid ${T.line}`,
           position: "relative", zIndex: 2,
@@ -147,8 +209,8 @@ export function AuthShell({
       </aside>
 
       {/* ══ RIGHT: Form ══ */}
-      <main style={{ padding: "56px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 72 }}>
+      <main className="auth-main" style={{ padding: "56px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+        <div className="auth-topbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 72 }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: T.ink400, fontSize: 14 }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Ana sayfa
@@ -161,7 +223,7 @@ export function AuthShell({
           </span>
         </div>
 
-        <div style={{ maxWidth: 400, width: "100%", margin: "auto 0" }}>
+        <div className="auth-form-wrap" style={{ maxWidth: 400, width: "100%", margin: "auto 0" }}>
           <h1 style={{ margin: "0 0 10px", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(32px, 3.5vw, 44px)", lineHeight: 1.05, color: T.ink100 }}>
             {title}
           </h1>
@@ -170,7 +232,7 @@ export function AuthShell({
           {children}
         </div>
 
-        <div style={{ marginTop: "auto", paddingTop: 40, color: T.ink500, fontSize: 13, textAlign: "center" }}>
+        <div className="auth-copyright" style={{ marginTop: "auto", paddingTop: 40, color: T.ink500, fontSize: 13, textAlign: "center" }}>
           © 2026 Jackpot · İstanbul
         </div>
       </main>

@@ -42,10 +42,135 @@ export default async function DashboardPage() {
   const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+    <div className="dashboard-shell" style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+      <style>{`
+        @media (max-width: 920px) {
+          .dashboard-shell {
+            display: block !important;
+            overflow-x: hidden;
+          }
+          .dashboard-sidebar {
+            position: relative !important;
+            height: auto !important;
+            min-height: 0 !important;
+            padding: 16px 14px !important;
+            border-right: 0 !important;
+            border-bottom: 1px solid rgba(232,200,118,0.12) !important;
+            overflow: visible !important;
+          }
+          .dashboard-sidebar-nav {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 8px !important;
+          }
+          .dashboard-sidebar .side-section {
+            grid-column: 1 / -1;
+            padding: 12px 6px 2px !important;
+          }
+          .dashboard-sidebar .side-link {
+            min-height: 44px;
+            margin-bottom: 0 !important;
+            padding: 10px 11px !important;
+            border-left-width: 0 !important;
+            border: 1px solid rgba(232,200,118,0.1);
+          }
+          .dashboard-sidebar-footer {
+            margin-top: 16px !important;
+          }
+          .dashboard-topbar {
+            position: relative !important;
+            padding: 14px 18px !important;
+          }
+          .dashboard-content {
+            padding: 24px 16px 48px !important;
+          }
+          .dashboard-page-head {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            align-items: start !important;
+            margin-bottom: 22px !important;
+          }
+          .dashboard-page-head h1 {
+            font-size: 38px !important;
+          }
+          .dashboard-new-btn {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .dashboard-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            margin-bottom: 22px !important;
+          }
+          .dashboard-kpi {
+            padding: 16px !important;
+          }
+          .dashboard-kpi-value {
+            font-size: 30px !important;
+          }
+          .dashboard-main-grid {
+            display: block !important;
+          }
+          .dashboard-activity {
+            display: none !important;
+          }
+          .venue-card {
+            display: grid !important;
+            grid-template-columns: 68px minmax(0, 1fr) !important;
+            gap: 14px !important;
+            padding: 18px !important;
+            align-items: start !important;
+          }
+          .venue-cover {
+            width: 68px !important;
+            height: 68px !important;
+          }
+          .venue-meta {
+            min-width: 0 !important;
+          }
+          .venue-meta h2 {
+            font-size: 21px !important;
+            overflow-wrap: anywhere;
+          }
+          .venue-meta-row,
+          .venue-sub-meta {
+            gap: 7px !important;
+          }
+          .venue-actions {
+            grid-column: 1 / -1;
+            justify-content: flex-start !important;
+          }
+          .venue-actions a,
+          .venue-actions button {
+            flex: 1 1 calc(50% - 8px);
+            justify-content: center !important;
+            min-width: 0;
+          }
+        }
+        @media (max-width: 520px) {
+          .dashboard-sidebar-nav {
+            grid-template-columns: 1fr !important;
+          }
+          .dashboard-kpis {
+            grid-template-columns: 1fr 1fr !important;
+          }
+          .venue-card {
+            grid-template-columns: 56px minmax(0, 1fr) !important;
+            padding: 16px !important;
+          }
+          .venue-cover {
+            width: 56px !important;
+            height: 56px !important;
+          }
+          .venue-actions a,
+          .venue-actions button {
+            flex-basis: 100%;
+          }
+        }
+      `}</style>
 
       {/* ═══════ SIDEBAR ═══════ */}
-      <aside style={{
+      <aside className="dashboard-sidebar" style={{
         background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
         borderRight: `1px solid ${T.line}`,
         padding: "24px 16px",
@@ -65,6 +190,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Workspace nav */}
+        <div className="dashboard-sidebar-nav">
         <SideSection label="Workspace" />
         <SideLink href="/dashboard" active label="İşletmelerim" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -112,9 +238,10 @@ export default async function DashboardPage() {
             <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         }/>
+        </div>
 
         {/* Account footer */}
-        <div style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
+        <div className="dashboard-sidebar-footer" style={{ marginTop: "auto", paddingTop: 16, borderTop: `1px solid ${T.line}` }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px" }}>
             <div style={{
               width: 32, height: 32, borderRadius: "50%",
@@ -136,7 +263,7 @@ export default async function DashboardPage() {
       <main style={{ background: T.bg0, minWidth: 0 }}>
 
         {/* Topbar */}
-        <header style={{
+        <header className="dashboard-topbar" style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           padding: "18px 32px",
           borderBottom: `1px solid ${T.line}`,
@@ -159,10 +286,10 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        <div style={{ padding: "36px 32px 64px" }}>
+        <div className="dashboard-content" style={{ padding: "36px 32px 64px" }}>
 
           {/* Page header */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
+          <div className="dashboard-page-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
             <div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: T.brass300, textTransform: "uppercase" }}>
                 Workspace · {user.email?.split("@")[0]}
@@ -171,7 +298,7 @@ export default async function DashboardPage() {
                 İşletmelerim
               </h1>
             </div>
-            <Link href="/studio" style={{
+            <Link className="dashboard-new-btn" href="/studio" style={{
               display: "inline-flex", alignItems: "center", gap: 8,
               padding: "12px 22px", borderRadius: 999, border: "none",
               background: "linear-gradient(160deg, #f0d690 0%, #c89a4a 50%, #8b6a30 100%)",
@@ -186,7 +313,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* KPI strip — mocked totals across venues */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
+          <div className="dashboard-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
             <KpiCard label="Toplam mekan" value={String(venues.length)} delta="" />
             <KpiCard label="Aktif mekan" value={String(venues.filter(v => v.active).length)} delta="" />
             <KpiCard label="Pro plan" value={String(venues.filter(v => v.tier === "pro").length)} delta="" />
@@ -194,7 +321,7 @@ export default async function DashboardPage() {
           </div>
 
           {/* Main layout: venue list + activity sidebar */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "flex-start" }}>
+          <div className="dashboard-main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "flex-start" }}>
 
             {/* Venue list */}
             <div>
@@ -215,7 +342,7 @@ export default async function DashboardPage() {
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                   {venues.map((v) => (
-                    <div key={v.id} style={{
+                    <div className="venue-card" key={v.id} style={{
                       background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
                       border: `1px solid ${T.line}`,
                       borderRadius: 18, padding: "22px 24px",
@@ -223,7 +350,7 @@ export default async function DashboardPage() {
                       flexWrap: "wrap",
                     }}>
                       {/* Cover glyph */}
-                      <div style={{
+                      <div className="venue-cover" style={{
                         width: 80, height: 80, flexShrink: 0, borderRadius: 14,
                         background: `linear-gradient(160deg, ${T.bg2}, ${T.bg0})`,
                         border: `1px solid ${T.lineStrong}`,
@@ -237,25 +364,25 @@ export default async function DashboardPage() {
                       </div>
 
                       {/* Meta */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="venue-meta" style={{ flex: 1, minWidth: 0 }}>
                         <h2 style={{ margin: "0 0 6px", fontFamily: "'Playfair Display', serif", fontWeight: 800, fontSize: 20, color: T.ink100, letterSpacing: "-0.005em" }}>
                           {v.name}
                         </h2>
-                        <div style={{ color: T.ink400, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        <div className="venue-meta-row" style={{ color: T.ink400, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontFamily: "'DM Mono', monospace", color: T.ink300 }}>/play/{v.slug}</span>
                           <span style={{ color: T.ink500 }}>·</span>
                           <span>{v.plan === "kampanya" ? "Kampanya" : "İşletme"}</span>
                           <span style={{ color: T.ink500 }}>·</span>
                           <StatusPill active={v.active} />
                         </div>
-                        <div style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300 }}>
+                        <div className="venue-sub-meta" style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300, flexWrap: "wrap" }}>
                           <span style={{ color: T.ink400 }}>{v.tier === "pro" ? "Pro" : "Standard"} plan</span>
                           <span>{new Date(v.created_at).toLocaleDateString("tr-TR", { month: "short", year: "numeric" })} tarihinden beri</span>
                         </div>
                       </div>
 
                       {/* Actions */}
-                      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <div className="venue-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                         {v.active && <CopyLinkButton slug={v.slug} />}
                         {v.active && <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />}
                         {v.active && <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />}
@@ -297,7 +424,7 @@ export default async function DashboardPage() {
             </div>
 
             {/* Activity sidebar */}
-            <aside style={{
+            <aside className="dashboard-activity" style={{
               background: `linear-gradient(180deg, ${T.bg1} 0%, ${T.bg0} 100%)`,
               border: `1px solid ${T.line}`,
               borderRadius: 16, padding: 22,
@@ -323,7 +450,7 @@ export default async function DashboardPage() {
 
 function SideSection({ label }: { label: string }) {
   return (
-    <div style={{
+    <div className="side-section" style={{
       color: "#5a4f3a", textTransform: "uppercase",
       letterSpacing: "0.18em", fontSize: 11,
       fontFamily: "'Bebas Neue', sans-serif",
@@ -334,7 +461,7 @@ function SideSection({ label }: { label: string }) {
 
 function SideLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active?: boolean }) {
   return (
-    <Link href={href} style={{
+    <Link className="side-link" href={href} style={{
       display: "flex", alignItems: "center", gap: 12,
       padding: active ? "10px 10px 10px 10px" : "10px 12px",
       borderRadius: 10, textDecoration: "none",
@@ -366,7 +493,7 @@ function IconBtn({ title, children }: { title: string; children: React.ReactNode
 
 function KpiCard({ label, value, delta }: { label: string; value: string; delta: string }) {
   return (
-    <div style={{
+    <div className="dashboard-kpi" style={{
       background: `linear-gradient(180deg, #110a08 0%, #08050a 100%)`,
       border: "1px solid rgba(232,200,118,0.12)",
       borderRadius: 16, padding: 22, position: "relative", overflow: "hidden",
@@ -374,7 +501,7 @@ function KpiCard({ label, value, delta }: { label: string; value: string; delta:
       <div style={{ color: "#8b7d5e", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontFamily: "'Bebas Neue', sans-serif" }}>
         {label}
       </div>
-      <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 36, color: "#fff8e8", lineHeight: 1, marginTop: 10 }}>
+      <div className="dashboard-kpi-value" style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 36, color: "#fff8e8", lineHeight: 1, marginTop: 10 }}>
         {value}
       </div>
       {delta && <div style={{ marginTop: 8, fontSize: 12, color: "#7be38a" }}>{delta}</div>}
