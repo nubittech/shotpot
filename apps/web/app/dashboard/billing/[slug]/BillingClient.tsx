@@ -136,8 +136,11 @@ export function BillingClient({
       items: [{ priceId, quantity: 1 }],
       customer: { email: userEmail },
       customData: { venue_id: venueId, plan, billing_cycle: period },
-      successUrl: `${window.location.origin}/dashboard/billing/${window.location.pathname.split("/").pop()}?success=1`,
-      settings: { displayMode: "overlay", locale: "en" },
+      settings: {
+        displayMode: "overlay",
+        locale: "en",
+        successUrl: `${window.location.origin}/dashboard/billing/${window.location.pathname.split("/").pop()}?success=1`,
+      },
     });
 
     // Reset loading after paddle opens (no direct callback in overlay mode)

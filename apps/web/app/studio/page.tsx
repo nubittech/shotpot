@@ -177,8 +177,11 @@ async function openPaddleCheckoutFromStudio(args: {
   window.Paddle.Checkout.open({
     items: [{ priceId: config.priceId, quantity: 1 }],
     customData: { venue_id: args.venueId, plan: checkoutPlan, billing_cycle: checkoutPeriod },
-    successUrl: `${window.location.origin}/dashboard/billing/${args.slug}?success=1`,
-    settings: { displayMode: "overlay", locale: "en" },
+    settings: {
+      displayMode: "overlay",
+      locale: "en",
+      successUrl: `${window.location.origin}/dashboard/billing/${args.slug}?success=1`,
+    },
   });
 }
 
