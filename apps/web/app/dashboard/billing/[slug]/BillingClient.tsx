@@ -174,6 +174,8 @@ export function BillingClient({
     inactive: { text: "Pasif",            color: "rgba(244,239,230,0.4)" },
   };
   const statusInfo = statusLabel[subscriptionStatus ?? "inactive"] ?? statusLabel.inactive;
+  const normalizedCurrentPlan: PlanKey | "" =
+    currentPlan === "pro" || currentPlan === "isletme" ? "pro" : currentPlan === "kampanya" ? "kampanya" : "";
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 20px" }}>
@@ -236,7 +238,7 @@ export function BillingClient({
 
       <div style={{ display: "grid", gap: 14 }}>
         {PLANS.map((p) => {
-          const isCurrent = currentPlan === p.key && isActive;
+          const isCurrent = normalizedCurrentPlan === p.key && isActive;
           const displayPrice = period === "annual" ? p.annualPrice : p.monthlyPrice;
           const displaySub = period === "annual" ? "/yıl" : "/ay";
           const monthlyEquiv = period === "annual" ? p.annualMonthly : null;

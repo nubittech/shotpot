@@ -24,7 +24,7 @@ export default async function BillingPage({ params, searchParams }: Props) {
   const svc = getServiceClient();
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, slug, plan, tier, stripe_customer_id, stripe_subscription_id, subscription_status, plan_expires_at")
+    .select("id, name, slug, plan, tier, active")
     .eq("slug", params.slug)
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -33,11 +33,7 @@ export default async function BillingPage({ params, searchParams }: Props) {
 
   const v = venue as {
     id: string; name: string; slug: string;
-    plan: string | null; tier: string;
-    stripe_customer_id: string | null;
-    stripe_subscription_id: string | null;
-    subscription_status: string | null;
-    plan_expires_at: string | null;
+    plan: string | null; tier: string; active: boolean | null;
   };
 
   return (
@@ -65,10 +61,10 @@ export default async function BillingPage({ params, searchParams }: Props) {
         venueName={v.name}
         userEmail={user.email ?? ""}
         currentPlan={v.plan ?? ""}
-        subscriptionStatus={v.subscription_status}
-        planExpiresAt={v.plan_expires_at}
-        hasPaddleCustomer={!!v.stripe_customer_id}
-        paddleSubscriptionId={v.stripe_subscription_id}
+        subscriptionStatus={v.active ? "active" : null}
+        planExpiresAt={null}
+        hasPaddleCustomer={false}
+        paddleSubscriptionId={null}
         paddleClientToken={PADDLE_CLIENT_TOKEN}
         paddleEnvironment={PADDLE_ENVIRONMENT}
         priceKampanya={PADDLE_PRICE_IDS.kampanya}
