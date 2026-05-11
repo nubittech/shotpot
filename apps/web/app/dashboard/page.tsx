@@ -53,29 +53,74 @@ export default async function DashboardPage() {
             position: relative !important;
             height: auto !important;
             min-height: 0 !important;
-            padding: 16px 14px !important;
+            padding: 14px 16px !important;
             border-right: 0 !important;
             border-bottom: 1px solid rgba(232,200,118,0.12) !important;
             overflow: visible !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
           }
           .dashboard-sidebar-nav {
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 8px !important;
+            display: none !important;
           }
-          .dashboard-sidebar .side-section {
-            grid-column: 1 / -1;
-            padding: 12px 6px 2px !important;
+          .dashboard-sidebar-footer {
+            display: none !important;
           }
-          .dashboard-sidebar .side-link {
+          .dashboard-brand {
+            padding: 0 !important;
+          }
+          .dashboard-mobile-menu {
+            display: block !important;
+            position: relative;
+          }
+          .dashboard-mobile-menu summary {
+            list-style: none;
+          }
+          .dashboard-mobile-menu summary::-webkit-details-marker {
+            display: none;
+          }
+          .dashboard-mobile-menu-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(232,200,118,0.28);
+            background: #110a08;
+            color: #e8c876;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+          }
+          .dashboard-mobile-menu-panel {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 12px);
+            width: min(330px, calc(100vw - 32px));
+            max-height: calc(100svh - 92px);
+            overflow-y: auto;
+            padding: 12px;
+            border-radius: 18px;
+            border: 1px solid rgba(232,200,118,0.18);
+            background: linear-gradient(180deg, #110a08 0%, #08050a 100%);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.56);
+            z-index: 90;
+          }
+          .dashboard-mobile-menu-panel .side-section {
+            padding: 10px 6px 4px !important;
+          }
+          .dashboard-mobile-menu-panel .side-link {
             min-height: 44px;
-            margin-bottom: 0 !important;
+            margin-bottom: 7px !important;
             padding: 10px 11px !important;
             border-left-width: 0 !important;
             border: 1px solid rgba(232,200,118,0.1);
           }
-          .dashboard-sidebar-footer {
-            margin-top: 16px !important;
+          .dashboard-mobile-menu-footer {
+            margin-top: 10px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(232,200,118,0.12);
           }
           .dashboard-topbar {
             position: relative !important;
@@ -148,9 +193,6 @@ export default async function DashboardPage() {
           }
         }
         @media (max-width: 520px) {
-          .dashboard-sidebar-nav {
-            grid-template-columns: 1fr !important;
-          }
           .dashboard-kpis {
             grid-template-columns: 1fr 1fr !important;
           }
@@ -167,6 +209,11 @@ export default async function DashboardPage() {
             flex-basis: 100%;
           }
         }
+        @media (min-width: 921px) {
+          .dashboard-mobile-menu {
+            display: none !important;
+          }
+        }
       `}</style>
 
       {/* ═══════ SIDEBAR ═══════ */}
@@ -178,7 +225,7 @@ export default async function DashboardPage() {
         position: "sticky", top: 0, height: "100vh", overflowY: "auto",
       }}>
         {/* Brand */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 24px" }}>
+        <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 24px" }}>
           <div style={{
             width: 30, height: 30, borderRadius: 8,
             background: "linear-gradient(160deg, #e8c876, #5a3414)",
@@ -188,6 +235,77 @@ export default async function DashboardPage() {
           }}>J</div>
           <span style={{ fontWeight: 700, fontSize: 14, color: T.ink100 }}>Jackpot</span>
         </div>
+
+        <details className="dashboard-mobile-menu">
+          <summary className="dashboard-mobile-menu-button" aria-label="Menüyü aç">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M4 7h14M4 11h14M4 15h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+            </svg>
+          </summary>
+          <div className="dashboard-mobile-menu-panel">
+            <SideSection label="Workspace" />
+            <SideLink href="/dashboard" active label="İşletmelerim" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="2" y="2" width="6" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="10" y="2" width="6" height="4" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="2" y="11" width="6" height="5" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+                <rect x="10" y="8" width="6" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
+              </svg>
+            }/>
+            {primaryProVenue && (
+              <>
+                <SideLink href={analyticsHref} label="Analitik" icon={
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                }/>
+                <SideLink href={customersHref} label="Müşteriler" icon={
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="13" cy="7" r="2" stroke="currentColor" strokeWidth="1.5"/>
+                    <path d="M11 16c0-2 1-3 2.5-3s2.5 1 2.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                }/>
+              </>
+            )}
+            <SideLink href={couponsHref} label="Kuponlar" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }/>
+            <SideSection label="Hesap" />
+            <SideLink href={billingHref} label="Plan & Faturalama" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            }/>
+            <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Destek" label="Yardım & Destek" icon={
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              </svg>
+            }/>
+            <div className="dashboard-mobile-menu-footer">
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px 10px" }}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: "50%",
+                  background: "linear-gradient(160deg, #c89a4a, #5a3414)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontFamily: "'Playfair Display', serif", fontWeight: 900,
+                  color: "#1a0f06", fontSize: 13, flexShrink: 0,
+                }}>{initials}</div>
+                <div>
+                  <div style={{ color: T.ink100, fontWeight: 600, fontSize: 13, lineHeight: 1.1 }}>{user.email?.split("@")[0]}</div>
+                  <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} mekan</div>
+                </div>
+              </div>
+              <LogoutButton />
+            </div>
+          </div>
+        </details>
 
         {/* Workspace nav */}
         <div className="dashboard-sidebar-nav">
