@@ -5,6 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Paddle?: any;
+  }
+}
+
 /* ─── Constants ──────────────────────────────────────────────── */
 const SELECTABLE_SYMS: SymId[] = ["beer", "wine", "shot", "martini", "cocktail", "bar"];
 const MAX_SYMBOLS = 5;
@@ -118,6 +125,61 @@ function billingLabel(cycle: State["billingCycle"]) {
 function planPrice(plan: State["plan"], cycle: State["billingCycle"]) {
   if (plan === "kampanya") return cycle === "yearly" ? "$20/yıl" : "$5/ay";
   return cycle === "yearly" ? "$50/yıl" : "$10/ay";
+}
+
+function checkoutPlanFromStudio(plan: State["plan"]) {
+  return plan === "kampanya" ? "kampanya" : "pro";
+}
+
+function checkoutPeriodFromStudio(cycle: State["billingCycle"]) {
+  return cycle === "yearly" ? "annual" : "monthly";
+}
+
+function loadPaddleScript() {
+  return new Promise<void>((resolve, reject) => {
+    if (window.Paddle) {
+      resolve();
+      return;
+    }
+    const existing = document.querySelector<HTMLScriptElement>('script[src="https://cdn.paddle.com/paddle/v2/paddle.js"]');
+    if (existing) {
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error("Paddle script failed")), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Paddle script failed"));
+    document.head.appendChild(script);
+  });
+}
+
+async function openPaddleCheckoutFromStudio(args: {
+  venueId: string;
+  slug: string;
+  plan: State["plan"];
+  billingCycle: State["billingCycle"];
+}) {
+  const checkoutPlan = checkoutPlanFromStudio(args.plan);
+  const checkoutPeriod = checkoutPeriodFromStudio(args.billingCycle);
+  const res = await fetch(`/api/paddle/checkout-config?plan=${checkoutPlan}&period=${checkoutPeriod}`);
+  if (!res.ok) throw new Error("Paddle checkout config missing");
+  const config = await res.json() as {
+    environment: "sandbox" | "production";
+    clientToken: string;
+    priceId: string;
+  };
+
+  await loadPaddleScript();
+  window.Paddle.Environment.set(config.environment);
+  window.Paddle.Initialize({ token: config.clientToken });
+  window.Paddle.Checkout.open({
+    items: [{ priceId: config.priceId, quantity: 1 }],
+    customData: { venue_id: args.venueId, plan: checkoutPlan, billing_cycle: checkoutPeriod },
+    successUrl: `${window.location.origin}/dashboard/billing/${args.slug}?success=1`,
+    settings: { displayMode: "overlay", locale: "en" },
+  });
 }
 
 /* ─── Main Component ─────────────────────────────────────────── */
@@ -320,13 +382,23 @@ function StudioInner() {
         const err = await sbRes.json().catch(() => ({}));
         console.error("Supabase save failed:", err);
       } else {
-        const savedVenue = await sbRes.json().catch(() => null) as { slug?: string } | null;
+        const savedVenue = await sbRes.json().catch(() => null) as { venueId?: string; slug?: string } | null;
         checkoutSlug = savedVenue?.slug ?? st.slug;
+        if (savedVenue?.venueId && checkoutSlug) {
+          await openPaddleCheckoutFromStudio({
+            venueId: savedVenue.venueId,
+            slug: checkoutSlug,
+            plan: st.plan,
+            billingCycle: st.billingCycle,
+          });
+          update({ saved: true });
+          return;
+        }
       }
 
       if (checkoutSlug) {
-        const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
-        const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
+        const checkoutPlan = checkoutPlanFromStudio(st.plan);
+        const checkoutPeriod = checkoutPeriodFromStudio(st.billingCycle);
         window.location.href = `/dashboard/billing/${checkoutSlug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
         return;
       }
@@ -881,8 +953,8 @@ function StepPreview({
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
   const selectedPlanLabel = `${planLabel(st.plan)} · ${billingLabel(st.billingCycle)}`;
   const selectedPlanPrice = planPrice(st.plan, st.billingCycle);
-  const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
-  const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
+  const checkoutPlan = checkoutPlanFromStudio(st.plan);
+  const checkoutPeriod = checkoutPeriodFromStudio(st.billingCycle);
   const checkoutHref = `/dashboard/billing/${st.slug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
 
   return (
