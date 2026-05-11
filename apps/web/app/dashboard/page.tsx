@@ -18,7 +18,6 @@ const T = {
 type Venue = {
   id: string; slug: string; name: string;
   plan: string; tier: string; active: boolean; created_at: string;
-  subscription_status?: string | null;
 };
 
 export default async function DashboardPage() {
@@ -28,7 +27,7 @@ export default async function DashboardPage() {
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
-    .from("venues").select("*")
+    .from("venues").select("id, slug, name, plan, tier, active, created_at")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -246,7 +245,7 @@ export default async function DashboardPage() {
                           <span style={{ color: T.ink500 }}>·</span>
                           <span>{v.plan === "kampanya" ? "Kampanya" : "İşletme"}</span>
                           <span style={{ color: T.ink500 }}>·</span>
-                          <StatusPill active={v.active} status={v.subscription_status} />
+                          <StatusPill active={v.active} />
                         </div>
                         <div style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300 }}>
                           <span style={{ color: T.ink400 }}>{v.tier === "pro" ? "Pro" : "Standard"} plan</span>
@@ -374,18 +373,17 @@ function KpiCard({ label, value, delta }: { label: string; value: string; delta:
   );
 }
 
-function StatusPill({ active, status }: { active: boolean; status?: string | null }) {
-  const pending = status === "pending_payment";
-  const color = active ? "#7be38a" : pending ? "#ffd84e" : "#8b7d5e";
-  const label = active ? "Aktif" : pending ? "Ödeme Bekliyor" : "Pasif";
+function StatusPill({ active }: { active: boolean }) {
+  const color = active ? "#7be38a" : "#ffd84e";
+  const label = active ? "Aktif" : "Ödeme Bekliyor";
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
       color,
       padding: "3px 8px", borderRadius: 999,
-      background: active ? "rgba(123,227,138,0.08)" : pending ? "rgba(255,216,78,0.08)" : "rgba(255,255,255,0.03)",
-      border: `1px solid ${active ? "rgba(123,227,138,0.25)" : pending ? "rgba(255,216,78,0.22)" : "rgba(255,255,255,0.08)"}`,
+      background: active ? "rgba(123,227,138,0.08)" : "rgba(255,216,78,0.08)",
+      border: `1px solid ${active ? "rgba(123,227,138,0.25)" : "rgba(255,216,78,0.22)"}`,
     }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
       {label}

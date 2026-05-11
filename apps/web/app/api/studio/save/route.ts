@@ -51,14 +51,13 @@ export async function POST(req: NextRequest) {
     // Ownership check: if slug already exists, must belong to this user
     const { data: existing } = await sb
       .from("venues")
-      .select("id, owner_user_id, active, subscription_status")
+      .select("id, owner_user_id, active")
       .eq("slug", slug)
       .maybeSingle();
     const existingRow = existing as {
       id: string;
       owner_user_id: string | null;
       active: boolean | null;
-      subscription_status: string | null;
     } | null;
     if (existingRow && existingRow.owner_user_id && existingRow.owner_user_id !== user.id) {
       return NextResponse.json({ error: "slug taken" }, { status: 409 });
@@ -78,7 +77,6 @@ export async function POST(req: NextRequest) {
         token_threshold: body.tokenThreshold,
         owner_user_id: user.id,
         active: existingRow?.active ?? false,
-        subscription_status: existingRow?.subscription_status ?? "pending_payment",
       }, { onConflict: "slug" })
       .select("id")
       .single();
