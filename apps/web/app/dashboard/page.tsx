@@ -18,6 +18,7 @@ const T = {
 type Venue = {
   id: string; slug: string; name: string;
   plan: string; tier: string; active: boolean; created_at: string;
+  subscription_status?: string | null;
 };
 
 export default async function DashboardPage() {
@@ -245,7 +246,7 @@ export default async function DashboardPage() {
                           <span style={{ color: T.ink500 }}>·</span>
                           <span>{v.plan === "kampanya" ? "Kampanya" : "İşletme"}</span>
                           <span style={{ color: T.ink500 }}>·</span>
-                          <StatusPill active={v.active} />
+                          <StatusPill active={v.active} status={v.subscription_status} />
                         </div>
                         <div style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300 }}>
                           <span style={{ color: T.ink400 }}>{v.tier === "pro" ? "Pro" : "Standard"} plan</span>
@@ -255,10 +256,10 @@ export default async function DashboardPage() {
 
                       {/* Actions */}
                       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        <CopyLinkButton slug={v.slug} />
-                        <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />
-                        <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />
-                        {v.tier === "pro" && (
+                        {v.active && <CopyLinkButton slug={v.slug} />}
+                        {v.active && <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />}
+                        {v.active && <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />}
+                        {v.active && v.tier === "pro" && (
                           <>
                             <ABtn href={`/dashboard/analytics/${v.slug}`} label="Analitik" icon="chart" />
                             <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
@@ -373,18 +374,21 @@ function KpiCard({ label, value, delta }: { label: string; value: string; delta:
   );
 }
 
-function StatusPill({ active }: { active: boolean }) {
+function StatusPill({ active, status }: { active: boolean; status?: string | null }) {
+  const pending = status === "pending_payment";
+  const color = active ? "#7be38a" : pending ? "#ffd84e" : "#8b7d5e";
+  const label = active ? "Aktif" : pending ? "Ödeme Bekliyor" : "Pasif";
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,
       fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em",
-      color: active ? "#7be38a" : "#8b7d5e",
+      color,
       padding: "3px 8px", borderRadius: 999,
-      background: active ? "rgba(123,227,138,0.08)" : "rgba(255,255,255,0.03)",
-      border: `1px solid ${active ? "rgba(123,227,138,0.25)" : "rgba(255,255,255,0.08)"}`,
+      background: active ? "rgba(123,227,138,0.08)" : pending ? "rgba(255,216,78,0.08)" : "rgba(255,255,255,0.03)",
+      border: `1px solid ${active ? "rgba(123,227,138,0.25)" : pending ? "rgba(255,216,78,0.22)" : "rgba(255,255,255,0.08)"}`,
     }}>
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: active ? "#7be38a" : "#5a4f3a", flexShrink: 0 }} />
-      {active ? "Aktif" : "Pasif"}
+      <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+      {label}
     </span>
   );
 }

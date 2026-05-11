@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     await svc.from("venues").update({
       plan,
       tier: isActive ? tierFromPlan(plan) : "standard",
+      active: isActive,
       stripe_customer_id:    data.customer_id,   // repurposed column → paddle customer id
       stripe_subscription_id: data.id,            // repurposed column → paddle subscription id
       subscription_status:   data.status,
@@ -86,6 +87,7 @@ export async function POST(req: NextRequest) {
     if (venueId) {
       await svc.from("venues").update({
         tier: "standard",
+        active: false,
         subscription_status: data.status,
         stripe_subscription_id: data.id,
       }).eq("id", venueId);

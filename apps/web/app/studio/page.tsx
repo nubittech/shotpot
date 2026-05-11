@@ -217,6 +217,7 @@ function StudioInner() {
   });
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   function update(patch: Partial<State>) {
     setSt((prev) => ({ ...prev, ...patch }));
@@ -307,6 +308,7 @@ function StudioInner() {
   /* ── Save ────────────────────────────────────────────────── */
   async function handleSave() {
     update({ saving: true });
+    setSaveError(null);
     let checkoutSlug: string | null = null;
     try {
       const rules = [
@@ -379,8 +381,10 @@ function StudioInner() {
         body: JSON.stringify(sbPayload),
       });
       if (!sbRes.ok) {
-        const err = await sbRes.json().catch(() => ({}));
+        const err = await sbRes.json().catch(() => ({ error: "Konfigürasyon kaydedilemedi." }));
         console.error("Supabase save failed:", err);
+        setSaveError(err.error ?? "Konfigürasyon kaydedilemedi. Lütfen tekrar dene.");
+        return;
       } else {
         const savedVenue = await sbRes.json().catch(() => null) as { venueId?: string; slug?: string } | null;
         checkoutSlug = savedVenue?.slug ?? st.slug;
@@ -432,9 +436,11 @@ function StudioInner() {
         }),
       ]);
       update({ saved: true });
-    } catch {
-      // backend unavailable in dev
-      update({ saved: true });
+    } catch (error) {
+      console.error("Checkout failed:", error);
+      setSaveError(
+        "Ödeme ekranı açılamadı. Paddle verification, Vercel env değişkenleri veya tarayıcı pop-up/extension ayarlarını kontrol edip tekrar dene."
+      );
     } finally {
       update({ saving: false });
     }
@@ -466,7 +472,7 @@ function StudioInner() {
           {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} />}
           {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} />}
           {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} />}
-          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} onSave={handleSave} onBack={() => goTo(3)} />}
+          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} />}
         </div>
       </div>
     </div>
@@ -941,12 +947,13 @@ function StepRates({
 
 /* ─── Step 4: Preview & Save ─────────────────────────────────── */
 function StepPreview({
-  st, probabilities, saving, saved, onSave, onBack,
+  st, probabilities, saving, saved, saveError, onSave, onBack,
 }: {
   st: State;
   probabilities: ReturnType<typeof computeProbs>;
   saving: boolean;
   saved: boolean;
+  saveError: string | null;
   onSave: () => void;
   onBack: () => void;
 }) {
@@ -1024,6 +1031,16 @@ function StepPreview({
             <a href="/dashboard" style={successActionPrimary}>Dashboard&apos;a Git</a>
             <a href={checkoutHref} style={successActionSecondary}>Ödemeye Git</a>
             <a href={`/play/${st.slug}`} target="_blank" rel="noreferrer" style={successActionSecondary}>Müşteri Sayfası</a>
+          </div>
+        </div>
+      )}
+
+      {saveError && (
+        <div style={{ padding: 18, borderRadius: 14, background: "rgba(255,126,90,0.1)", border: "1px solid rgba(255,126,90,0.28)", color: "#ffb199", fontSize: 13, lineHeight: 1.5 }}>
+          <strong style={{ color: "#ffdfd2" }}>Ödeme başlatılamadı.</strong>
+          <div style={{ marginTop: 6 }}>{saveError}</div>
+          <div style={{ marginTop: 10, color: "rgba(255,223,210,0.72)" }}>
+            İşletme ödeme tamamlanana kadar aktif görünmez. Plan sayfasından tekrar ödeme başlatabilirsin.
           </div>
         </div>
       )}
