@@ -86,7 +86,7 @@ a{text-decoration:none;}
   .hero-actions a{justify-content:center!important;width:100%;}
   .hero-metrics{display:grid!important;grid-template-columns:1fr!important;gap:12px!important;margin-top:26px!important;}
   .hero-metric-divider{display:none!important;}
-  .slot-stage{max-width:286px!important;aspect-ratio:1 / 1.05!important;}
+  .slot-stage{display:none!important;}
   .slot-stage [data-slot-cabinet]{padding:18px!important;border-radius:22px!important;}
   .slot-stage [data-slot-lever]{display:none!important;}
   .benefits-grid,.stats-grid,.flow,.foot-grid{grid-template-columns:1fr!important;}
