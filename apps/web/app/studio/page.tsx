@@ -9,6 +9,7 @@ declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Paddle?: any;
+    __shotpotPaddleInitialized?: boolean;
   }
 }
 
@@ -172,8 +173,13 @@ async function openPaddleCheckoutFromStudio(args: {
   };
 
   await loadPaddleScript();
-  window.Paddle.Environment.set(config.environment);
-  window.Paddle.Initialize({ token: config.clientToken });
+  if (!window.__shotpotPaddleInitialized) {
+    if (config.environment === "sandbox") {
+      window.Paddle.Environment.set("sandbox");
+    }
+    window.Paddle.Initialize({ token: config.clientToken, pwCustomer: {} });
+    window.__shotpotPaddleInitialized = true;
+  }
   window.Paddle.Checkout.open({
     items: [{ priceId: config.priceId, quantity: 1 }],
     customData: { venue_id: args.venueId, plan: checkoutPlan, billing_cycle: checkoutPeriod },

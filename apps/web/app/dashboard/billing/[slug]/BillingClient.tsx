@@ -6,6 +6,7 @@ declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Paddle?: any;
+    __shotpotPaddleInitialized?: boolean;
   }
 }
 
@@ -101,12 +102,15 @@ export function BillingClient({
       setError("Paddle token eksik. Vercel environment değişkenlerini kontrol et.");
       return;
     }
-    if (window.Paddle) { setPaddleReady(true); return; }
+    if (window.Paddle && window.__shotpotPaddleInitialized) { setPaddleReady(true); return; }
     const script = document.createElement("script");
     script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
     script.onload = () => {
-      window.Paddle.Environment.set(paddleEnvironment);
-      window.Paddle.Initialize({ token: paddleClientToken });
+      if (paddleEnvironment === "sandbox") {
+        window.Paddle.Environment.set("sandbox");
+      }
+      window.Paddle.Initialize({ token: paddleClientToken, pwCustomer: {} });
+      window.__shotpotPaddleInitialized = true;
       setPaddleReady(true);
     };
     document.head.appendChild(script);
