@@ -5,6 +5,11 @@ export const PADDLE_PRICE_IDS: Record<PlanKey, string> = {
   pro:      process.env.PADDLE_PRICE_PRO ?? "",
 };
 
+export const PADDLE_PRICE_IDS_ANNUAL: Record<PlanKey, string> = {
+  kampanya: process.env.PADDLE_PRICE_KAMPANYA_ANNUAL ?? "",
+  pro:      process.env.PADDLE_PRICE_PRO_ANNUAL ?? "",
+};
+
 export const PADDLE_CLIENT_TOKEN = process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ?? "";
 export const PADDLE_VENDOR_ID    = process.env.NEXT_PUBLIC_PADDLE_VENDOR_ID ?? "";
 export const PADDLE_ENVIRONMENT  = (process.env.PADDLE_ENVIRONMENT ?? "sandbox") as "sandbox" | "production";

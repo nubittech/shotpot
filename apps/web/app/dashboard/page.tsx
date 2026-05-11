@@ -38,6 +38,7 @@ export default async function DashboardPage() {
   const analyticsHref = primaryProVenue ? `/dashboard/analytics/${primaryProVenue.slug}` : "/dashboard";
   const customersHref = primaryProVenue ? `/dashboard/customers/${primaryProVenue.slug}` : "/dashboard";
   const couponsHref = venues.length > 0 ? "/dashboard/coupons" : "/dashboard";
+  const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
@@ -98,6 +99,12 @@ export default async function DashboardPage() {
 
         {/* Account nav */}
         <SideSection label="Hesap" />
+        <SideLink href={billingHref} label="Plan & Faturalama" icon={
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        }/>
         <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Destek" label="Yardım & Destek" icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -257,6 +264,7 @@ export default async function DashboardPage() {
                             <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
                           </>
                         )}
+                        <ABtn href={`/dashboard/billing/${v.slug}`} label="Plan" icon="card" variant="brass" />
                         <ABtn href={`/studio?slug=${v.slug}`} label="Düzenle" icon="edit" variant="gold" />
                       </div>
                     </div>

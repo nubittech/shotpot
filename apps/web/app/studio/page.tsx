@@ -245,6 +245,7 @@ function StudioInner() {
   /* ── Save ────────────────────────────────────────────────── */
   async function handleSave() {
     update({ saving: true });
+    let checkoutSlug: string | null = null;
     try {
       const rules = [
         {
@@ -318,6 +319,9 @@ function StudioInner() {
       if (!sbRes.ok) {
         const err = await sbRes.json().catch(() => ({}));
         console.error("Supabase save failed:", err);
+      } else {
+        const savedVenue = await sbRes.json().catch(() => null) as { slug?: string } | null;
+        checkoutSlug = savedVenue?.slug ?? st.slug;
       }
 
       await Promise.all([
@@ -348,6 +352,12 @@ function StudioInner() {
           body: JSON.stringify({ rules }),
         }),
       ]);
+      if (checkoutSlug) {
+        const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
+        const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
+        window.location.href = `/dashboard/billing/${checkoutSlug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
+        return;
+      }
       update({ saved: true });
     } catch {
       // backend unavailable in dev
@@ -874,7 +884,7 @@ function StepPreview({
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
-      <StepHeader title="Önizleme & Kaydet" sub="Konfigürasyonunu gözden geçir. Paddle kurulunca bu adım seçilen paketin ödeme ekranına yönlenecek." />
+      <StepHeader title="Önizleme & Kaydet" sub="Konfigürasyonunu gözden geçir. Kaydettikten sonra seçilen paketin ödeme ekranına yönleneceksin." />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Left: summary */}
@@ -933,7 +943,7 @@ function StepPreview({
         <div style={{ padding: 20, borderRadius: 16, background: "rgba(142,242,161,0.08)", border: "1px solid rgba(142,242,161,0.22)", color: "#8ef2a1" }}>
           <div style={{ fontWeight: 800, fontSize: 15 }}>✓ Konfigürasyon kaydedildi</div>
           <div style={{ marginTop: 6, color: "rgba(210,255,218,0.78)", fontSize: 13, lineHeight: 1.45 }}>
-            Seçilen paket: <strong>{selectedPlanLabel} · {selectedPlanPrice}</strong>. Paddle kurulunca bu adım gerçek ödeme ekranına yönlenecek.
+            Seçilen paket: <strong>{selectedPlanLabel} · {selectedPlanPrice}</strong>. Ödeme sayfasına yönlendirme hazır.
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
             <a href="/dashboard" style={successActionPrimary}>Dashboard&apos;a Git</a>
@@ -960,7 +970,7 @@ function StepPreview({
             <div style={demoRow}><span>Ödeme sağlayıcı</span><strong>Paddle</strong></div>
           </div>
           <button disabled type="button" style={{ ...primaryBtn, width: "100%", marginTop: 18, opacity: 0.65, cursor: "not-allowed" }}>
-            Paddle kurulunca ödeme burada açılacak
+            Ödeme sayfasında Paddle Checkout açılacak
           </button>
         </div>
       )}
@@ -983,7 +993,7 @@ function StepPreview({
         )}
       </div>
       <div style={{ marginTop: -20, color: "rgba(244,239,230,0.38)", fontSize: 12, lineHeight: 1.5 }}>
-        Ödeme yönlendirmesi Paddle kurulumu tamamlanınca aktif olacak. Şimdilik işletme konfigürasyonu ve seçilen paket kaydedilir.
+        İşletme kaydedildikten sonra seçilen paketle ödeme sayfasına yönlendirilirsin.
       </div>
     </div>
   );

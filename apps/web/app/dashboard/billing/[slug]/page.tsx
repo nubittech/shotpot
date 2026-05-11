@@ -3,9 +3,18 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import { BillingClient } from "./BillingClient";
-import { PADDLE_CLIENT_TOKEN, PADDLE_ENVIRONMENT, PADDLE_PRICE_IDS } from "../../../../lib/paddle";
+import { PADDLE_CLIENT_TOKEN, PADDLE_ENVIRONMENT, PADDLE_PRICE_IDS, PADDLE_PRICE_IDS_ANNUAL } from "../../../../lib/paddle";
 
-type Props = { params: { slug: string }; searchParams: { success?: string; cancelled?: string } };
+type Props = {
+  params: { slug: string };
+  searchParams: {
+    success?: string;
+    cancelled?: string;
+    checkout?: string;
+    plan?: string;
+    period?: string;
+  };
+};
 
 export default async function BillingPage({ params, searchParams }: Props) {
   const sb = createClient();
@@ -64,6 +73,11 @@ export default async function BillingPage({ params, searchParams }: Props) {
         paddleEnvironment={PADDLE_ENVIRONMENT}
         priceKampanya={PADDLE_PRICE_IDS.kampanya}
         pricePro={PADDLE_PRICE_IDS.pro}
+        priceKampanyaAnnual={PADDLE_PRICE_IDS_ANNUAL.kampanya}
+        priceProAnnual={PADDLE_PRICE_IDS_ANNUAL.pro}
+        autoCheckout={searchParams.checkout === "1"}
+        initialPlan={searchParams.plan === "pro" ? "pro" : searchParams.plan === "kampanya" ? "kampanya" : null}
+        initialPeriod={searchParams.period === "annual" ? "annual" : searchParams.period === "monthly" ? "monthly" : null}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -10,6 +10,7 @@ declare global {
 }
 
 type PlanKey = "kampanya" | "pro";
+type BillingPeriod = "monthly" | "annual";
 
 type Props = {
   venueId: string;
@@ -24,37 +25,57 @@ type Props = {
   paddleEnvironment: string;
   priceKampanya: string;
   pricePro: string;
+  priceKampanyaAnnual?: string;
+  priceProAnnual?: string;
+  autoCheckout?: boolean;
+  initialPlan?: PlanKey | null;
+  initialPeriod?: BillingPeriod | null;
 };
 
-const PLANS = [
+const PLANS: Array<{
+  key: PlanKey;
+  name: string;
+  monthlyPrice: string;
+  annualPrice: string;
+  annualMonthly: string;
+  period: string;
+  color: string;
+  features: string[];
+  badge?: string;
+}> = [
   {
-    key: "kampanya" as PlanKey,
-    name: "Campaign",
-    price: "$14",
+    key: "kampanya",
+    name: "Standart",
+    monthlyPrice: "$5",
+    annualPrice: "$20",
+    annualMonthly: "$1.67",
     period: "/mo",
     color: "#ffd84e",
     features: [
-      "Unlimited receipt scanning",
-      "AI receipt verification",
-      "3 slot machine themes",
-      "Staff redemption panel",
-      "Basic analytics",
+      "Sınırsız fiş tarama",
+      "AI fiş doğrulama",
+      "3 slot makinesi teması",
+      "Garson kupon paneli",
+      "Temel analitik",
     ],
   },
   {
-    key: "pro" as PlanKey,
+    key: "pro",
     name: "Pro",
-    price: "$36",
+    monthlyPrice: "$10",
+    annualPrice: "$50",
+    annualMonthly: "$4.17",
     period: "/mo",
     color: "#a78bfa",
+    badge: "En Popüler",
     features: [
-      "Everything in Campaign",
-      "Customer accounts",
-      "Profile + coupon history",
-      "Loyalty tiers",
-      "Campaign sender",
-      "Detailed analytics",
-      "CSV export",
+      "Standart'taki her şey",
+      "Müşteri hesapları",
+      "Profil & kupon geçmişi",
+      "Sadakat seviyeleri",
+      "Kampanya gönderimi",
+      "Detaylı analitik",
+      "CSV dışa aktarım",
     ],
   },
 ];
@@ -63,15 +84,23 @@ export function BillingClient({
   venueId, venueName, userEmail, currentPlan, subscriptionStatus,
   planExpiresAt, hasPaddleCustomer, paddleSubscriptionId,
   paddleClientToken, paddleEnvironment, priceKampanya, pricePro,
+  priceKampanyaAnnual, priceProAnnual, autoCheckout = false,
+  initialPlan, initialPeriod,
 }: Props) {
   const [loading, setLoading] = useState<PlanKey | "portal" | null>(null);
   const [paddleReady, setPaddleReady] = useState(false);
   const [error, setError] = useState("");
+  const [period, setPeriod] = useState<BillingPeriod>(initialPeriod ?? "monthly");
+  const autoCheckoutOpened = useRef(false);
 
   const isActive = subscriptionStatus === "active" || subscriptionStatus === "trialing";
 
   // Load Paddle.js
   useEffect(() => {
+    if (!paddleClientToken) {
+      setError("Paddle token eksik. Vercel environment değişkenlerini kontrol et.");
+      return;
+    }
     if (window.Paddle) { setPaddleReady(true); return; }
     const script = document.createElement("script");
     script.src = "https://cdn.paddle.com/paddle/v2/paddle.js";
@@ -84,10 +113,18 @@ export function BillingClient({
   }, [paddleClientToken, paddleEnvironment]);
 
   function getPriceId(plan: PlanKey) {
+    if (period === "annual") {
+      return plan === "pro" ? (priceProAnnual ?? pricePro) : (priceKampanyaAnnual ?? priceKampanya);
+    }
     return plan === "pro" ? pricePro : priceKampanya;
   }
 
   function handleSubscribe(plan: PlanKey) {
+    const priceId = getPriceId(plan);
+    if (!priceId) {
+      setError("Bu paket için Paddle price ID eksik. Environment değişkenlerini kontrol et.");
+      return;
+    }
     if (!paddleReady || !window.Paddle) {
       setError("Ödeme sistemi yüklenemedi. Sayfayı yenileyip tekrar dene.");
       return;
@@ -96,9 +133,9 @@ export function BillingClient({
     setError("");
 
     window.Paddle.Checkout.open({
-      items: [{ priceId: getPriceId(plan), quantity: 1 }],
+      items: [{ priceId, quantity: 1 }],
       customer: { email: userEmail },
-      customData: { venue_id: venueId, plan },
+      customData: { venue_id: venueId, plan, billing_cycle: period },
       successUrl: `${window.location.origin}/dashboard/billing/${window.location.pathname.split("/").pop()}?success=1`,
       settings: { displayMode: "overlay", locale: "en" },
     });
@@ -106,6 +143,12 @@ export function BillingClient({
     // Reset loading after paddle opens (no direct callback in overlay mode)
     setTimeout(() => setLoading(null), 2000);
   }
+
+  useEffect(() => {
+    if (!autoCheckout || autoCheckoutOpened.current || !initialPlan || !paddleReady) return;
+    autoCheckoutOpened.current = true;
+    handleSubscribe(initialPlan);
+  }, [autoCheckout, initialPlan, paddleReady]);
 
   function handlePortal() {
     if (!paddleReady || !window.Paddle || !paddleSubscriptionId) {
@@ -140,7 +183,7 @@ export function BillingClient({
           <div>
             <div style={{ fontSize: 12, color: "rgba(244,239,230,0.45)", fontWeight: 600, marginBottom: 4 }}>MEVCUT PLAN</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#f4efe6" }}>
-              {currentPlan === "pro" ? "Pro" : currentPlan === "kampanya" ? "Campaign" : "Ücretsiz"}
+              {currentPlan === "pro" || currentPlan === "isletme" ? "Pro" : currentPlan === "kampanya" ? "Standart" : "Ücretsiz"}
             </div>
             <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", marginTop: 2 }}>{venueName}</div>
           </div>
@@ -168,24 +211,57 @@ export function BillingClient({
         )}
       </div>
 
-      {/* Plan cards */}
-      <h2 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 800, color: "#f4efe6" }}>Plan Seç</h2>
+      {/* Billing period toggle */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#f4efe6" }}>Plan Seç</h2>
+        <div style={{ display: "flex", background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: 3, gap: 2 }}>
+          {(["monthly", "annual"] as BillingPeriod[]).map((p) => (
+            <button
+              key={p}
+              onClick={() => setPeriod(p)}
+              type="button"
+              style={{
+                padding: "6px 14px", borderRadius: 8, fontSize: 12, fontWeight: 700,
+                border: "none", cursor: "pointer",
+                background: period === p ? "rgba(255,216,78,0.15)" : "transparent",
+                color: period === p ? "#ffd84e" : "rgba(244,239,230,0.5)",
+              }}
+            >
+              {p === "monthly" ? "Aylık" : "Yıllık"}
+              {p === "annual" && <span style={{ fontSize: 10, marginLeft: 4, color: "#4ade80" }}>%58 ucuz</span>}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display: "grid", gap: 14 }}>
         {PLANS.map((p) => {
           const isCurrent = currentPlan === p.key && isActive;
+          const displayPrice = period === "annual" ? p.annualPrice : p.monthlyPrice;
+          const displaySub = period === "annual" ? "/yıl" : "/ay";
+          const monthlyEquiv = period === "annual" ? p.annualMonthly : null;
           return (
             <div key={p.key} style={{
               background: "rgba(255,255,255,0.03)",
-              border: `1.5px solid ${isCurrent ? p.color : "rgba(255,255,255,0.08)"}`,
-              borderRadius: 18, padding: "22px 20px",
+              border: `1.5px solid ${isCurrent ? p.color : p.key === "pro" ? "rgba(167,139,250,0.25)" : "rgba(255,255,255,0.08)"}`,
+              borderRadius: 18, padding: "22px 20px", position: "relative", overflow: "hidden",
               boxShadow: isCurrent ? `0 0 30px ${p.color}20` : "none",
             }}>
+              {p.badge && !isCurrent && (
+                <div style={{ position: "absolute", top: 14, right: 14, fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 999, background: `${p.color}20`, color: p.color, border: `1px solid ${p.color}40` }}>
+                  {p.badge}
+                </div>
+              )}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{p.name}</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: "#f4efe6", lineHeight: 1.2, marginTop: 2 }}>
-                    {p.price}<span style={{ fontSize: 13, fontWeight: 600, color: "rgba(244,239,230,0.4)" }}>{p.period}</span>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginTop: 2 }}>
+                    <span style={{ fontSize: 28, fontWeight: 900, color: "#f4efe6", lineHeight: 1.1 }}>{displayPrice}</span>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(244,239,230,0.4)" }}>{displaySub}</span>
                   </div>
+                  {monthlyEquiv && (
+                    <div style={{ fontSize: 11, color: "#4ade80", marginTop: 2 }}>{monthlyEquiv}/ay eşdeğeri</div>
+                  )}
                 </div>
                 {isCurrent ? (
                   <div style={{ padding: "6px 14px", borderRadius: 999, background: `${p.color}20`, color: p.color, fontSize: 11, fontWeight: 700, border: `1px solid ${p.color}50` }}>
