@@ -21,7 +21,7 @@ export async function fetchPlayBundleBySlug(slug: string): Promise<PlayBundle | 
   const v = venue as unknown as Venue;
   const [{ data: cfg }, { data: camps }] = await Promise.all([
     sb.from("symbol_configs").select("*").eq("venue_id", v.id).maybeSingle(),
-    sb.from("campaigns").select("*").eq("venue_id", v.id).eq("active", true),
+    sb.from("campaigns").select("*").eq("venue_id", v.id),
   ]);
 
   if (!cfg) return null;

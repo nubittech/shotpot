@@ -112,7 +112,6 @@ export async function POST(req: NextRequest) {
         reward_label: c.rewardLabel,
         coupon_prefix: c.couponPrefix,
         share: c.share,
-        active: c.active ?? true,
       }));
       const { error: insErr } = await sb.from("campaigns").insert(rows);
       if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
