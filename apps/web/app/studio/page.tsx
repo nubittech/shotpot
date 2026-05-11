@@ -324,6 +324,13 @@ function StudioInner() {
         checkoutSlug = savedVenue?.slug ?? st.slug;
       }
 
+      if (checkoutSlug) {
+        const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
+        const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
+        window.location.href = `/dashboard/billing/${checkoutSlug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
+        return;
+      }
+
       await Promise.all([
         fetch(`${API}/business/${BUSINESS_ID}/config`, {
           method: "POST",
@@ -352,12 +359,6 @@ function StudioInner() {
           body: JSON.stringify({ rules }),
         }),
       ]);
-      if (checkoutSlug) {
-        const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
-        const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
-        window.location.href = `/dashboard/billing/${checkoutSlug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
-        return;
-      }
       update({ saved: true });
     } catch {
       // backend unavailable in dev
@@ -877,10 +878,12 @@ function StepPreview({
   onSave: () => void;
   onBack: () => void;
 }) {
-  const [showPaymentDemo, setShowPaymentDemo] = useState(false);
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
   const selectedPlanLabel = `${planLabel(st.plan)} · ${billingLabel(st.billingCycle)}`;
   const selectedPlanPrice = planPrice(st.plan, st.billingCycle);
+  const checkoutPlan = st.plan === "kampanya" ? "kampanya" : "pro";
+  const checkoutPeriod = st.billingCycle === "yearly" ? "annual" : "monthly";
+  const checkoutHref = `/dashboard/billing/${st.slug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
@@ -947,39 +950,17 @@ function StepPreview({
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
             <a href="/dashboard" style={successActionPrimary}>Dashboard&apos;a Git</a>
-            <button onClick={() => setShowPaymentDemo((v) => !v)} type="button" style={successActionSecondary}>
-              {showPaymentDemo ? "Ödeme Demosunu Gizle" : "Ödeme Demosu"}
-            </button>
+            <a href={checkoutHref} style={successActionSecondary}>Ödemeye Git</a>
             <a href={`/play/${st.slug}`} target="_blank" rel="noreferrer" style={successActionSecondary}>Müşteri Sayfası</a>
           </div>
-        </div>
-      )}
-
-      {saved && showPaymentDemo && (
-        <div style={{ borderRadius: 18, border: "1px solid rgba(255,216,78,0.24)", background: "linear-gradient(180deg, rgba(255,216,78,0.08), rgba(255,255,255,0.03))", padding: 22 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 18 }}>
-            <div>
-              <div style={{ color: "#ffd84e", fontSize: 11, fontWeight: 800, letterSpacing: "0.14em", textTransform: "uppercase" }}>Paddle Checkout Demo</div>
-              <div style={{ marginTop: 6, color: "#f4efe6", fontSize: 20, fontWeight: 850 }}>{selectedPlanLabel}</div>
-            </div>
-            <div style={{ color: "#ffd84e", fontSize: 24, fontWeight: 900 }}>{selectedPlanPrice}</div>
-          </div>
-          <div style={{ display: "grid", gap: 10, color: "rgba(244,239,230,0.62)", fontSize: 13 }}>
-            <div style={demoRow}><span>İşletme</span><strong>{st.name || "İşletme"}</strong></div>
-            <div style={demoRow}><span>Plan</span><strong>{selectedPlanLabel}</strong></div>
-            <div style={demoRow}><span>Ödeme sağlayıcı</span><strong>Paddle</strong></div>
-          </div>
-          <button disabled type="button" style={{ ...primaryBtn, width: "100%", marginTop: 18, opacity: 0.65, cursor: "not-allowed" }}>
-            Ödeme sayfasında Paddle Checkout açılacak
-          </button>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 12 }}>
         <button onClick={onBack} style={secondaryBtn} type="button">{saved ? "← Düzenlemeye Devam Et" : "← Geri"}</button>
         {saved ? (
-          <a href="/dashboard" style={{ ...primaryBtn, flex: 1, textAlign: "center", textDecoration: "none" }}>
-            Dashboard&apos;a Git
+          <a href={checkoutHref} style={{ ...primaryBtn, flex: 1, textAlign: "center", textDecoration: "none" }}>
+            Ödemeye Git
           </a>
         ) : (
           <button
@@ -1161,14 +1142,6 @@ const successActionSecondary: React.CSSProperties = {
   fontWeight: 750,
   textDecoration: "none",
   cursor: "pointer",
-};
-
-const demoRow: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: 16,
-  padding: "10px 0",
-  borderBottom: "1px solid rgba(255,255,255,0.06)",
 };
 
 /* ─── Helpers ────────────────────────────────────────────────── */
