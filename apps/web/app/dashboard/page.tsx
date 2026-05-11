@@ -4,6 +4,7 @@ import { createClient } from "../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../lib/supabase/server";
 import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
+import { DeleteVenueButton } from "./DeleteVenueButton";
 
 /* ── Design tokens (from Jackpot styles.css) ── */
 const T = {
@@ -17,7 +18,7 @@ const T = {
 
 type Venue = {
   id: string; slug: string; name: string;
-  plan: string; tier: string; active: boolean; created_at: string;
+  plan: string; tier: string; active: boolean; created_at: string; billing_cycle?: string | null;
 };
 
 export default async function DashboardPage() {
@@ -27,7 +28,7 @@ export default async function DashboardPage() {
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
-    .from("venues").select("id, slug, name, plan, tier, active, created_at")
+    .from("venues").select("id, slug, name, plan, tier, active, created_at, billing_cycle")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -266,6 +267,14 @@ export default async function DashboardPage() {
                         )}
                         <ABtn href={`/dashboard/billing/${v.slug}`} label="Plan" icon="card" variant="brass" />
                         <ABtn href={`/studio?slug=${v.slug}`} label="Düzenle" icon="edit" variant="gold" />
+                        <DeleteVenueButton
+                          slug={v.slug}
+                          name={v.name}
+                          active={v.active}
+                          plan={v.plan}
+                          tier={v.tier}
+                          billingCycle={v.billing_cycle ?? "monthly"}
+                        />
                       </div>
                     </div>
                   ))}
