@@ -42,7 +42,7 @@ type PlanView = {
   annualMonthly: string;
   period: string;
   color: string;
-  features: string[];
+  features: readonly string[];
   badge?: string;
 };
 
