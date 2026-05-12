@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "../lib/supabase/server-rsc";
+import { copy } from "../lib/i18n";
 import { LandingPricing } from "./LandingPricing";
 
 /* ─── Design tokens ─── */
@@ -107,6 +108,8 @@ a{text-decoration:none;}
 export default async function HomePage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
+  const landing = copy.landing;
+  const common = copy.common;
 
   return (
     <>
@@ -130,26 +133,26 @@ export default async function HomePage() {
               fontFamily: "'Playfair Display', serif", fontWeight: 900,
               color: "#1a0f06", fontSize: 17,
             }}>J</div>
-            <span style={{ fontWeight: 700, fontSize: 16, color: C.i100, letterSpacing: "0.01em" }}>Jackpot</span>
+            <span style={{ fontWeight: 700, fontSize: 16, color: C.i100, letterSpacing: "0.01em" }}>{copy.meta.brand}</span>
           </Link>
 
           {/* Nav links */}
           <div className="nav-links-wrap" style={{ display: "flex", gap: 28, alignItems: "center" }}>
-            <a href="#how" className="nav-link">Nasıl çalışır</a>
-            <a href="#benefits" className="nav-link">Faydalar</a>
-            <a href="#pricing" className="nav-link">Fiyatlar</a>
-            <a href="#faq" className="nav-link">SSS</a>
+            <a href="#how" className="nav-link">{landing.nav.how}</a>
+            <a href="#benefits" className="nav-link">{landing.nav.benefits}</a>
+            <a href="#pricing" className="nav-link">{landing.nav.pricing}</a>
+            <a href="#faq" className="nav-link">{landing.nav.faq}</a>
           </div>
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {user ? (
-              <Link href="/dashboard" className="btn-primary">Panele Git</Link>
+              <Link href="/dashboard" className="btn-primary">{common.goDashboard}</Link>
             ) : (
               <>
-                <Link href="/login" className="btn-ghost">Giriş yap</Link>
+                <Link href="/login" className="btn-ghost">{common.login}</Link>
                 <Link href="/signup" className="btn-primary">
-                  Mekanını bağla
+                  {common.connectVenue}
                   <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L8 4m3 3L8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 </Link>
               </>
@@ -165,34 +168,32 @@ export default async function HomePage() {
           {/* Left copy */}
           <div className="hero-copy">
             <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>
-              Barlar için sadakat çarkı · B2B
+              {landing.hero.eyebrow}
             </div>
             <h1 style={{ margin: "18px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(40px, 6vw, 72px)", lineHeight: 1.0, color: C.i100, letterSpacing: "-0.01em" }}>
-              Müşteri fişini taratır.<br/>
-              <span style={{ color: C.e400, fontStyle: "italic" }}>Çark döner.</span><br/>
-              <span style={{ color: C.b300 }}>Bara geri gelir.</span>
+              {landing.hero.titleLine1}<br/>
+              <span style={{ color: C.e400, fontStyle: "italic" }}>{landing.hero.titleLine2}</span><br/>
+              <span style={{ color: C.b300 }}>{landing.hero.titleLine3}</span>
             </h1>
             <p style={{ marginTop: 28, fontSize: "clamp(16px,1.3vw,18px)", lineHeight: 1.55, color: C.i300, maxWidth: 520 }}>
-              Jackpot, fişten doğan ikinci bir tur. Her ödeme sonrası müşteriniz
-              slot makinesini çevirir; kazandığı ikram sadece sizin barınızda geçerlidir.
-              Sadakat — eğlenceli, şeffaf, anında.
+              {landing.hero.body}
             </p>
             <div className="hero-actions" style={{ display: "flex", gap: 14, marginTop: 40, flexWrap: "wrap" }}>
               <Link href="/signup" className="btn-primary-lg">
-                Mekanını bağla
+                {landing.hero.primaryCta}
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L8 4m3 3L8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
               </Link>
               <a href="#how" className="btn-ghost-lg">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 3l5 4-5 4V3z" fill="currentColor"/></svg>
-                Nasıl çalışır
+                {landing.hero.secondaryCta}
               </a>
             </div>
             <div className="hero-metrics" style={{ marginTop: 36, display: "flex", gap: 24, alignItems: "center", color: C.i400, fontSize: 13, flexWrap: "wrap" }}>
-              <div><strong style={{ color: C.b300, fontWeight: 700 }}>40+</strong> bar İstanbul&apos;da</div>
+              <div><strong style={{ color: C.b300, fontWeight: 700 }}>40+</strong> {landing.hero.metrics.activeBars}</div>
               <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
-              <div><strong style={{ color: C.b300, fontWeight: 700 }}>%34</strong> ortalama tekrar ziyaret</div>
+              <div><strong style={{ color: C.b300, fontWeight: 700 }}>%34</strong> {landing.hero.metrics.repeatVisit}</div>
               <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
-              <div><strong style={{ color: C.b300, fontWeight: 700 }}>0₺</strong> kurulum ücreti</div>
+              <div><strong style={{ color: C.b300, fontWeight: 700 }}>0₺</strong> {landing.hero.metrics.setupFee}</div>
             </div>
           </div>
 
@@ -330,10 +331,10 @@ export default async function HomePage() {
       <section id="how" style={{ padding: "100px 0", position: "relative" }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>Nasıl çalışır</div>
-            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100, letterSpacing: "-0.01em" }}>Dört adımda ikinci tur</h2>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.how.eyebrow}</div>
+            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100, letterSpacing: "-0.01em" }}>{landing.how.title}</h2>
             <p style={{ margin: "18px auto 0", maxWidth: 560, fontSize: 17, color: C.i300, lineHeight: 1.6 }}>
-              Müşteri zaten ödedi. Şimdi geri gelmesi için bir sebep daha verelim.
+              {landing.how.body}
             </p>
           </div>
 
@@ -343,12 +344,7 @@ export default async function HomePage() {
               position: "absolute", top: 36, left: "8%", right: "8%", height: 2,
               background: `repeating-linear-gradient(90deg, ${C.lineS} 0, ${C.lineS} 4px, transparent 4px, transparent 10px)`,
             }} />
-            {[
-              { n: "1", title: "Fişini tarat", desc: "Müşteri masada ödediği fişi telefon kamerasıyla okutur. OCR doğrular." },
-              { n: "2", title: "Çarkı çevir", desc: "Bir spin hakkı kazanır. Kolu çeker, slot makinesi döner — anlık eğlence." },
-              { n: "3", title: "İkram düşer", desc: "Bedava içecek, indirim, mezenin yanında ekstra. Hep sizin barınızdan." },
-              { n: "4", title: "Geri gelir", desc: "Kupon QR olarak telefonda. Garson okutur, biter. Veriyi siz görürsünüz." },
-            ].map((s) => (
+            {landing.how.steps.map((s) => (
               <div key={s.n} style={{ position: "relative", textAlign: "center" }}>
                 <div style={{
                   width: 72, height: 72, margin: "0 auto 20px",
@@ -372,22 +368,15 @@ export default async function HomePage() {
       <section id="benefits" style={{ padding: "100px 0", background: "linear-gradient(180deg, transparent, rgba(232,200,118,0.02), transparent)" }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>Bar sahipleri için</div>
-            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100, letterSpacing: "-0.01em" }}>Reklam değil — tekrar.</h2>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.benefits.eyebrow}</div>
+            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100, letterSpacing: "-0.01em" }}>{landing.benefits.title}</h2>
             <p style={{ margin: "18px auto 0", maxWidth: 560, fontSize: 17, color: C.i300, lineHeight: 1.6 }}>
-              Yeni müşteri bulmak pahalı. Geleni geri getirmek, akıllı.
+              {landing.benefits.body}
             </p>
           </div>
 
           <div className="benefits-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }}>
-            {[
-              { icon: "★", title: "Sadakat, eğlenceli olduğunda işler", desc: "Klasik puan kart sıkıcı. Slot makinesi anlık dopamin — müşteri arkadaşına da gösterir, organik trafik." },
-              { icon: "▣", title: "Sıfır kurulum, sıfır donanım", desc: "POS değiştirmeyin, tablet eklemeyin. Müşteri kendi telefonundan girer. Siz dashboard'dan kuponları görürsünüz." },
-              { icon: "↑", title: "Her şeyi siz kontrol edersiniz", desc: "Kazanma oranı, ikram havuzu, geçerlilik süresi — hepsi sizin elinizde. Riskli görseniz kapatırsınız." },
-              { icon: "⏱", title: "Sessiz saatlerde otomatik kampanya", desc: "Salı 22:00'de kazanma şansı 2x — müşterilere bildirim gider. Ölü saatler dolar, planlı." },
-              { icon: "◈", title: "Gerçek müşteri verisi", desc: "Kim ne içiyor, hangi gün geliyor, kaç defa döndü. Kararları artık tahminle değil, veriyle alın." },
-              { icon: "◉", title: "Kendi markanızla, kendi sayfanızda", desc: "jackpot.bar/komun gibi link verin. Müşteri direkt sizin slotunuza gelir, başka bara değil." },
-            ].map((b) => (
+            {landing.benefits.cards.map((b) => (
               <div key={b.title} className="benefit-card" style={{
                 padding: "36px 28px", borderRadius: 18,
                 background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`,
@@ -413,12 +402,7 @@ export default async function HomePage() {
       {/* ═══════ STATS ═══════ */}
       <section id="stats" style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`, padding: "80px 0", background: "linear-gradient(180deg, transparent, rgba(232,200,118,0.03), transparent)" }}>
         <div className="container stats-grid" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 32, textAlign: "center" }}>
-          {[
-            { num: "40+", label: "Aktif mekan", sub: "İstanbul, Ankara, İzmir" },
-            { num: "%34", label: "Tekrar ziyaret artışı", sub: "İlk 90 gün ortalaması" },
-            { num: "180k+", label: "Toplam spin", sub: "Son 12 ay" },
-            { num: "%92", label: "Kupon kullanım oranı", sub: "7 gün içinde" },
-          ].map((s) => (
+          {landing.stats.map((s) => (
             <div key={s.label}>
               <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(36px,5vw,62px)", color: C.b300, lineHeight: 1, textShadow: "0 0 24px rgba(232,200,118,0.3)" }}>{s.num}</div>
               <div style={{ marginTop: 8, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.15em", fontSize: 13, color: C.i400, textTransform: "uppercase" }}>{s.label}</div>
@@ -434,18 +418,11 @@ export default async function HomePage() {
       <section id="faq" style={{ padding: "100px 0" }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
           <div style={{ textAlign: "center", marginBottom: 56 }}>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>Sorular</div>
-            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100 }}>Sık sorulanlar</h2>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.nav.faq}</div>
+            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100 }}>{landing.faq.title}</h2>
           </div>
           <div style={{ maxWidth: 760, margin: "0 auto", display: "flex", flexDirection: "column", gap: 10 }}>
-            {[
-              { q: "Maliyeti ne? Kurulum var mı?", a: "Kurulum ücretsiz. Aylık sabit bir abonelik ya da spin başına küçük bir ücret — mekanınızın boyutuna göre seçersiniz. İlk 30 gün deneme, kart bilgisi istemiyoruz." },
-              { q: "Müşteri uygulama indirmek zorunda mı?", a: "Hayır. QR kod ile mobil web sayfası açılır, fişini tarar, çarkı çevirir. İsteyen telefon ana ekranına ekler — ayrı bir app yok." },
-              { q: "Kazanma oranını biz mi belirliyoruz?", a: "Evet, tamamen. İkram havuzu, kazanma yüzdesi, hangi ürünün ne sıklıkla çıkacağı — dashboard'dan ayarlanır. Anlık değiştirebilirsiniz." },
-              { q: "Yasal olarak kumar değil mi?", a: "Hayır. Müşteri çark için para yatırmaz; zaten ödediği fişin yan ürünü olarak hak kazanır. Bu, yasal sadakat programıdır — Starbucks'ın yıldızlarıyla aynı kategoride." },
-              { q: "Mevcut POS sistemimle nasıl entegre olur?", a: "Entegre olmasına gerek yok. Müşteri fotoğraftan okur, OCR doğrular. İsteğe bağlı olarak Adisyo, Ikas, Doping gibi sistemlerle API entegrasyonu da var." },
-              { q: "Kuponları garson nasıl okur?", a: "Müşteri telefonundaki QR'ı garsona gösterir. Garson kendi mobil panelinden okutur, otomatik düşülür." },
-            ].map((f, i) => (
+            {landing.faq.items.map((f, i) => (
               <details key={i} className="faq-item" style={{
                 background: C.bg1, border: `1px solid ${C.line}`,
                 borderRadius: 14, overflow: "hidden",
@@ -482,15 +459,15 @@ export default async function HomePage() {
           border: `1px solid ${C.lineS}`,
           position: "relative", overflow: "hidden",
         }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>İlk spin sizden</div>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.cta.eyebrow}</div>
           <h2 style={{ margin: "12px 0 16px", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(28px,4vw,48px)", color: C.i100, letterSpacing: "-0.01em" }}>
-            Mekanınızı bu hafta bağlayın.<br/>Cuma akşamı yayında olun.
+            {landing.cta.titleLine1}<br/>{landing.cta.titleLine2}
           </h2>
           <p style={{ fontSize: 17, maxWidth: 520, margin: "0 auto 32px", color: C.i300, lineHeight: 1.6 }}>
-            5 dakikada hesap, aynı gün test, ilk hafta sonunda gerçek müşteri verisi.
+            {landing.cta.body}
           </p>
           <Link href="/signup" className="btn-primary-lg">
-            Mekanını bağla
+            {common.connectVenue}
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7h8m0 0L8 4m3 3L8 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
           </Link>
         </div>
@@ -503,41 +480,41 @@ export default async function HomePage() {
             <div>
               <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(160deg, #e8c876, #5a3414)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display',serif", fontWeight: 900, color: "#1a0f06", fontSize: 14 }}>J</div>
-                <span style={{ fontWeight: 700, fontSize: 15, color: C.i100 }}>Jackpot</span>
+                <span style={{ fontWeight: 700, fontSize: 15, color: C.i100 }}>{copy.meta.brand}</span>
               </Link>
-              <p style={{ marginTop: 16, maxWidth: 300, fontSize: 14, color: C.i400, lineHeight: 1.6 }}>Bar ve mekanlar için sadakat çarkı. İstanbul, Karaköy.</p>
+              <p style={{ marginTop: 16, maxWidth: 300, fontSize: 14, color: C.i400, lineHeight: 1.6 }}>{landing.footer.description}</p>
             </div>
             <div>
-              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>Ürün</h5>
+              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>{landing.footer.product}</h5>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[["#how","Nasıl çalışır"],["#benefits","Faydalar"],["#stats","Rakamlar"],["#faq","SSS"]].map(([h,l])=>(
+                {[["#how",landing.nav.how],["#benefits",landing.nav.benefits],["#stats",landing.footer.stats],["#faq",landing.nav.faq]].map(([h,l])=>(
                   <a key={h} href={h} className="foot-link">{l}</a>
                 ))}
               </div>
             </div>
             <div>
-              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>Bar sahipleri</h5>
+              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>{landing.footer.owners}</h5>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[["/login","Dashboard girişi"],["/signup","Mekan bağla"],["#faq","SSS"]].map(([h,l])=>(
+                {[["/login",landing.footer.dashboardLogin],["/signup",landing.footer.connectVenue],["#faq",landing.nav.faq]].map(([h,l])=>(
                   <Link key={h} href={h} className="foot-link">{l}</Link>
                 ))}
               </div>
             </div>
             <div>
-              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>İletişim</h5>
+              <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>{landing.footer.contact}</h5>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <a href="mailto:hello@jackpot.bar" className="foot-link">hello@jackpot.bar</a>
-                <a href="#" className="foot-link">Karaköy, İstanbul</a>
+                <a href="#" className="foot-link">{landing.footer.location}</a>
                 <a href="#" className="foot-link">Instagram · @jackpot.bar</a>
               </div>
             </div>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 24, borderTop: `1px solid ${C.line}`, fontSize: 13, color: C.i500, flexWrap: "wrap", gap: 12 }}>
-            <div>© 2026 Jackpot. Tüm hakları saklıdır.</div>
+            <div>{landing.footer.rights}</div>
             <div style={{ display: "flex", gap: 22 }}>
-              <Link href="/privacy" className="foot-link">Gizlilik</Link>
-              <Link href="/terms" className="foot-link">Şartlar</Link>
-              <Link href="/refund" className="foot-link">İade</Link>
+              <Link href="/privacy" className="foot-link">{landing.footer.privacy}</Link>
+              <Link href="/terms" className="foot-link">{landing.footer.terms}</Link>
+              <Link href="/refund" className="foot-link">{landing.footer.refund}</Link>
             </div>
           </div>
         </div>

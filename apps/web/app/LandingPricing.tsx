@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { copy } from "../lib/i18n";
 
 const C = {
   bg0: "#08050a",
@@ -23,43 +24,47 @@ type Props = {
 
 export function LandingPricing({ signedIn }: Props) {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
+  const pricing = copy.pricing;
+  const common = copy.common;
+  const standard = pricing.plans.standard;
+  const pro = pricing.plans.pro;
 
   return (
     <section id="pricing" style={{ padding: "100px 0" }}>
       <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
         <div style={{ textAlign: "center", marginBottom: 48 }}>
-          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>Fiyatlandırma</div>
-          <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100 }}>Basit, şeffaf fiyatlar</h2>
+          <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{pricing.eyebrow}</div>
+          <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100 }}>{pricing.title}</h2>
           <p style={{ margin: "18px auto 0", maxWidth: 520, fontSize: 17, color: C.i300, lineHeight: 1.6 }}>
-            İlk 30 gün ücretsiz. Kart bilgisi istemiyoruz.
+            {pricing.body}
           </p>
           <div style={{ display: "inline-flex", marginTop: 28, background: "rgba(232,200,118,0.06)", border: `1px solid ${C.line}`, borderRadius: 12, padding: 4, gap: 3 }}>
-            <PeriodButton active={period === "monthly"} onClick={() => setPeriod("monthly")}>Aylık</PeriodButton>
+            <PeriodButton active={period === "monthly"} onClick={() => setPeriod("monthly")}>{common.monthly}</PeriodButton>
             <PeriodButton active={period === "annual"} onClick={() => setPeriod("annual")}>
-              Yıllık <span style={{ fontSize: 10, color: "#4ade80", marginLeft: 4 }}>%58 ucuz</span>
+              {common.annual} <span style={{ fontSize: 10, color: "#4ade80", marginLeft: 4 }}>{pricing.annualBadge}</span>
             </PeriodButton>
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, maxWidth: 760, margin: "0 auto" }}>
           <PlanCard
-            title="Standart"
-            price={period === "monthly" ? "$5" : "$20"}
-            suffix={period === "monthly" ? "/ay" : "/yıl"}
-            subPrice={period === "annual" ? "$1.67/ay eşdeğeri" : undefined}
-            description="Anonim oyun akışı. Müşteri hesabı yok, basit kupon dağıtımı."
-            features={["Sınırsız fiş tarama", "AI ile fiş doğrulama", "3 slot tasarımı", "Garson redemption paneli", "Temel istatistikler"]}
-            cta={signedIn ? "Panelde Başla" : "Ücretsiz Başla"}
+            title={standard.title}
+            price={period === "monthly" ? standard.monthlyPrice : standard.annualPrice}
+            suffix={period === "monthly" ? common.monthSuffix : common.yearSuffix}
+            subPrice={period === "annual" ? pricing.equivalentMonthly.standard : undefined}
+            description={standard.description}
+            features={[...standard.features]}
+            cta={signedIn ? standard.signedInCta : standard.signedOutCta}
             href={signedIn ? "/dashboard" : "/signup?plan=kampanya"}
           />
           <PlanCard
-            title="Pro"
-            price={period === "monthly" ? "$10" : "$50"}
-            suffix={period === "monthly" ? "/ay" : "/yıl"}
-            subPrice={period === "annual" ? "$4.17/ay eşdeğeri" : undefined}
-            description="Müşteri hesabı + sadakat sistemi + kampanya gönderimi."
-            features={["Standart planındaki her şey", "Müşteri hesapları (e-posta giriş)", "Profil + kupon geçmişi", "Sadakat seviyesi", "Kampanya gönderici", "Detaylı analytics", "CSV export"]}
-            cta={signedIn ? "Pro'ya Geç" : "Pro Hesap Aç"}
+            title={pro.title}
+            price={period === "monthly" ? pro.monthlyPrice : pro.annualPrice}
+            suffix={period === "monthly" ? common.monthSuffix : common.yearSuffix}
+            subPrice={period === "annual" ? pricing.equivalentMonthly.pro : undefined}
+            description={pro.description}
+            features={[...pro.features]}
+            cta={signedIn ? pro.signedInCta : pro.signedOutCta}
             href={signedIn ? "/dashboard" : "/signup?plan=pro"}
             featured
           />
@@ -125,7 +130,7 @@ function PlanCard({
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: featured ? C.b300 : C.i400, textTransform: "uppercase" }}>{title}</div>
-        {featured && <span style={{ padding: "3px 10px", borderRadius: 999, background: C.b300, color: "#1a0f06", fontSize: 10, fontWeight: 800 }}>POPÜLER</span>}
+        {featured && <span style={{ padding: "3px 10px", borderRadius: 999, background: C.b300, color: "#1a0f06", fontSize: 10, fontWeight: 800 }}>{copy.pricing.popular}</span>}
       </div>
       <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
         {price}<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>{suffix}</span>

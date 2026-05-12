@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { copy } from "../../lib/i18n";
 
 /* ─── Design tokens ─── */
 const T = {
@@ -118,7 +119,7 @@ export function AuthShell({
             fontFamily: "'Playfair Display', serif", fontWeight: 900,
             color: "#1a0f06", fontSize: 16,
           }}>J</div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: T.ink100 }}>Jackpot</span>
+          <span style={{ fontWeight: 700, fontSize: 16, color: T.ink100 }}>{copy.meta.brand}</span>
         </Link>
 
         {/* Center content */}
@@ -167,9 +168,9 @@ export function AuthShell({
             lineHeight: 1.15, color: T.ink100, letterSpacing: "-0.01em",
             maxWidth: 480,
           }}>
-            Cuma akşamı doluyduk zaten —<br/>
-            <span style={{ color: T.brass300, fontStyle: "italic" }}>ama Salı, Çarşamba</span><br/>
-            artık ölü değil.
+            {copy.auth.visual.quoteLine1}<br/>
+            <span style={{ color: T.brass300, fontStyle: "italic" }}>{copy.auth.visual.quoteLine2}</span><br/>
+            {copy.auth.visual.quoteLine3}
           </p>
 
           <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 14, color: T.ink300, fontSize: 14 }}>
@@ -181,8 +182,8 @@ export function AuthShell({
               boxShadow: "inset 0 1px 0 rgba(255,244,212,0.4)",
             }}>M</div>
             <div>
-              <div style={{ color: T.ink100, fontWeight: 600 }}>Murat Kara</div>
-              <div style={{ color: T.ink400, fontSize: 12 }}>Komün Bar · Karaköy</div>
+              <div style={{ color: T.ink100, fontWeight: 600 }}>{copy.auth.visual.customerName}</div>
+              <div style={{ color: T.ink400, fontSize: 12 }}>{copy.auth.visual.customerVenue}</div>
             </div>
           </div>
         </div>
@@ -193,11 +194,7 @@ export function AuthShell({
           paddingTop: 24, borderTop: `1px solid ${T.line}`,
           position: "relative", zIndex: 2,
         }}>
-          <span>40+ aktif mekan</span>
-          <span>•</span>
-          <span>%34 tekrar ziyaret</span>
-          <span>•</span>
-          <span>İstanbul, Ankara, İzmir</span>
+          {copy.auth.visual.stats.map((stat) => <span key={stat}>{stat}</span>)}
         </div>
 
         <style>{`
@@ -213,12 +210,12 @@ export function AuthShell({
         <div className="auth-topbar" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 72 }}>
           <Link href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: T.ink400, fontSize: 14 }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            Ana sayfa
+            {copy.common.home}
           </Link>
           <span style={{ color: T.ink500, fontSize: 13 }}>
             {mode === "login"
-              ? <span>Hesabın yok mu? <Link href="/signup" style={{ color: T.brass300, textDecoration: "none" }}>Mekanını bağla</Link></span>
-              : <span>Zaten hesabın var mı? <Link href="/login" style={{ color: T.brass300, textDecoration: "none" }}>Giriş yap</Link></span>
+              ? <span>{copy.auth.topbar.noAccount} <Link href="/signup" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.connectVenue}</Link></span>
+              : <span>{copy.auth.topbar.hasAccount} <Link href="/login" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.login}</Link></span>
             }
           </span>
         </div>
@@ -233,7 +230,7 @@ export function AuthShell({
         </div>
 
         <div className="auth-copyright" style={{ marginTop: "auto", paddingTop: 40, color: T.ink500, fontSize: 13, textAlign: "center" }}>
-          © 2026 Jackpot · İstanbul
+          {copy.auth.footer}
         </div>
       </main>
 

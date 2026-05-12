@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ReactNode } from "react";
+import { copy } from "../lib/i18n";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -11,20 +12,20 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Shotpot — Jackpot for Bars",
-  description: "Fişini tara, jackpot çevir, kupon kazan. Bar & restoranlar için sadakat oyunu.",
+  title: copy.meta.title,
+  description: copy.meta.description,
   manifest: "/manifest.json",
   themeColor: "#ffd84e",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Shotpot",
+    title: copy.meta.appName,
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr" className={inter.variable}>
+    <html lang={copy.meta.lang} className={inter.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

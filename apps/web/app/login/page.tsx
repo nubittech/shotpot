@@ -4,6 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/browser";
+import { copy } from "../../lib/i18n";
 import { AuthShell, Field, inputStyle, primaryBtn, errorStyle } from "../../components/auth/AuthShell";
 
 function LoginForm() {
@@ -36,18 +37,18 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
-      <Field label="E-posta">
+      <Field label={copy.common.email}>
         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
       </Field>
-      <Field label="Parola">
+      <Field label={copy.common.password}>
         <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
       </Field>
       {err && <div style={errorStyle}>{err}</div>}
       <button type="submit" disabled={busy} style={primaryBtn}>
-        {busy ? "Giriş yapılıyor…" : "Giriş Yap"}
+        {busy ? copy.auth.login.submitting : copy.auth.login.submit}
       </button>
       <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", textAlign: "center" }}>
-        Hesabın yok mu? <Link href="/signup" style={{ color: "#ffd84e" }}>Kaydol</Link>
+        {copy.auth.login.signupPrompt} <Link href="/signup" style={{ color: "#ffd84e" }}>{copy.auth.login.signupLink}</Link>
       </div>
     </form>
   );
@@ -55,8 +56,8 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthShell title="Tekrar hoş geldin." sub="Bar yönetim paneline giriş yapın. Kuponlar, müşteriler, analitik — hepsi tek yerde." mode="login">
-      <Suspense fallback={<div style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>Yükleniyor…</div>}>
+    <AuthShell title={copy.auth.login.title} sub={copy.auth.login.subtitle} mode="login">
+      <Suspense fallback={<div style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{copy.common.loading}</div>}>
         <LoginForm />
       </Suspense>
     </AuthShell>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/browser";
+import { copy } from "../../lib/i18n";
 import { AuthShell, Field, inputStyle, primaryBtn, errorStyle } from "../../components/auth/AuthShell";
 
 export default function SignupPage() {
@@ -31,7 +32,7 @@ export default function SignupPage() {
         router.push("/dashboard");
         router.refresh();
       } else {
-        setInfo("E-postanı kontrol et — onay linki gönderdik.");
+        setInfo(copy.auth.signup.success);
       }
     } finally {
       setBusy(false);
@@ -39,21 +40,21 @@ export default function SignupPage() {
   }
 
   return (
-    <AuthShell title="Mekanını bağla." sub="5 dakikada hesap. İlk 30 gün ücretsiz, kart bilgisi gerekmez." mode="signup">
+    <AuthShell title={copy.auth.signup.title} sub={copy.auth.signup.subtitle} mode="signup">
       <form onSubmit={handleSubmit} style={{ display: "grid", gap: 14 }}>
-        <Field label="E-posta">
+        <Field label={copy.common.email}>
           <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
         </Field>
-        <Field label="Parola (min 6)">
+        <Field label={copy.auth.signup.passwordLabel}>
           <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} style={inputStyle} />
         </Field>
         {err && <div style={errorStyle}>{err}</div>}
         {info && <div style={{ ...errorStyle, background: "rgba(142,242,161,0.1)", borderColor: "rgba(142,242,161,0.3)", color: "#8ef2a1" }}>{info}</div>}
         <button type="submit" disabled={busy} style={primaryBtn}>
-          {busy ? "Kaydediliyor…" : "Kaydol"}
+          {busy ? copy.auth.signup.submitting : copy.auth.signup.submit}
         </button>
         <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", textAlign: "center" }}>
-          Hesabın var mı? <Link href="/login" style={{ color: "#ffd84e" }}>Giriş yap</Link>
+          {copy.auth.signup.loginPrompt} <Link href="/login" style={{ color: "#ffd84e" }}>{copy.auth.signup.loginLink}</Link>
         </div>
       </form>
     </AuthShell>
