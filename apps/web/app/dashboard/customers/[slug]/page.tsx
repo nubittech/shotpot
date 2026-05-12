@@ -3,19 +3,23 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import type { CustomerPro } from "../../../../lib/supabase/types";
+import { getServerCopy } from "../../../../lib/i18n/server";
 
 type Params = { params: { slug: string } };
-
-const LOYALTY_BADGE: Record<string, string> = {
-  bronze: "🥉 Bronz",
-  silver: "🥈 Gümüş",
-  gold:   "🥇 Altın",
-};
 
 export default async function CustomersPage({ params }: Params) {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login?next=/dashboard");
+  const copyText = getServerCopy();
+  const common = copyText.common;
+  const customersCopy = copyText.dashboardPages.customers;
+  const brand = copyText.meta.brand;
+  const loyaltyBadge: Record<string, string> = {
+    bronze: `🥉 ${customersCopy.loyalty.bronze}`,
+    silver: `🥈 ${customersCopy.loyalty.silver}`,
+    gold: `🥇 ${customersCopy.loyalty.gold}`,
+  };
 
   const svc = getServiceClient();
 
@@ -33,13 +37,13 @@ export default async function CustomersPage({ params }: Params) {
 
   if (v.tier !== "pro") {
     return (
-      <Shell title="Müşteriler" venueName={v.name} slug={v.slug}>
+      <Shell title={common.customers} venueName={v.name} slug={v.slug} brand={brand} analyticsLabel={common.analytics} backLabel={copyText.dashboardPages.backDashboard}>
         <div style={{ padding: "60px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16 }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
           <p style={{ color: "rgba(244,239,230,0.5)", fontSize: 14 }}>
-            Müşteri takibi <strong style={{ color: "#ffd84e" }}>Pro</strong> hesaba özeldir.
+            {customersCopy.locked}
           </p>
-          <Link href="/studio" style={primaryLink}>Pro&apos;ya Geç →</Link>
+          <Link href="/studio" style={primaryLink}>{customersCopy.upgrade}</Link>
         </div>
       </Shell>
     );
@@ -61,7 +65,7 @@ export default async function CustomersPage({ params }: Params) {
   const totalSpend = customers.reduce((s, c) => s + (c.total_spend ?? 0), 0);
 
   return (
-    <Shell title="Müşteriler" venueName={v.name} slug={v.slug}>
+    <Shell title={common.customers} venueName={v.name} slug={v.slug} brand={brand} analyticsLabel={common.analytics} backLabel={copyText.dashboardPages.backDashboard}>
       {/* Action bar */}
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14, gap: 8 }}>
         <a
@@ -69,19 +73,19 @@ export default async function CustomersPage({ params }: Params) {
           download
           style={{ padding: "8px 14px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(244,239,230,0.85)", fontSize: 12, fontWeight: 700, textDecoration: "none" }}
         >
-          📥 CSV İndir
+          {customersCopy.csv}
         </a>
         <Link href={`/dashboard/campaigns/${v.slug}`} style={{ padding: "8px 14px", borderRadius: 10, background: "#a78bfa", color: "#111", fontSize: 12, fontWeight: 700, textDecoration: "none" }}>
-          📨 Kampanya Gönder
+          {customersCopy.sendCampaign}
         </Link>
       </div>
 
       {/* KPI row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>
         {[
-          { label: "Toplam Üye", value: total, color: "#ffd84e" },
-          { label: "Son 30 gün aktif", value: active30, color: "#4ade80" },
-          { label: "Toplam Harcama", value: `₺${totalSpend.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}`, color: "#a78bfa" },
+          { label: customersCopy.totalMembers, value: total, color: "#ffd84e" },
+          { label: customersCopy.active30d, value: active30, color: "#4ade80" },
+          { label: customersCopy.totalSpend, value: `₺${totalSpend.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}`, color: "#a78bfa" },
         ].map(({ label, value, color }) => (
           <div key={label} style={kpiCard}>
             <div style={{ fontSize: 26, fontWeight: 800, color }}>{value}</div>
@@ -93,14 +97,14 @@ export default async function CustomersPage({ params }: Params) {
       {/* Table */}
       {customers.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.4)", fontSize: 14 }}>
-          Henüz kayıtlı müşteri yok. Müşteriler /play/{v.slug} üzerinden giriş yaptıkça burada görünür.
+          {customersCopy.empty.replace("{slug}", v.slug)}
         </div>
       ) : (
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                {["Ad Soyad", "E-posta", "Seviye", "Ziyaret", "Harcama", "Son Ziyaret", ""].map((h) => (
+                {[customersCopy.table.fullName, customersCopy.table.email, customersCopy.table.level, customersCopy.table.visits, customersCopy.table.spend, customersCopy.table.lastVisit, ""].map((h) => (
                   <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(244,239,230,0.4)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
                 ))}
               </tr>
@@ -110,18 +114,18 @@ export default async function CustomersPage({ params }: Params) {
                 <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                   <td style={td}>{c.full_name ?? "—"}</td>
                   <td style={{ ...td, color: "rgba(244,239,230,0.55)" }}>{c.email ?? "—"}</td>
-                  <td style={td}>{LOYALTY_BADGE[c.loyalty_tier] ?? "—"}</td>
+                  <td style={td}>{loyaltyBadge[c.loyalty_tier] ?? "—"}</td>
                   <td style={{ ...td, fontWeight: 700 }}>{c.total_visits}</td>
                   <td style={{ ...td, color: "#ffd84e", fontWeight: 700 }}>
-                    {c.total_spend > 0 ? `₺${c.total_spend.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}` : "—"}
+                    {c.total_spend > 0 ? `₺${c.total_spend.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}` : "—"}
                   </td>
                   <td style={{ ...td, color: "rgba(244,239,230,0.45)", whiteSpace: "nowrap" }}>
                     {c.last_visit_at
-                      ? new Date(c.last_visit_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })
+                      ? new Date(c.last_visit_at).toLocaleDateString(copyText.meta.locale, { day: "numeric", month: "short" })
                       : "—"}
                   </td>
                   <td style={td}>
-                    <Link href={`/dashboard/customers/${v.slug}/${c.id}`} style={smallLink}>Detay →</Link>
+                    <Link href={`/dashboard/customers/${v.slug}/${c.id}`} style={smallLink}>{customersCopy.detail}</Link>
                   </td>
                 </tr>
               ))}
@@ -134,18 +138,18 @@ export default async function CustomersPage({ params }: Params) {
 }
 
 /* ─── Layout shell ─── */
-function Shell({ title, venueName, slug, children }: { title: string; venueName: string; slug: string; children: React.ReactNode }) {
+function Shell({ title, venueName, slug, brand, analyticsLabel, backLabel, children }: { title: string; venueName: string; slug: string; brand: string; analyticsLabel: string; backLabel: string; children: React.ReactNode }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Receipt Reward</Link>
+        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>{brand}</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <Link href="/dashboard" style={{ color: "rgba(244,239,230,0.5)", fontSize: 13, textDecoration: "none" }}>{venueName}</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.8)", fontSize: 13 }}>{title}</span>
         <div style={{ flex: 1 }} />
-        <Link href={`/dashboard/analytics/${slug}`} style={navLink}>Analitik</Link>
-        <Link href="/dashboard" style={navLink}>← Dashboard</Link>
+        <Link href={`/dashboard/analytics/${slug}`} style={navLink}>{analyticsLabel}</Link>
+        <Link href="/dashboard" style={navLink}>{backLabel}</Link>
       </header>
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px" }}>
         <h1 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800 }}>{title} — {venueName}</h1>

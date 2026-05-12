@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../lib/supabase/server";
+import { getServerCopy } from "../../../lib/i18n/server";
 
 type VenueRow = {
   id: string;
@@ -23,6 +24,9 @@ export default async function CouponsIndexPage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login?next=/dashboard/coupons");
+  const copyText = getServerCopy();
+  const common = copyText.common;
+  const couponsCopy = copyText.dashboardPages.coupons;
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
@@ -57,23 +61,23 @@ export default async function CouponsIndexPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Jackpot</Link>
+        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>{copyText.meta.brand}</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Kuponlar</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{common.coupons}</span>
         <div style={{ flex: 1 }} />
-        <Link href="/dashboard" style={navLink}>Dashboard</Link>
+        <Link href="/dashboard" style={navLink}>{common.dashboard}</Link>
       </header>
 
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "32px 24px" }}>
         <div style={{ marginBottom: 24 }}>
-          <div style={{ color: "#ffd84e", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>Kupon Yönetimi</div>
-          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 850 }}>İşletme Seç</h1>
-          <p style={{ margin: "8px 0 0", color: "rgba(244,239,230,0.55)", fontSize: 14 }}>Her işletmenin kuponlarını ayrı ayrı görüntüleyebilirsin.</p>
+          <div style={{ color: "#ffd84e", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>{couponsCopy.management}</div>
+          <h1 style={{ margin: 0, fontSize: 28, fontWeight: 850 }}>{couponsCopy.chooseVenue}</h1>
+          <p style={{ margin: "8px 0 0", color: "rgba(244,239,230,0.55)", fontSize: 14 }}>{couponsCopy.chooseHelp}</p>
         </div>
 
         {venues.length === 0 ? (
           <div style={{ padding: "48px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.45)", fontSize: 14 }}>
-            Henüz işletme yok. İlk işletmeni oluşturduktan sonra kuponlar burada listelenir.
+            {couponsCopy.emptyVenues}
           </div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
@@ -109,10 +113,10 @@ export default async function CouponsIndexPage() {
                     </div>
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
-                    <MiniStat label="Toplam" value={stats.total} />
-                    <MiniStat label="Aktif" value={stats.active} tone="green" />
-                    <MiniStat label="Kullanıldı" value={stats.redeemed} tone="purple" />
-                    <MiniStat label="Süresi Doldu" value={stats.expired} tone="red" />
+                    <MiniStat label={couponsCopy.total} value={stats.total} />
+                    <MiniStat label={couponsCopy.active} value={stats.active} tone="green" />
+                    <MiniStat label={couponsCopy.redeemed} value={stats.redeemed} tone="purple" />
+                    <MiniStat label={couponsCopy.expired} value={stats.expired} tone="red" />
                   </div>
                 </Link>
               );

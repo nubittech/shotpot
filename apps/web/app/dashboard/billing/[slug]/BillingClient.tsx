@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { getClientCopy } from "../../../../lib/i18n/client";
 
 declare global {
   interface Window {
@@ -33,7 +34,7 @@ type Props = {
   initialPeriod?: BillingPeriod | null;
 };
 
-const PLANS: Array<{
+type PlanView = {
   key: PlanKey;
   name: string;
   monthlyPrice: string;
@@ -43,43 +44,26 @@ const PLANS: Array<{
   color: string;
   features: string[];
   badge?: string;
-}> = [
+};
+
+const PLAN_BASE = [
   {
     key: "kampanya",
-    name: "Standart",
     monthlyPrice: "$5",
     annualPrice: "$20",
     annualMonthly: "$1.67",
     period: "/mo",
     color: "#ffd84e",
-    features: [
-      "Sınırsız fiş tarama",
-      "AI fiş doğrulama",
-      "3 slot makinesi teması",
-      "Garson kupon paneli",
-      "Temel analitik",
-    ],
   },
   {
     key: "pro",
-    name: "Pro",
     monthlyPrice: "$10",
     annualPrice: "$50",
     annualMonthly: "$4.17",
     period: "/mo",
     color: "#a78bfa",
-    badge: "En Popüler",
-    features: [
-      "Standart'taki her şey",
-      "Müşteri hesapları",
-      "Profil & kupon geçmişi",
-      "Sadakat seviyeleri",
-      "Kampanya gönderimi",
-      "Detaylı analitik",
-      "CSV dışa aktarım",
-    ],
   },
-];
+] as const;
 
 export function BillingClient({
   venueId, venueName, userEmail, currentPlan, subscriptionStatus,
@@ -88,6 +72,9 @@ export function BillingClient({
   priceKampanyaAnnual, priceProAnnual, autoCheckout = false,
   initialPlan, initialPeriod,
 }: Props) {
+  const copyText = getClientCopy();
+  const billing = copyText.billing;
+  const common = copyText.common;
   const [loading, setLoading] = useState<PlanKey | "portal" | null>(null);
   const [paddleReady, setPaddleReady] = useState(false);
   const [error, setError] = useState("");
@@ -99,7 +86,7 @@ export function BillingClient({
   // Load Paddle.js
   useEffect(() => {
     if (!paddleClientToken) {
-      setError("Paddle token eksik. Vercel environment değişkenlerini kontrol et.");
+      setError(billing.missingToken);
       return;
     }
     if (window.Paddle && window.__shotpotPaddleInitialized) { setPaddleReady(true); return; }
@@ -114,7 +101,7 @@ export function BillingClient({
       setPaddleReady(true);
     };
     document.head.appendChild(script);
-  }, [paddleClientToken, paddleEnvironment]);
+  }, [billing.missingToken, paddleClientToken, paddleEnvironment]);
 
   function getPriceId(plan: PlanKey) {
     if (period === "annual") {
@@ -126,11 +113,11 @@ export function BillingClient({
   function handleSubscribe(plan: PlanKey) {
     const priceId = getPriceId(plan);
     if (!priceId) {
-      setError("Bu paket için Paddle price ID eksik. Environment değişkenlerini kontrol et.");
+      setError(billing.missingPrice);
       return;
     }
     if (!paddleReady || !window.Paddle) {
-      setError("Ödeme sistemi yüklenemedi. Sayfayı yenileyip tekrar dene.");
+      setError(billing.paymentLoadError);
       return;
     }
     setLoading(plan);
@@ -142,7 +129,7 @@ export function BillingClient({
       customData: { venue_id: venueId, plan, billing_cycle: period },
       settings: {
         displayMode: "overlay",
-        locale: "en",
+        locale: copyText.meta.lang,
         successUrl: `${window.location.origin}/dashboard/billing/${window.location.pathname.split("/").pop()}?success=1`,
       },
     });
@@ -159,7 +146,7 @@ export function BillingClient({
 
   function handlePortal() {
     if (!paddleReady || !window.Paddle || !paddleSubscriptionId) {
-      setError("Abonelik bulunamadı.");
+      setError(billing.subscriptionMissing);
       return;
     }
     setLoading("portal");
@@ -173,16 +160,22 @@ export function BillingClient({
   }
 
   const statusLabel: Record<string, { text: string; color: string }> = {
-    active:   { text: "Aktif",            color: "#4ade80" },
-    trialing: { text: "Deneme",           color: "#fbbf24" },
-    past_due: { text: "Ödeme Gecikti",    color: "#f87171" },
-    canceled: { text: "İptal Edildi",     color: "rgba(244,239,230,0.4)" },
-    paused:   { text: "Duraklatıldı",     color: "#94a3b8" },
-    inactive: { text: "Pasif",            color: "rgba(244,239,230,0.4)" },
+    active:   { text: billing.statuses.active, color: "#4ade80" },
+    trialing: { text: billing.statuses.trialing, color: "#fbbf24" },
+    past_due: { text: billing.statuses.past_due, color: "#f87171" },
+    canceled: { text: billing.statuses.canceled, color: "rgba(244,239,230,0.4)" },
+    paused:   { text: billing.statuses.paused, color: "#94a3b8" },
+    inactive: { text: billing.statuses.inactive, color: "rgba(244,239,230,0.4)" },
   };
   const statusInfo = statusLabel[subscriptionStatus ?? "inactive"] ?? statusLabel.inactive;
   const normalizedCurrentPlan: PlanKey | "" =
     currentPlan === "pro" || currentPlan === "isletme" ? "pro" : currentPlan === "kampanya" ? "kampanya" : "";
+  const plans: PlanView[] = PLAN_BASE.map((plan) => ({
+    ...plan,
+    name: plan.key === "pro" ? billing.plans.pro.name : billing.plans.standard.name,
+    features: plan.key === "pro" ? billing.plans.pro.features : billing.plans.standard.features,
+    badge: plan.key === "pro" ? billing.popular : undefined,
+  }));
 
   return (
     <div style={{ maxWidth: 640, margin: "0 auto", padding: "32px 20px" }}>
@@ -190,9 +183,9 @@ export function BillingClient({
       <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "24px 22px", marginBottom: 28 }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
-            <div style={{ fontSize: 12, color: "rgba(244,239,230,0.45)", fontWeight: 600, marginBottom: 4 }}>MEVCUT PLAN</div>
+            <div style={{ fontSize: 12, color: "rgba(244,239,230,0.45)", fontWeight: 600, marginBottom: 4, textTransform: "uppercase" }}>{billing.currentPlanLabel}</div>
             <div style={{ fontSize: 22, fontWeight: 800, color: "#f4efe6" }}>
-              {currentPlan === "pro" || currentPlan === "isletme" ? "Pro" : currentPlan === "kampanya" ? "Standart" : "Ücretsiz"}
+              {currentPlan === "pro" || currentPlan === "isletme" ? billing.plans.pro.name : currentPlan === "kampanya" ? billing.plans.standard.name : billing.freePlan}
             </div>
             <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", marginTop: 2 }}>{venueName}</div>
           </div>
@@ -202,7 +195,7 @@ export function BillingClient({
             </div>
             {planExpiresAt && isActive && (
               <div style={{ fontSize: 11, color: "rgba(244,239,230,0.4)", marginTop: 6 }}>
-                Yenileme: {new Date(planExpiresAt).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}
+                {billing.renewal}: {new Date(planExpiresAt).toLocaleDateString(copyText.meta.locale, { day: "numeric", month: "long", year: "numeric" })}
               </div>
             )}
           </div>
@@ -215,14 +208,14 @@ export function BillingClient({
             rel="noopener noreferrer"
             style={{ marginTop: 16, display: "inline-block", padding: "9px 16px", borderRadius: 10, fontSize: 12, fontWeight: 700, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "rgba(244,239,230,0.8)", textDecoration: "none" }}
           >
-            💳 Paddle'da Yönet (Fatura & Kart)
+            {billing.managePaddle}
           </a>
         )}
       </div>
 
       {/* Billing period toggle */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#f4efe6" }}>Plan Seç</h2>
+        <h2 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: "#f4efe6" }}>{billing.choosePlan}</h2>
         <div style={{ display: "flex", background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: 3, gap: 2 }}>
           {(["monthly", "annual"] as BillingPeriod[]).map((p) => (
             <button
@@ -236,18 +229,18 @@ export function BillingClient({
                 color: period === p ? "#ffd84e" : "rgba(244,239,230,0.5)",
               }}
             >
-              {p === "monthly" ? "Aylık" : "Yıllık"}
-              {p === "annual" && <span style={{ fontSize: 10, marginLeft: 4, color: "#4ade80" }}>%58 ucuz</span>}
+              {p === "monthly" ? common.monthly : common.annual}
+              {p === "annual" && <span style={{ fontSize: 10, marginLeft: 4, color: "#4ade80" }}>{billing.annualCheap}</span>}
             </button>
           ))}
         </div>
       </div>
 
       <div style={{ display: "grid", gap: 14 }}>
-        {PLANS.map((p) => {
+        {plans.map((p) => {
           const isCurrent = normalizedCurrentPlan === p.key && isActive;
           const displayPrice = period === "annual" ? p.annualPrice : p.monthlyPrice;
-          const displaySub = period === "annual" ? "/yıl" : "/ay";
+          const displaySub = period === "annual" ? billing.yearlySuffix : common.monthSuffix;
           const monthlyEquiv = period === "annual" ? p.annualMonthly : null;
           return (
             <div key={p.key} style={{
@@ -269,12 +262,12 @@ export function BillingClient({
                     <span style={{ fontSize: 13, fontWeight: 600, color: "rgba(244,239,230,0.4)" }}>{displaySub}</span>
                   </div>
                   {monthlyEquiv && (
-                    <div style={{ fontSize: 11, color: "#4ade80", marginTop: 2 }}>{monthlyEquiv}/ay eşdeğeri</div>
+                    <div style={{ fontSize: 11, color: "#4ade80", marginTop: 2 }}>{monthlyEquiv}{billing.monthlyEquivalent}</div>
                   )}
                 </div>
                 {isCurrent ? (
                   <div style={{ padding: "6px 14px", borderRadius: 999, background: `${p.color}20`, color: p.color, fontSize: 11, fontWeight: 700, border: `1px solid ${p.color}50` }}>
-                    ✓ Mevcut Plan
+                    {billing.currentPlan}
                   </div>
                 ) : (
                   <button
@@ -286,7 +279,7 @@ export function BillingClient({
                       opacity: (loading !== null || !paddleReady) ? 0.7 : 1,
                     }}
                   >
-                    {loading === p.key ? "Açılıyor..." : "Abone Ol"}
+                    {loading === p.key ? billing.opening : billing.subscribe}
                   </button>
                 )}
               </div>
@@ -309,7 +302,7 @@ export function BillingClient({
       )}
 
       <p style={{ marginTop: 20, fontSize: 11, color: "rgba(244,239,230,0.3)", textAlign: "center" }}>
-        Ödemeler Paddle tarafından güvenle işlenir. İstediğin zaman iptal edebilirsin.
+        {billing.secure}
       </p>
     </div>
   );

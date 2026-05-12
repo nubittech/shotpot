@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { getServerCopy } from "../../../../lib/i18n/server";
 
 type Params = { params: { slug: string } };
 
@@ -18,6 +19,9 @@ export default async function CouponsPage({ params }: Params) {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login?next=/dashboard");
+  const copyText = getServerCopy();
+  const common = copyText.common;
+  const couponsCopy = copyText.dashboardPages.coupons;
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
@@ -52,28 +56,28 @@ export default async function CouponsPage({ params }: Params) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Jackpot</Link>
+        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>{copyText.meta.brand}</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Kuponlar</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{common.coupons}</span>
         <div style={{ flex: 1 }} />
         {v.tier === "pro" && (
           <>
-            <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>Analitik</Link>
-            <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
+            <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>{common.analytics}</Link>
+            <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>{common.customers}</Link>
           </>
         )}
-        <Link href="/dashboard" style={navLink}>Dashboard</Link>
+        <Link href="/dashboard" style={navLink}>{common.dashboard}</Link>
       </header>
 
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 24 }}>
           <div>
-            <div style={{ color: "#ffd84e", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>Kupon Yönetimi</div>
-            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 850 }}>{v.name} Kuponları</h1>
+            <div style={{ color: "#ffd84e", textTransform: "uppercase", letterSpacing: "0.16em", fontSize: 11, fontWeight: 800, marginBottom: 8 }}>{couponsCopy.management}</div>
+            <h1 style={{ margin: 0, fontSize: 24, fontWeight: 850 }}>{v.name} {couponsCopy.venueCoupons}</h1>
           </div>
-          <Link href={`/scan?venue=${v.slug}`} style={primaryLink}>Garson Kullanım Ekranı</Link>
+          <Link href={`/scan?venue=${v.slug}`} style={primaryLink}>{couponsCopy.staffScreen}</Link>
         </div>
 
         {venues.length > 1 && (
@@ -99,22 +103,22 @@ export default async function CouponsPage({ params }: Params) {
         )}
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
-          <Kpi label="Toplam" value={coupons.length} color="#ffd84e" />
-          <Kpi label="Aktif" value={active} color="#4ade80" />
-          <Kpi label="Kullanıldı" value={redeemed} color="#a78bfa" />
-          <Kpi label="Süresi Doldu" value={expired} color="#fb7185" />
+          <Kpi label={couponsCopy.total} value={coupons.length} color="#ffd84e" />
+          <Kpi label={couponsCopy.active} value={active} color="#4ade80" />
+          <Kpi label={couponsCopy.redeemed} value={redeemed} color="#a78bfa" />
+          <Kpi label={couponsCopy.expired} value={expired} color="#fb7185" />
         </div>
 
         {coupons.length === 0 ? (
           <div style={{ padding: "48px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.45)", fontSize: 14 }}>
-            Henüz kupon yok. Müşteriler fiş tarayıp ödül kazandıkça burada listelenir.
+            {couponsCopy.empty}
           </div>
         ) : (
           <div style={{ overflowX: "auto", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16 }}>
             <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
               <thead>
                 <tr style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                  {["Kod", "Ödül", "Durum", "Oluşturuldu", "Son Kullanım"].map((h) => (
+                  {[couponsCopy.table.code, couponsCopy.table.reward, couponsCopy.table.status, couponsCopy.table.created, couponsCopy.table.expires].map((h) => (
                     <th key={h} style={th}>{h}</th>
                   ))}
                 </tr>
@@ -127,10 +131,10 @@ export default async function CouponsPage({ params }: Params) {
                       <td style={{ ...td, fontFamily: "'DM Mono', ui-monospace, monospace", color: "#ffd84e", fontWeight: 800 }}>{c.code}</td>
                       <td style={td}>{c.reward_label}</td>
                       <td style={td}>
-                        <Status label={c.redeemed_at ? "Kullanıldı" : isExpired ? "Süresi doldu" : "Aktif"} tone={c.redeemed_at ? "purple" : isExpired ? "red" : "green"} />
+                        <Status label={c.redeemed_at ? couponsCopy.redeemed : isExpired ? couponsCopy.expiredLower : couponsCopy.active} tone={c.redeemed_at ? "purple" : isExpired ? "red" : "green"} />
                       </td>
-                      <td style={{ ...td, color: "rgba(244,239,230,0.55)", whiteSpace: "nowrap" }}>{formatDate(c.created_at)}</td>
-                      <td style={{ ...td, color: "rgba(244,239,230,0.55)", whiteSpace: "nowrap" }}>{c.expires_at ? formatDate(c.expires_at) : "-"}</td>
+                      <td style={{ ...td, color: "rgba(244,239,230,0.55)", whiteSpace: "nowrap" }}>{formatDate(c.created_at, copyText.meta.locale)}</td>
+                      <td style={{ ...td, color: "rgba(244,239,230,0.55)", whiteSpace: "nowrap" }}>{c.expires_at ? formatDate(c.expires_at, copyText.meta.locale) : "-"}</td>
                     </tr>
                   );
                 })}
@@ -161,8 +165,8 @@ function Status({ label, tone }: { label: string; tone: "green" | "purple" | "re
   );
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" });
+function formatDate(value: string, locale: string) {
+  return new Date(value).toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
 }
 
 const navLink: React.CSSProperties = { padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(244,239,230,0.7)", fontSize: 12, fontWeight: 600, textDecoration: "none" };

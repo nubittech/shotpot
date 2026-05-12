@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { getServerCopy } from "../../../../lib/i18n/server";
 
 type Params = { params: { slug: string } };
 
@@ -9,6 +10,10 @@ export default async function AnalyticsPage({ params }: Params) {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login");
+  const copyText = getServerCopy();
+  const common = copyText.common;
+  const dashboard = copyText.dashboard;
+  const analytics = copyText.dashboardPages.analytics;
 
   const svc = getServiceClient();
 
@@ -74,38 +79,38 @@ export default async function AnalyticsPage({ params }: Params) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Receipt Reward</Link>
+        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>{copyText.meta.brand}</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Analitik</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{analytics.title}</span>
         <div style={{ flex: 1 }} />
         {v.tier === "pro" && (
-          <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
+          <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>{common.customers}</Link>
         )}
-        <Link href="/dashboard" style={navLink}>← Dashboard</Link>
+        <Link href="/dashboard" style={navLink}>{copyText.dashboardPages.backDashboard}</Link>
       </header>
 
       <main style={{ maxWidth: 1000, margin: "0 auto", padding: "32px 24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{v.name} — Analitik</h1>
+          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800 }}>{v.name} — {analytics.title}</h1>
           <div style={{ fontSize: 12, color: "rgba(244,239,230,0.4)", padding: "6px 12px", background: "rgba(255,255,255,0.04)", borderRadius: 8, border: "1px solid rgba(255,255,255,0.07)" }}>
-            Son güncelleme: {now.toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+            {analytics.updated}: {now.toLocaleString(copyText.meta.locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
           </div>
         </div>
 
         {/* ── SECTION: Fiş & Gelir ── */}
-        <SectionTitle>🧾 Fiş & Gelir</SectionTitle>
+        <SectionTitle>{analytics.receiptsRevenue}</SectionTitle>
         <div style={kpiGrid}>
-          <KPI label="Toplam Fiş" value={totalReceipts ?? 0} color="#ffd84e" />
-          <KPI label="Son 30 gün" value={receipts30d ?? 0} color="#ffd84e" />
-          <KPI label="30g Ciro" value={`${currSymbol}${totalAmount30d.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}`} color="#a78bfa" />
-          <KPI label="30g Token" value={totalTokens30d} color="#60a5fa" />
+          <KPI label={analytics.totalReceipts} value={totalReceipts ?? 0} color="#ffd84e" />
+          <KPI label={analytics.last30Days} value={receipts30d ?? 0} color="#ffd84e" />
+          <KPI label={analytics.revenue30d} value={`${currSymbol}${totalAmount30d.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}`} color="#a78bfa" />
+          <KPI label={analytics.token30d} value={totalTokens30d} color="#60a5fa" />
         </div>
 
         {/* ── Bar chart: daily 7 days ── */}
         <div style={{ ...sectionCard, marginBottom: 24 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, color: "rgba(244,239,230,0.7)" }}>Son 7 Gün — Günlük Fiş Sayısı</div>
+          <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, color: "rgba(244,239,230,0.7)" }}>{analytics.dailyReceipts7d}</div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
             {daily7.map(({ label, count }) => {
               const max = Math.max(...daily7.map((d) => d.count), 1);
@@ -122,37 +127,37 @@ export default async function AnalyticsPage({ params }: Params) {
         </div>
 
         {/* ── SECTION: Spin & Kupon ── */}
-        <SectionTitle>🎰 Spin & Kupon</SectionTitle>
+        <SectionTitle>{analytics.spinsCoupons}</SectionTitle>
         <div style={kpiGrid}>
-          <KPI label="Toplam Spin" value={totalSpins ?? 0} color="#fb923c" />
-          <KPI label="Kazanan Spin" value={wins ?? 0} color="#4ade80" />
-          <KPI label="Kazanma Oranı" value={`%${winRate}`} color="#4ade80" />
-          <KPI label="Kupon Kullanım" value={`%${redemptionRate}`} color="#f472b6" />
+          <KPI label={analytics.totalSpins} value={totalSpins ?? 0} color="#fb923c" />
+          <KPI label={analytics.winningSpins} value={wins ?? 0} color="#4ade80" />
+          <KPI label={analytics.winRate} value={`%${winRate}`} color="#4ade80" />
+          <KPI label={analytics.redemptionRate} value={`%${redemptionRate}`} color="#f472b6" />
         </div>
         <div style={kpiGrid}>
-          <KPI label="Toplam Kupon" value={totalCoupons ?? 0} color="#e2e8f0" sub="oluşturuldu" />
-          <KPI label="Kullanıldı" value={redeemedCoupons ?? 0} color="#4ade80" sub="redemption" />
-          <KPI label="Bekleyen" value={(totalCoupons ?? 0) - (redeemedCoupons ?? 0)} color="#fbbf24" sub="aktif kupon" />
+          <KPI label={analytics.totalCoupons} value={totalCoupons ?? 0} color="#e2e8f0" sub={analytics.created} />
+          <KPI label={analytics.redeemed} value={redeemedCoupons ?? 0} color="#4ade80" sub={analytics.redemption} />
+          <KPI label={analytics.pending} value={(totalCoupons ?? 0) - (redeemedCoupons ?? 0)} color="#fbbf24" sub={analytics.activeCoupon} />
         </div>
 
         {/* ── SECTION: Pro Müşteri (only Pro) ── */}
         {v.tier === "pro" && (
           <>
-            <SectionTitle>👥 Müşteri</SectionTitle>
+            <SectionTitle>{analytics.customer}</SectionTitle>
             <div style={kpiGrid}>
-              <KPI label="Toplam Üye" value={totalCustomers ?? 0} color="#a78bfa" />
-              <KPI label="Son 30g Aktif" value={customers30d ?? 0} color="#34d399" />
-              <KPI label="Uyku Oranı" value={totalCustomers ? `%${(((totalCustomers - (customers30d ?? 0)) / totalCustomers) * 100).toFixed(0)}` : "—"} color="#f87171" sub="30g ziyaretsiz" />
+              <KPI label={analytics.totalMembers} value={totalCustomers ?? 0} color="#a78bfa" />
+              <KPI label={analytics.active30d} value={customers30d ?? 0} color="#34d399" />
+              <KPI label={analytics.sleepingRate} value={totalCustomers ? `%${(((totalCustomers - (customers30d ?? 0)) / totalCustomers) * 100).toFixed(0)}` : "—"} color="#f87171" sub={analytics.noVisit30d} />
             </div>
 
             {/* Top customers */}
             {(topCustomers ?? []).length > 0 && (
               <div style={{ ...sectionCard, marginBottom: 24 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: "rgba(244,239,230,0.7)" }}>🏆 En İyi Müşteriler (harcamaya göre)</div>
+                <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 14, color: "rgba(244,239,230,0.7)" }}>{analytics.topCustomers}</div>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                      {["Ad", "Seviye", "Ziyaret", "Harcama", "Son Ziyaret"].map((h) => (
+                      {[analytics.table.name, analytics.table.level, analytics.table.visits, analytics.table.spend, analytics.table.lastVisit].map((h) => (
                         <th key={h} style={{ padding: "8px 10px", textAlign: "left", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(244,239,230,0.4)", textTransform: "uppercase" }}>{h}</th>
                       ))}
                     </tr>
@@ -165,9 +170,9 @@ export default async function AnalyticsPage({ params }: Params) {
                           <td style={td}>{tc.full_name ?? tc.email ?? "—"}</td>
                           <td style={td}>{LOYALTY_EMOJI[tc.loyalty_tier] ?? "🥉"}</td>
                           <td style={td}>{tc.total_visits}</td>
-                          <td style={{ ...td, color: "#ffd84e", fontWeight: 700 }}>{currSymbol}{tc.total_spend.toLocaleString("tr-TR", { maximumFractionDigits: 0 })}</td>
+                          <td style={{ ...td, color: "#ffd84e", fontWeight: 700 }}>{currSymbol}{tc.total_spend.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}</td>
                           <td style={{ ...td, color: "rgba(244,239,230,0.45)" }}>
-                            {tc.last_visit_at ? new Date(tc.last_visit_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }) : "—"}
+                            {tc.last_visit_at ? new Date(tc.last_visit_at).toLocaleDateString(copyText.meta.locale, { day: "numeric", month: "short" }) : "—"}
                           </td>
                         </tr>
                       );
@@ -182,7 +187,7 @@ export default async function AnalyticsPage({ params }: Params) {
         {/* ── Recent redemptions ── */}
         {(recentCoupons ?? []).length > 0 && (
           <>
-            <SectionTitle>🎟️ Son Kullanılan Kuponlar</SectionTitle>
+            <SectionTitle>{analytics.recentCoupons}</SectionTitle>
             <div style={{ ...sectionCard }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {(recentCoupons ?? []).map((c, i) => {
@@ -194,7 +199,7 @@ export default async function AnalyticsPage({ params }: Params) {
                         <div style={{ fontFamily: "monospace", fontSize: 11, color: "rgba(244,239,230,0.4)", marginTop: 2 }}>{rc.code}</div>
                       </div>
                       <div style={{ fontSize: 11, color: "rgba(244,239,230,0.4)" }}>
-                        {new Date(rc.redeemed_at).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(rc.redeemed_at).toLocaleString(copyText.meta.locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </div>
                     </div>
                   );
