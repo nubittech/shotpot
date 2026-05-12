@@ -2,9 +2,16 @@
 
 Türkçe metinler `tr.ts` içinde sayfa/özellik bazlı kategorilendi. Yeni dil eklerken aynı yapıda ikinci bir dosya oluştur:
 
-1. `en.ts` dosyasında `tr` ile aynı anahtarları doldur.
-2. `index.ts` içindeki `dictionaries` objesine `en` ekle.
-3. Locale seçimi eklendiğinde sayfalar `getCopy(locale)` ile doğru sözlüğü okuyabilir.
+1. Yeni dil dosyasında `tr` ile aynı anahtarları doldur.
+2. `index.ts` içindeki `dictionaries` objesine yeni locale anahtarını ekle.
+3. Server component'lerde `getServerCopy()`, client component'lerde prop veya `getClientCopy()` kullan.
+
+Mevcut diller:
+
+- `tr`: Türkçe varsayılan dil.
+- `en`: İngilizce.
+
+Dil seçimi `shotpot_locale` cookie'si ile saklanır. `LanguageToggle` bu cookie'yi değiştirip sayfayı yeniden yükler.
 
 Kategoriler:
 

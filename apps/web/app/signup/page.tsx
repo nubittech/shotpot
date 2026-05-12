@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/browser";
-import { copy } from "../../lib/i18n";
+import { getClientCopy } from "../../lib/i18n/client";
 import { AuthShell, Field, inputStyle, primaryBtn, errorStyle } from "../../components/auth/AuthShell";
 
 export default function SignupPage() {
+  const copy = getClientCopy();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

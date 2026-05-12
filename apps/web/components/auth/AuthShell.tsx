@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { copy } from "../../lib/i18n";
+import { getClientCopy } from "../../lib/i18n/client";
+import { LanguageToggle } from "../LanguageToggle";
 
 /* ─── Design tokens ─── */
 const T = {
@@ -18,6 +19,8 @@ export function AuthShell({
   title: string; sub: string; children: React.ReactNode;
   mode?: "login" | "signup";
 }) {
+  const copy = getClientCopy();
+
   return (
     <div className="auth-shell" style={{
       minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr",
@@ -212,12 +215,15 @@ export function AuthShell({
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 11L5 7l4-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             {copy.common.home}
           </Link>
-          <span style={{ color: T.ink500, fontSize: 13 }}>
-            {mode === "login"
-              ? <span>{copy.auth.topbar.noAccount} <Link href="/signup" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.connectVenue}</Link></span>
-              : <span>{copy.auth.topbar.hasAccount} <Link href="/login" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.login}</Link></span>
-            }
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <LanguageToggle />
+            <span style={{ color: T.ink500, fontSize: 13 }}>
+              {mode === "login"
+                ? <span>{copy.auth.topbar.noAccount} <Link href="/signup" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.connectVenue}</Link></span>
+                : <span>{copy.auth.topbar.hasAccount} <Link href="/login" style={{ color: T.brass300, textDecoration: "none" }}>{copy.common.login}</Link></span>
+              }
+            </span>
+          </div>
         </div>
 
         <div className="auth-form-wrap" style={{ maxWidth: 400, width: "100%", margin: "auto 0" }}>

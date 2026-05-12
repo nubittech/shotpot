@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "../lib/supabase/server-rsc";
-import { copy } from "../lib/i18n";
+import { getServerCopy, getServerLocale } from "../lib/i18n/server";
+import { LanguageToggle } from "../components/LanguageToggle";
 import { LandingPricing } from "./LandingPricing";
 
 /* ─── Design tokens ─── */
@@ -108,6 +109,8 @@ a{text-decoration:none;}
 export default async function HomePage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
+  const locale = getServerLocale();
+  const copy = getServerCopy();
   const landing = copy.landing;
   const common = copy.common;
 
@@ -146,6 +149,7 @@ export default async function HomePage() {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <LanguageToggle initialLocale={locale} />
             {user ? (
               <Link href="/dashboard" className="btn-primary">{common.goDashboard}</Link>
             ) : (
@@ -412,7 +416,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <LandingPricing signedIn={Boolean(user)} />
+      <LandingPricing signedIn={Boolean(user)} copyText={copy} />
 
       {/* ═══════ FAQ ═══════ */}
       <section id="faq" style={{ padding: "100px 0" }}>

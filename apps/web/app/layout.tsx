@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ReactNode } from "react";
 import { copy } from "../lib/i18n";
+import { getServerCopy } from "../lib/i18n/server";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -24,8 +25,10 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const serverCopy = getServerCopy();
+
   return (
-    <html lang={copy.meta.lang} className={inter.variable}>
+    <html lang={serverCopy.meta.lang} className={inter.variable}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

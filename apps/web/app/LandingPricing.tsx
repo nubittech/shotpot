@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { copy } from "../lib/i18n";
+import type { AppCopy } from "../lib/i18n";
 
 const C = {
   bg0: "#08050a",
@@ -20,12 +20,13 @@ type BillingPeriod = "monthly" | "annual";
 
 type Props = {
   signedIn: boolean;
+  copyText: AppCopy;
 };
 
-export function LandingPricing({ signedIn }: Props) {
+export function LandingPricing({ signedIn, copyText }: Props) {
   const [period, setPeriod] = useState<BillingPeriod>("monthly");
-  const pricing = copy.pricing;
-  const common = copy.common;
+  const pricing = copyText.pricing;
+  const common = copyText.common;
   const standard = pricing.plans.standard;
   const pro = pricing.plans.pro;
 
@@ -56,6 +57,7 @@ export function LandingPricing({ signedIn }: Props) {
             features={[...standard.features]}
             cta={signedIn ? standard.signedInCta : standard.signedOutCta}
             href={signedIn ? "/dashboard" : "/signup?plan=kampanya"}
+            popularLabel={pricing.popular}
           />
           <PlanCard
             title={pro.title}
@@ -66,6 +68,7 @@ export function LandingPricing({ signedIn }: Props) {
             features={[...pro.features]}
             cta={signedIn ? pro.signedInCta : pro.signedOutCta}
             href={signedIn ? "/dashboard" : "/signup?plan=pro"}
+            popularLabel={pricing.popular}
             featured
           />
         </div>
@@ -105,6 +108,7 @@ function PlanCard({
   features,
   cta,
   href,
+  popularLabel,
   featured,
 }: {
   title: string;
@@ -115,6 +119,7 @@ function PlanCard({
   features: string[];
   cta: string;
   href: string;
+  popularLabel: string;
   featured?: boolean;
 }) {
   return (
@@ -130,7 +135,7 @@ function PlanCard({
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: featured ? C.b300 : C.i400, textTransform: "uppercase" }}>{title}</div>
-        {featured && <span style={{ padding: "3px 10px", borderRadius: 999, background: C.b300, color: "#1a0f06", fontSize: 10, fontWeight: 800 }}>{copy.pricing.popular}</span>}
+        {featured && <span style={{ padding: "3px 10px", borderRadius: 999, background: C.b300, color: "#1a0f06", fontSize: 10, fontWeight: 800 }}>{popularLabel}</span>}
       </div>
       <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 40, color: C.i100, lineHeight: 1 }}>
         {price}<span style={{ fontSize: 15, color: C.i400, fontWeight: 600 }}>{suffix}</span>

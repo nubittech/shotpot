@@ -4,10 +4,11 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../lib/supabase/browser";
-import { copy } from "../../lib/i18n";
+import { getClientCopy } from "../../lib/i18n/client";
 import { AuthShell, Field, inputStyle, primaryBtn, errorStyle } from "../../components/auth/AuthShell";
 
 function LoginForm() {
+  const copy = getClientCopy();
   const router = useRouter();
   const params = useSearchParams();
   const next = params.get("next") || "/dashboard";
@@ -55,6 +56,8 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const copy = getClientCopy();
+
   return (
     <AuthShell title={copy.auth.login.title} sub={copy.auth.login.subtitle} mode="login">
       <Suspense fallback={<div style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{copy.common.loading}</div>}>
