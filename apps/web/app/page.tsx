@@ -508,7 +508,7 @@ export default async function HomePage() {
               <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>{landing.footer.contact}</h5>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <a href="mailto:hello@jackpot.bar" className="foot-link">hello@jackpot.bar</a>
-                <a href="#" className="foot-link">{landing.footer.location}</a>
+                {landing.footer.location && <a href="#" className="foot-link">{landing.footer.location}</a>}
                 <a href="#" className="foot-link">Instagram · @jackpot.bar</a>
               </div>
             </div>

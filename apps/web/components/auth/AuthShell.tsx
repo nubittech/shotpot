@@ -43,9 +43,6 @@ export function AuthShell({
           .auth-visual-center {
             display: none !important;
           }
-          .auth-visual-footer {
-            display: none !important;
-          }
           .auth-main {
             min-height: auto !important;
             padding: 22px 20px 30px !important;
@@ -71,9 +68,6 @@ export function AuthShell({
           .auth-form-wrap p {
             margin-bottom: 24px !important;
             font-size: 14px !important;
-          }
-          .auth-copyright {
-            padding-top: 28px !important;
           }
         }
         @media (max-width: 420px) {
@@ -176,28 +170,6 @@ export function AuthShell({
             {copy.auth.visual.quoteLine3}
           </p>
 
-          <div style={{ marginTop: 28, display: "flex", alignItems: "center", gap: 14, color: T.ink300, fontSize: 14 }}>
-            <div style={{
-              width: 44, height: 44, borderRadius: "50%",
-              background: "linear-gradient(160deg, #c89a4a, #5a3414)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "'Playfair Display', serif", fontWeight: 900, color: "#1a0f06", fontSize: 18,
-              boxShadow: "inset 0 1px 0 rgba(255,244,212,0.4)",
-            }}>M</div>
-            <div>
-              <div style={{ color: T.ink100, fontWeight: 600 }}>{copy.auth.visual.customerName}</div>
-              <div style={{ color: T.ink400, fontSize: 12 }}>{copy.auth.visual.customerVenue}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Footer stats */}
-        <div className="auth-visual-footer" style={{
-          display: "flex", gap: 28, color: T.ink500, fontSize: 12,
-          paddingTop: 24, borderTop: `1px solid ${T.line}`,
-          position: "relative", zIndex: 2,
-        }}>
-          {copy.auth.visual.stats.map((stat) => <span key={stat}>{stat}</span>)}
         </div>
 
         <style>{`
@@ -233,10 +205,6 @@ export function AuthShell({
           <p style={{ margin: "0 0 36px", color: T.ink300, fontSize: 15, lineHeight: 1.6 }}>{sub}</p>
 
           {children}
-        </div>
-
-        <div className="auth-copyright" style={{ marginTop: "auto", paddingTop: 40, color: T.ink500, fontSize: 13, textAlign: "center" }}>
-          {copy.auth.footer}
         </div>
       </main>
 
