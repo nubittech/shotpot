@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "../../lib/supabase/browser";
 
-export function LogoutButton() {
+export function LogoutButton({ label = "Çıkış yap" }: { label?: string }) {
   const router = useRouter();
   return (
     <button
@@ -25,7 +25,7 @@ export function LogoutButton() {
         <path d="M9 3H4a1 1 0 00-1 1v8a1 1 0 001 1h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
         <path d="M11 5l3 3-3 3M14 8H7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
       </svg>
-      Çıkış yap
+      {label}
     </button>
   );
 }

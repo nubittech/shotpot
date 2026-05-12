@@ -5,6 +5,8 @@ import { getServiceClient } from "../../lib/supabase/server";
 import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteVenueButton } from "./DeleteVenueButton";
+import { LanguageToggle } from "../../components/LanguageToggle";
+import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
 
 /* ── Design tokens (from Jackpot styles.css) ── */
 const T = {
@@ -25,6 +27,10 @@ export default async function DashboardPage() {
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login?next=/dashboard");
+  const locale = getServerLocale();
+  const copyText = getServerCopy();
+  const common = copyText.common;
+  const dashboard = copyText.dashboard;
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
@@ -40,6 +46,10 @@ export default async function DashboardPage() {
   const customersHref = primaryProVenue ? `/dashboard/customers/${primaryProVenue.slug}` : "/dashboard";
   const couponsHref = venues.length > 0 ? "/dashboard/coupons" : "/dashboard";
   const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
+  const formatSince = (createdAt: string) => {
+    const date = new Date(createdAt).toLocaleDateString(copyText.meta.locale, { month: "short", year: "numeric" });
+    return copyText.meta.lang === "tr" ? `${date} ${dashboard.sinceDate}` : `${dashboard.sinceDate} ${date}`;
+  };
 
   return (
     <div className="dashboard-shell" style={{ display: "grid", gridTemplateColumns: "240px 1fr", minHeight: "100vh", background: T.bg0, color: T.ink200, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
@@ -233,18 +243,18 @@ export default async function DashboardPage() {
             fontSize: 14, fontWeight: 900, color: "#1a0f06",
             fontFamily: "'Playfair Display', serif",
           }}>J</div>
-          <span style={{ fontWeight: 700, fontSize: 14, color: T.ink100 }}>Jackpot</span>
+          <span style={{ fontWeight: 700, fontSize: 14, color: T.ink100 }}>{copyText.meta.brand}</span>
         </div>
 
         <details className="dashboard-mobile-menu">
-          <summary className="dashboard-mobile-menu-button" aria-label="Menüyü aç">
+          <summary className="dashboard-mobile-menu-button" aria-label={dashboard.openMenu}>
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <path d="M4 7h14M4 11h14M4 15h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           </summary>
           <div className="dashboard-mobile-menu-panel">
-            <SideSection label="Workspace" />
-            <SideLink href="/dashboard" active label="İşletmelerim" icon={
+            <SideSection label={dashboard.workspace} />
+            <SideLink href="/dashboard" active label={dashboard.venuesTitle} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <rect x="2" y="2" width="6" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
                 <rect x="10" y="2" width="6" height="4" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -254,12 +264,12 @@ export default async function DashboardPage() {
             }/>
             {primaryProVenue && (
               <>
-                <SideLink href={analyticsHref} label="Analitik" icon={
+                <SideLink href={analyticsHref} label={common.analytics} icon={
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 }/>
-                <SideLink href={customersHref} label="Müşteriler" icon={
+                <SideLink href={customersHref} label={common.customers} icon={
                   <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
                     <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -269,20 +279,20 @@ export default async function DashboardPage() {
                 }/>
               </>
             )}
-            <SideLink href={couponsHref} label="Kuponlar" icon={
+            <SideLink href={couponsHref} label={common.coupons} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             }/>
-            <SideSection label="Hesap" />
-            <SideLink href={billingHref} label="Plan & Faturalama" icon={
+            <SideSection label={dashboard.account} />
+            <SideLink href={billingHref} label={dashboard.billing} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             }/>
-            <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Destek" label="Yardım & Destek" icon={
+            <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Support" label={common.support} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -299,18 +309,18 @@ export default async function DashboardPage() {
                 }}>{initials}</div>
                 <div>
                   <div style={{ color: T.ink100, fontWeight: 600, fontSize: 13, lineHeight: 1.1 }}>{user.email?.split("@")[0]}</div>
-                  <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} mekan</div>
+                  <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} {dashboard.venueCountSuffix}</div>
                 </div>
               </div>
-              <LogoutButton />
+              <LogoutButton label={common.logout} />
             </div>
           </div>
         </details>
 
         {/* Workspace nav */}
         <div className="dashboard-sidebar-nav">
-        <SideSection label="Workspace" />
-        <SideLink href="/dashboard" active label="İşletmelerim" icon={
+        <SideSection label={dashboard.workspace} />
+        <SideLink href="/dashboard" active label={dashboard.venuesTitle} icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="2" y="2" width="6" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
             <rect x="10" y="2" width="6" height="4" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
@@ -320,12 +330,12 @@ export default async function DashboardPage() {
         }/>
         {primaryProVenue && (
           <>
-            <SideLink href={analyticsHref} label="Analitik" icon={
+            <SideLink href={analyticsHref} label={common.analytics} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <path d="M3 14V8M9 14V4M15 14v-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             }/>
-            <SideLink href={customersHref} label="Müşteriler" icon={
+            <SideLink href={customersHref} label={common.customers} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
                 <circle cx="6" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M2 16c0-2.5 2-4.5 4-4.5s4 2 4 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -335,7 +345,7 @@ export default async function DashboardPage() {
             }/>
           </>
         )}
-        <SideLink href={couponsHref} label="Kuponlar" icon={
+        <SideLink href={couponsHref} label={common.coupons} icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="2.5" y="3" width="13" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -343,14 +353,14 @@ export default async function DashboardPage() {
         }/>
 
         {/* Account nav */}
-        <SideSection label="Hesap" />
-        <SideLink href={billingHref} label="Plan & Faturalama" icon={
+        <SideSection label={dashboard.account} />
+        <SideLink href={billingHref} label={dashboard.billing} icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="3" y="3" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M7 9l2 2 3-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         }/>
-        <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Destek" label="Yardım & Destek" icon={
+        <SideLink href="mailto:hello@nubit.tech?subject=Shotpot%20Support" label={common.support} icon={
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
             <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -370,10 +380,10 @@ export default async function DashboardPage() {
             }}>{initials}</div>
             <div>
               <div style={{ color: T.ink100, fontWeight: 600, fontSize: 13, lineHeight: 1.1 }}>{user.email?.split("@")[0]}</div>
-              <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} mekan</div>
+              <div style={{ color: T.ink400, fontSize: 11 }}>{venues.length} {dashboard.venueCountSuffix}</div>
             </div>
           </div>
-          <LogoutButton />
+          <LogoutButton label={common.logout} />
         </div>
       </aside>
 
@@ -390,12 +400,13 @@ export default async function DashboardPage() {
           position: "sticky", top: 0, zIndex: 30,
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: T.ink400 }}>
-            <span style={{ color: T.ink300 }}>Workspace</span>
+            <span style={{ color: T.ink300 }}>{dashboard.workspace}</span>
             <span style={{ color: T.ink500 }}>/</span>
-            <span style={{ color: T.ink100 }}>İşletmelerim</span>
+            <span style={{ color: T.ink100 }}>{dashboard.venuesTitle}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <IconBtn title="Arama">
+            <LanguageToggle initialLocale={locale} />
+            <IconBtn title={dashboard.search}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                 <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M11 11l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
@@ -410,10 +421,10 @@ export default async function DashboardPage() {
           <div className="dashboard-page-head" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 32, flexWrap: "wrap", gap: 16 }}>
             <div>
               <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: T.brass300, textTransform: "uppercase" }}>
-                Workspace · {user.email?.split("@")[0]}
+                {dashboard.workspace} · {user.email?.split("@")[0]}
               </div>
               <h1 style={{ margin: "6px 0 0", fontFamily: "'Playfair Display', serif", fontSize: "clamp(32px, 4vw, 48px)", fontWeight: 900, color: T.ink100, lineHeight: 1 }}>
-                İşletmelerim
+                {dashboard.venuesTitle}
               </h1>
             </div>
             <Link className="dashboard-new-btn" href="/studio" style={{
@@ -426,16 +437,16 @@ export default async function DashboardPage() {
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <path d="M7 3v8M3 7h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
               </svg>
-              Yeni İşletme
+              {dashboard.newVenue}
             </Link>
           </div>
 
           {/* KPI strip — mocked totals across venues */}
           <div className="dashboard-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>
-            <KpiCard label="Toplam mekan" value={String(venues.length)} delta="" />
-            <KpiCard label="Aktif mekan" value={String(venues.filter(v => v.active).length)} delta="" />
-            <KpiCard label="Pro plan" value={String(venues.filter(v => v.tier === "pro").length)} delta="" />
-            <KpiCard label="Kampanya" value={String(venues.filter(v => v.tier !== "pro").length)} delta="" />
+            <KpiCard label={dashboard.totalVenues} value={String(venues.length)} delta="" />
+            <KpiCard label={dashboard.activeVenues} value={String(venues.filter(v => v.active).length)} delta="" />
+            <KpiCard label={dashboard.proPlan} value={String(venues.filter(v => v.tier === "pro").length)} delta="" />
+            <KpiCard label={dashboard.campaign} value={String(venues.filter(v => v.tier !== "pro").length)} delta="" />
           </div>
 
           {/* Main layout: venue list + activity sidebar */}
@@ -454,8 +465,8 @@ export default async function DashboardPage() {
                     <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3"/>
                     <path d="M16 11v10M11 16h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
-                  <div style={{ fontSize: 14, fontWeight: 500 }}>İlk mekanını ekle</div>
-                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Ücretsiz, 5 dakikada hazır</div>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{dashboard.firstVenue}</div>
+                  <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>{dashboard.fiveMinutes}</div>
                 </Link>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -489,29 +500,29 @@ export default async function DashboardPage() {
                         <div className="venue-meta-row" style={{ color: T.ink400, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontFamily: "'DM Mono', monospace", color: T.ink300 }}>/play/{v.slug}</span>
                           <span style={{ color: T.ink500 }}>·</span>
-                          <span>{v.plan === "kampanya" ? "Kampanya" : "İşletme"}</span>
+                          <span>{v.plan === "kampanya" ? dashboard.campaign : dashboard.business}</span>
                           <span style={{ color: T.ink500 }}>·</span>
-                          <StatusPill active={v.active} />
+                          <StatusPill active={v.active} activeLabel={common.active} pendingLabel={common.pendingPayment} />
                         </div>
                         <div className="venue-sub-meta" style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300, flexWrap: "wrap" }}>
-                          <span style={{ color: T.ink400 }}>{v.tier === "pro" ? "Pro" : "Standard"} plan</span>
-                          <span>{new Date(v.created_at).toLocaleDateString("tr-TR", { month: "short", year: "numeric" })} tarihinden beri</span>
+                          <span style={{ color: T.ink400 }}>{v.tier === "pro" ? dashboard.proPlan : dashboard.standardPlan}</span>
+                          <span>{formatSince(v.created_at)}</span>
                         </div>
                       </div>
 
                       {/* Actions */}
                       <div className="venue-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                        {v.active && <CopyLinkButton slug={v.slug} />}
-                        {v.active && <ABtn href={`/play/${v.slug}`} target="_blank" label="Önizle" icon="eye" />}
-                        {v.active && <ABtn href={`/scan?venue=${v.slug}`} label="Garson" icon="user" />}
+                        {v.active && <CopyLinkButton slug={v.slug} label={dashboard.copyLink} copiedLabel={dashboard.copied} promptLabel={dashboard.copyPrompt} />}
+                        {v.active && <ABtn href={`/play/${v.slug}`} target="_blank" label={common.preview} icon="eye" />}
+                        {v.active && <ABtn href={`/scan?venue=${v.slug}`} label={dashboard.waiter} icon="user" />}
                         {v.active && v.tier === "pro" && (
                           <>
-                            <ABtn href={`/dashboard/analytics/${v.slug}`} label="Analitik" icon="chart" />
-                            <ABtn href={`/dashboard/customers/${v.slug}`} label="Müşteriler" icon="people" variant="purple" />
+                            <ABtn href={`/dashboard/analytics/${v.slug}`} label={common.analytics} icon="chart" />
+                            <ABtn href={`/dashboard/customers/${v.slug}`} label={common.customers} icon="people" variant="purple" />
                           </>
                         )}
-                        <ABtn href={`/dashboard/billing/${v.slug}`} label="Plan" icon="card" variant="brass" />
-                        <ABtn href={`/studio?slug=${v.slug}`} label="Düzenle" icon="edit" variant="gold" />
+                        <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />
+                        <ABtn href={`/studio?slug=${v.slug}`} label={common.edit} icon="edit" variant="gold" />
                         <DeleteVenueButton
                           slug={v.slug}
                           name={v.name}
@@ -519,6 +530,13 @@ export default async function DashboardPage() {
                           plan={v.plan}
                           tier={v.tier}
                           billingCycle={v.billing_cycle ?? "monthly"}
+                          label={common.delete}
+                          cancelLabel={common.cancel}
+                          closeLabel={common.cancel}
+                          monthlyLabel={common.monthly}
+                          annualLabel={common.annual}
+                          campaignLabel={dashboard.campaign}
+                          copyText={dashboard.deleteVenue}
                         />
                       </div>
                     </div>
@@ -534,8 +552,8 @@ export default async function DashboardPage() {
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 3"/>
                       <path d="M12 8v8M8 12h8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
-                    <div style={{ fontSize: 14, fontWeight: 500 }}>Yeni mekan ekle</div>
-                    <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>Ücretsiz, 5 dakikada hazır</div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{dashboard.newVenueShort}</div>
+                    <div style={{ fontSize: 12, marginTop: 4, opacity: 0.7 }}>{dashboard.fiveMinutes}</div>
                   </Link>
                 </div>
               )}
@@ -549,12 +567,12 @@ export default async function DashboardPage() {
               position: "sticky", top: 96,
             }}>
               <h3 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 14, letterSpacing: "0.18em", color: T.brass300, margin: "0 0 16px" }}>
-                Canlı akış
+                {dashboard.liveFeed}
               </h3>
               {venues.length === 0 ? (
-                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>İlk mekanını oluşturduktan sonra burada gerçek zamanlı aktiviteni göreceksin.</p>
+                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>{dashboard.liveFeedEmpty}</p>
               ) : (
-                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>Gerçek zamanlı aktivite akışı yakında eklenecek.</p>
+                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>{dashboard.liveFeedSoon}</p>
               )}
             </aside>
           </div>
@@ -627,9 +645,9 @@ function KpiCard({ label, value, delta }: { label: string; value: string; delta:
   );
 }
 
-function StatusPill({ active }: { active: boolean }) {
+function StatusPill({ active, activeLabel, pendingLabel }: { active: boolean; activeLabel: string; pendingLabel: string }) {
   const color = active ? "#7be38a" : "#ffd84e";
-  const label = active ? "Aktif" : "Ödeme Bekliyor";
+  const label = active ? activeLabel : pendingLabel;
   return (
     <span style={{
       display: "inline-flex", alignItems: "center", gap: 6,

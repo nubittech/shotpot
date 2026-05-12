@@ -10,6 +10,37 @@ type DeleteVenueButtonProps = {
   plan: string;
   tier: string;
   billingCycle?: string | null;
+  label?: string;
+  cancelLabel?: string;
+  closeLabel?: string;
+  monthlyLabel?: string;
+  annualLabel?: string;
+  campaignLabel?: string;
+  copyText?: {
+    title: string;
+    permanent: string;
+    irreversible: string;
+    dataWarning: string;
+    paidWarning: string;
+    annualWarning: string;
+    confirmSlug: string;
+    deleting: string;
+    submit: string;
+    error: string;
+  };
+};
+
+const defaultCopy = {
+  title: "İşletmeyi sil?",
+  permanent: "kalıcı olarak silinecek.",
+  irreversible: "Bu işlem geri alınamaz.",
+  dataWarning: "Müşteri linki, kampanyalar, kuponlar, fişler ve bu işletmeye bağlı veriler silinir.",
+  paidWarning: "Bu işletme ücretli/aktif görünüyor ({planLabel}). Paddle iptal entegrasyonu tamamlanana kadar silme işlemi Paddle tarafındaki aboneliği otomatik durdurmayabilir; ücretlendirme devam etmemesi için Plan ekranından Paddle aboneliğini ayrıca iptal etmelisin.",
+  annualWarning: "Yıllık üyelikte kalan kullanım süresi kaybolabilir ve işletme silindikten sonra geri getirilemez.",
+  confirmSlug: "Onay için slug yaz",
+  deleting: "Siliniyor...",
+  submit: "İşletmeyi Sil",
+  error: "İşletme silinemedi.",
 };
 
 export function DeleteVenueButton({
@@ -19,6 +50,13 @@ export function DeleteVenueButton({
   plan,
   tier,
   billingCycle,
+  label = "Sil",
+  cancelLabel = "Vazgeç",
+  closeLabel = "Kapat",
+  monthlyLabel = "Aylık",
+  annualLabel = "Yıllık",
+  campaignLabel = "Kampanya",
+  copyText = defaultCopy,
 }: DeleteVenueButtonProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -31,10 +69,10 @@ export function DeleteVenueButton({
   const canDelete = confirmSlug.trim() === slug && !loading;
 
   const planLabel = useMemo(() => {
-    const name = tier === "pro" || plan === "isletme" ? "Pro" : "Kampanya";
-    const period = isAnnual ? "Yıllık" : "Aylık";
+    const name = tier === "pro" || plan === "isletme" ? "Pro" : campaignLabel;
+    const period = isAnnual ? annualLabel : monthlyLabel;
     return `${name} · ${period}`;
-  }, [isAnnual, plan, tier]);
+  }, [annualLabel, campaignLabel, isAnnual, monthlyLabel, plan, tier]);
 
   async function deleteVenue() {
     if (!canDelete) return;
@@ -47,13 +85,13 @@ export function DeleteVenueButton({
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(json.error ?? "İşletme silinemedi.");
+        throw new Error(json.error ?? copyText.error);
       }
 
       setOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "İşletme silinemedi.");
+      setError(err instanceof Error ? err.message : copyText.error);
     } finally {
       setLoading(false);
     }
@@ -84,7 +122,7 @@ export function DeleteVenueButton({
           fontFamily: "inherit",
         }}
       >
-        Sil
+        {label}
       </button>
 
       {open && (
@@ -126,16 +164,16 @@ export function DeleteVenueButton({
                     lineHeight: 1.1,
                   }}
                 >
-                  İşletmeyi sil?
+                  {copyText.title}
                 </div>
                 <p style={{ margin: "10px 0 0", color: "#c8b890", fontSize: 14, lineHeight: 1.55 }}>
-                  <strong style={{ color: "#fff8e8" }}>{name}</strong> kalıcı olarak silinecek.
+                  <strong style={{ color: "#fff8e8" }}>{name}</strong> {copyText.permanent}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                aria-label="Kapat"
+                aria-label={closeLabel}
                 style={{
                   width: 36,
                   height: 36,
@@ -164,22 +202,22 @@ export function DeleteVenueButton({
                 lineHeight: 1.6,
               }}
             >
-              <div style={{ fontWeight: 800, color: "#ffb18a", marginBottom: 8 }}>Bu işlem geri alınamaz.</div>
-              <div>Müşteri linki, kampanyalar, kuponlar, fişler ve bu işletmeye bağlı veriler silinir.</div>
+              <div style={{ fontWeight: 800, color: "#ffb18a", marginBottom: 8 }}>{copyText.irreversible}</div>
+              <div>{copyText.dataWarning}</div>
               {hasPaidPlan && (
                 <div style={{ marginTop: 8 }}>
-                  Bu işletme ücretli/aktif görünüyor ({planLabel}). Paddle iptal entegrasyonu tamamlanana kadar silme işlemi Paddle tarafındaki aboneliği otomatik durdurmayabilir; ücretlendirme devam etmemesi için Plan ekranından Paddle aboneliğini ayrıca iptal etmelisin.
+                  {copyText.paidWarning.replace("{planLabel}", planLabel)}
                 </div>
               )}
               {isAnnual && (
                 <div style={{ marginTop: 8 }}>
-                  Yıllık üyelikte kalan kullanım süresi kaybolabilir ve işletme silindikten sonra geri getirilemez.
+                  {copyText.annualWarning}
                 </div>
               )}
             </div>
 
             <label style={{ display: "block", marginTop: 18, color: "#8b7d5e", fontSize: 12, fontWeight: 800, letterSpacing: "0.12em", textTransform: "uppercase" }}>
-              Onay için slug yaz
+              {copyText.confirmSlug}
             </label>
             <div style={{ marginTop: 8, color: "#c8b890", fontSize: 13 }}>
               <span style={{ color: "#e8c876", fontFamily: "'DM Mono', monospace" }}>{slug}</span>
@@ -228,7 +266,7 @@ export function DeleteVenueButton({
                   fontFamily: "inherit",
                 }}
               >
-                Vazgeç
+                {cancelLabel}
               </button>
               <button
                 type="button"
@@ -246,7 +284,7 @@ export function DeleteVenueButton({
                   fontFamily: "inherit",
                 }}
               >
-                {loading ? "Siliniyor..." : "İşletmeyi Sil"}
+                {loading ? copyText.deleting : copyText.submit}
               </button>
             </div>
           </div>

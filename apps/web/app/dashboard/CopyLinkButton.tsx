@@ -2,7 +2,19 @@
 
 import { useState } from "react";
 
-export function CopyLinkButton({ slug }: { slug: string }) {
+type CopyLinkButtonProps = {
+  slug: string;
+  label?: string;
+  copiedLabel?: string;
+  promptLabel?: string;
+};
+
+export function CopyLinkButton({
+  slug,
+  label = "Linki Kopyala",
+  copiedLabel = "✓ Kopyalandı",
+  promptLabel = "Kopyalayın:",
+}: CopyLinkButtonProps) {
   const [copied, setCopied] = useState(false);
 
   async function copy() {
@@ -13,7 +25,7 @@ export function CopyLinkButton({ slug }: { slug: string }) {
       setTimeout(() => setCopied(false), 1500);
     } catch {
       // fallback if Clipboard API unavailable
-      window.prompt("Kopyalayın:", url);
+      window.prompt(promptLabel, url);
     }
   }
 
@@ -30,7 +42,7 @@ export function CopyLinkButton({ slug }: { slug: string }) {
         transition: "all 0.15s",
       }}
     >
-      {copied ? "✓ Kopyalandı" : "🔗 Linki Kopyala"}
+      {copied ? copiedLabel : `🔗 ${label}`}
     </button>
   );
 }
