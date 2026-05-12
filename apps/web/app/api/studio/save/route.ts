@@ -9,6 +9,7 @@ type SavePayload = {
   billingCycle?: "monthly" | "yearly";
   currency?: "TRY" | "USD" | "EUR";
   receiptMode?: "ocr" | "qr" | "both";
+  interfaceLanguage?: "tr" | "en";
   timezone?: string;
   tokenThreshold: number;
   variant: "v1" | "v2" | "v3";
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
         billing_cycle: body.billingCycle ?? "monthly",
         currency: body.currency ?? "TRY",
         receipt_mode: body.receiptMode ?? "ocr",
+        interface_language: body.interfaceLanguage ?? "tr",
         timezone: body.timezone ?? "Europe/Istanbul",
         token_threshold: body.tokenThreshold,
         owner_user_id: user.id,

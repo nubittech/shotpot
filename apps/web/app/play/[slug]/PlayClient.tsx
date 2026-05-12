@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SlotMachine } from "../../../components/SlotMachine";
+import { getCopy, type Locale } from "../../../lib/i18n";
 import { createClient } from "../../../lib/supabase/browser";
 import type { PlayBundle } from "../../../lib/play";
 import type { SlotVariantDB } from "../../../lib/supabase/types";
@@ -161,6 +162,9 @@ function getOrCreateGuestToken() {
 
 export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const { venue, config } = bundle;
+  const interfaceLanguage = ((venue as unknown as { interface_language?: string }).interface_language === "en" ? "en" : "tr") as Locale;
+  const copyText = getCopy(interfaceLanguage);
+  const playCopy = copyText.play;
   const router  = useRouter();
   const variant = (config.variant ?? "v1") as SlotVariantDB;
   const theme   = THEMES[variant] ?? THEMES.v1;
@@ -217,23 +221,23 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     setStage("scan");
   }
 
-  if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
-  if (stage === "scan") return <ScanScreen venue={venue} theme={theme} guestToken={guestToken} customerId={customerId} onComplete={handleScanComplete} onBack={() => setStage("home")} />;
-  if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} coupon={result.coupon} onBack={() => { setResult(null); setStage("play"); }} onDone={() => { setResult(null); setStage("home"); }} />;
+  if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} copy={playCopy} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
+  if (stage === "scan") return <ScanScreen venue={venue} theme={theme} copy={playCopy} locale={copyText.meta.locale} guestToken={guestToken} customerId={customerId} onComplete={handleScanComplete} onBack={() => setStage("home")} />;
+  if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={result.coupon} onBack={() => { setResult(null); setStage("play"); }} onDone={() => { setResult(null); setStage("home"); }} />;
   if (stage === "play") return (
     <div style={{ position: "fixed", inset: 0, background: "#000" }}>
-      <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => result?.coupon && setStage("coupon")} onExit={() => { setResult(null); setStage("home"); }} />
+      <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} labels={playCopy.slot} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => result?.coupon && setStage("coupon")} onExit={() => { setResult(null); setStage("home"); }} />
     </div>
   );
 
-  return <HomeScreen venue={venue} theme={theme} isPro={isPro} customerId={customerId} tokens={tokens} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
 }
 
 /* ═══════════════════════════════════════════════
    HOME SCREEN
 ═══════════════════════════════════════════════ */
-function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, recentCoupons, onJackpot, onProfile }: {
-  venue: PlayBundle["venue"]; theme: Theme; isPro: boolean; customerId: string | null;
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, scannedInfo, recentCoupons, onJackpot, onProfile }: {
+  venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
   tokens: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
   onJackpot: () => void; onProfile: () => void;
 }) {
@@ -273,10 +277,10 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
           }}>
             <div style={{ fontSize: 12, color: theme.muted, marginBottom: 4, fontWeight: 600, letterSpacing: "0.04em" }}>You earned</div>
             <div style={{ fontSize: 24, fontWeight: 900, color: theme.text, fontFamily: theme.fontDisplay, letterSpacing: "0.01em" }}>
-              {tokens} spin · tonight
+              {copy.spinTonight.replace("{tokens}", String(tokens))}
             </div>
             <div style={{ fontSize: 12, color: theme.muted, marginTop: 4, letterSpacing: "0.02em" }}>
-              {currSym}{scannedInfo!.amount.toFixed(0)} · verified {scannedInfo!.time}
+              {copy.verifiedAt.replace("{amount}", `${currSym}${scannedInfo!.amount.toFixed(0)}`).replace("{time}", scannedInfo!.time)}
             </div>
           </div>
         )}
@@ -299,7 +303,7 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
             textTransform: "uppercase", marginBottom: 10,
             fontFamily: theme.fontLabel,
           }}>
-            {tokens > 0 ? "YOUR SPIN IS WAITING" : "JACKPOT"}
+            {tokens > 0 ? copy.spinWaiting : copy.jackpot}
           </div>
 
           <div style={{
@@ -310,7 +314,7 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
             textTransform: tokens > 0 && theme.nameTransform === "uppercase" ? "uppercase" : "none" as React.CSSProperties["textTransform"],
             lineHeight: 1.1, marginBottom: 8,
           }}>
-            {tokens > 0 ? "Pull the lever." : "Fiş Tara →"}
+            {tokens > 0 ? copy.pullLever : copy.scanReceipt}
           </div>
 
           <div style={{
@@ -319,8 +323,8 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
             lineHeight: 1.5,
           }}>
             {tokens > 0
-              ? "Three drinks in a row wins the round →"
-              : "Hesabını ödedikten sonra fişini tarat, jackpot kazan."}
+              ? copy.winHint
+              : copy.receiptReason}
           </div>
         </button>
 
@@ -328,7 +332,7 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
         {recentCoupons.length > 0 && (
           <div>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.22em", color: theme.muted, textTransform: "uppercase", marginBottom: 12, fontFamily: theme.fontLabel }}>
-              LAST WEEK
+              {copy.lastWeek}
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
               {recentCoupons.map((c) => (
@@ -342,7 +346,7 @@ function HomeScreen({ venue, theme, isPro, customerId, tokens, scannedInfo, rece
       </div>
 
       {/* ── Bottom Navigation ── */}
-      <BottomNav theme={theme} hasTokens={tokens > 0} isPro={isPro} customerId={customerId} onJackpot={onJackpot} onProfile={onProfile} />
+      <BottomNav theme={theme} copy={copy} hasTokens={tokens > 0} isPro={isPro} customerId={customerId} onJackpot={onJackpot} onProfile={onProfile} />
 
       <style>{`
         ::-webkit-scrollbar { display: none; }
@@ -375,8 +379,8 @@ function JackpotIcon() {
 /* ═══════════════════════════════════════════════
    BOTTOM NAV
 ═══════════════════════════════════════════════ */
-function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }: {
-  theme: Theme; hasTokens: boolean; isPro: boolean; customerId: string | null;
+function BottomNav({ theme, copy, hasTokens, isPro, customerId, onJackpot, onProfile }: {
+  theme: Theme; copy: ReturnType<typeof getCopy>["play"]; hasTokens: boolean; isPro: boolean; customerId: string | null;
   onJackpot: () => void; onProfile: () => void;
 }) {
   const showProfile = isPro && !!customerId;
@@ -391,7 +395,7 @@ function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }
       padding: "10px 8px 28px", zIndex: 50,
     }}>
       {/* Home */}
-      <NavIcon label="Home" color={theme.text} active>
+      <NavIcon label={copy.home} color={theme.text} active>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           <path d="M3 11.5L12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
         </svg>
@@ -418,7 +422,7 @@ function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }
           fontSize: 10, fontWeight: 700, letterSpacing: "0.08em",
           color: theme.jackpotHi, marginTop: 6, textTransform: "uppercase",
           textShadow: `0 0 8px ${theme.jackpotGlow}`,
-        }}>JACKPOT</span>
+        }}>{copy.jackpot}</span>
       </button>
 
       {/* Me */}
@@ -433,7 +437,7 @@ function BottomNav({ theme, hasTokens, isPro, customerId, onJackpot, onProfile }
           <circle cx="12" cy="8" r="3.5" />
           <path d="M5 20c1.5-3.5 4-5 7-5s5.5 1.5 7 5" strokeLinecap="round" />
         </svg>
-        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.04em" }}>Me</span>
+        <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.04em" }}>{copy.me}</span>
       </button>
     </div>
   );
@@ -455,8 +459,8 @@ type ScanStage = "idle" | "captured" | "processing" | "verified" | "error";
 type CapturedPayload = { previewUrl: string; hash: string; imageData: string };
 type OcrResult = { tokens: number; receiptId: string; amount: number; currency: string };
 
-function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }: {
-  venue: PlayBundle["venue"]; theme: Theme; guestToken: string; customerId: string | null;
+function ScanScreen({ venue, theme, copy, locale, guestToken, customerId, onComplete, onBack }: {
+  venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; locale: string; guestToken: string; customerId: string | null;
   onComplete: (tokens: number, receiptId: string, info: ScannedInfo) => void; onBack: () => void;
 }) {
   const [scanStage, setScanStage]   = useState<ScanStage>("idle");
@@ -479,7 +483,7 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
       setPreviewUrl(URL.createObjectURL(blob));
       setCaptured({ previewUrl: URL.createObjectURL(blob), hash, imageData: await blobToDataUrl(blob) });
       setScanStage("captured");
-    } catch { setErrorMsg("Fotoğraf işlenemedi."); setScanStage("error"); }
+    } catch { setErrorMsg(copy.photoError); setScanStage("error"); }
   }
 
   async function startScan() {
@@ -488,12 +492,12 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
     try {
       const res = await fetch("/api/play/ocr", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageData: captured.imageData, hash: captured.hash, slug: venue.slug, guestToken, customerId: customerId ?? undefined }) });
       const data = await res.json();
-      if (!res.ok) { setErrorMsg(data.error ?? "Fiş doğrulanamadı."); setScanStage("error"); return; }
-      const nowTime = new Date().toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+      if (!res.ok) { setErrorMsg(data.error ?? copy.receiptVerifyError); setScanStage("error"); return; }
+      const nowTime = new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
       setOcrResult({ tokens: data.tokens, receiptId: data.receiptId, amount: data.amount, currency: data.currency ?? "TRY" });
       setScanStage("verified");
       setTimeout(() => onComplete(data.tokens, data.receiptId, { amount: data.amount, currency: data.currency ?? "TRY", time: nowTime }), 2200);
-    } catch { setErrorMsg("Bağlantı hatası."); setScanStage("error"); }
+    } catch { setErrorMsg(copy.connectionError); setScanStage("error"); }
   }
 
   function retakePhoto() { setCaptured(null); setPreviewUrl(null); setErrorMsg(""); setScanStage("idle"); setTimeout(() => fileInputRef.current?.click(), 50); }
@@ -507,15 +511,15 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
       <div style={{ flexShrink: 0, padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1 }}>‹</button>
         <div style={{ fontSize: 15, fontWeight: 700, color: theme.text, fontFamily: theme.fontDisplay, textTransform: theme.nameTransform as React.CSSProperties["textTransform"] }}>
-          {scanStage === "idle" ? "Fişini Tara" : scanStage === "captured" ? "Fişin Hazır" : scanStage === "processing" ? "Analiz Ediliyor" : scanStage === "verified" ? "Doğrulandı" : "Hata"}
+          {scanStage === "idle" ? copy.scanTitle : scanStage === "captured" ? copy.receiptReadyTitle : scanStage === "processing" ? copy.analyzingTitle : scanStage === "verified" ? copy.verifiedTitle : copy.error}
         </div>
         <div style={{ width: 36 }} />
       </div>
       <div style={{ flexShrink: 0, padding: "0 24px 10px", minHeight: 18, textAlign: "center" }}>
-        {scanStage === "idle" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>Sarı düğmeye bas · Kamera açılır · Fiş son 1 saat geçerli</p>}
-        {scanStage === "captured" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>Fotoğraf net mi? Yeniden çek veya taramaya başla.</p>}
-        {scanStage === "processing" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>AI fişini analiz ediyor…</p>}
-        {scanStage === "verified" && <p style={{ margin: 0, fontSize: 13, color: "#4ade80", fontWeight: 700 }}>Doğrulandı · {ocrResult?.tokens ?? 1} çevirme hakkı kazandın</p>}
+        {scanStage === "idle" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>{copy.scanIdleHelp}</p>}
+        {scanStage === "captured" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>{copy.scanCapturedHelp}</p>}
+        {scanStage === "processing" && <p style={{ margin: 0, fontSize: 13, color: theme.muted }}>{copy.scanProcessingHelp}</p>}
+        {scanStage === "verified" && <p style={{ margin: 0, fontSize: 13, color: "#4ade80", fontWeight: 700 }}>{copy.scanVerifiedHelp.replace("{tokens}", String(ocrResult?.tokens ?? 1))}</p>}
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "8px 24px 24px", gap: 20, minHeight: 0 }}>
         {scanStage === "idle" && (
@@ -541,8 +545,8 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
               <img src={previewUrl} alt="çekilen fiş" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             </div>
             <div style={{ display: "flex", gap: 12, width: "min(82vw,320px)", flexShrink: 0 }}>
-              <button onClick={retakePhoto} type="button" style={{ flex: 1, padding: "16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.text, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>↺ Yeniden</button>
-              <button onClick={startScan} type="button" style={{ flex: 2, padding: "16px", borderRadius: 12, background: theme.btnBg, border: "none", color: theme.btnText, fontSize: 15, fontWeight: 800, cursor: "pointer", boxShadow: `0 10px 28px ${theme.glow}` }}>Taramayı Başlat</button>
+              <button onClick={retakePhoto} type="button" style={{ flex: 1, padding: "16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.text, fontSize: 15, fontWeight: 700, cursor: "pointer" }}>{copy.retake}</button>
+              <button onClick={startScan} type="button" style={{ flex: 2, padding: "16px", borderRadius: 12, background: theme.btnBg, border: "none", color: theme.btnText, fontSize: 15, fontWeight: 800, cursor: "pointer", boxShadow: `0 10px 28px ${theme.glow}` }}>{copy.startScan}</button>
             </div>
           </>
         )}
@@ -554,7 +558,7 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
             <div style={{ position: "absolute", left: 0, right: 0, height: 3, background: `linear-gradient(90deg,transparent,${theme.accent},transparent)`, boxShadow: `0 0 24px 6px ${theme.glow}`, animation: "scan-line 1.6s ease-in-out infinite", pointerEvents: "none" }} />
             <div style={{ position: "absolute", bottom: 12, right: 12, padding: "6px 12px", borderRadius: 999, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", gap: 8, border: `1px solid ${theme.border}` }}>
               <div style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.15)", borderTopColor: theme.accent, animation: "rr-spin 0.75s linear infinite" }} />
-              <span style={{ fontSize: 12, fontWeight: 800, color: theme.accent, letterSpacing: "0.08em" }}>TARANIYOR</span>
+              <span style={{ fontSize: 12, fontWeight: 800, color: theme.accent, letterSpacing: "0.08em" }}>{copy.scanning}</span>
             </div>
           </div>
         )}
@@ -567,7 +571,7 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
               </div>
             </div>
             <div style={{ width: "min(82vw,320px)", padding: "12px 16px", borderRadius: 14, background: theme.cardBg, border: `1px solid ${theme.border}`, display: "grid", gap: 6, flexShrink: 0 }}>
-              {[{ label: "VENUE", value: venue.name }, { label: "TOTAL", value: `${currSym} ${ocrResult?.amount?.toFixed(2) ?? "—"}`, accent: true }, { label: "AUTH", value: "PASSED", green: true }].map(({ label, value, accent, green }) => (
+              {[{ label: copy.venueLabel, value: venue.name }, { label: copy.totalLabel, value: `${currSym} ${ocrResult?.amount?.toFixed(2) ?? "—"}`, accent: true }, { label: copy.authLabel, value: copy.passed, green: true }].map(({ label, value, accent, green }) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.14em", color: theme.muted }}>{label}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: green ? "#4ade80" : accent ? theme.accent : theme.text }}>{value}</span>
@@ -580,7 +584,7 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 18, width: "min(82vw,360px)" }}>
             <div style={{ fontSize: 38 }}>⚠️</div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#ff7e5a", textAlign: "center", lineHeight: 1.55 }}>{errorMsg}</div>
-            <button onClick={() => { setErrorMsg(""); setCaptured(null); setPreviewUrl(null); setScanStage("idle"); }} style={{ ...primaryBtn(theme), width: "100%" }} type="button">Tekrar Dene</button>
+            <button onClick={() => { setErrorMsg(""); setCaptured(null); setPreviewUrl(null); setScanStage("idle"); }} style={{ ...primaryBtn(theme), width: "100%" }} type="button">{copy.tryAgain}</button>
           </div>
         )}
       </div>
@@ -596,8 +600,8 @@ function ScanScreen({ venue, theme, guestToken, customerId, onComplete, onBack }
 /* ═══════════════════════════════════════════════
    COUPON SCREEN
 ═══════════════════════════════════════════════ */
-function CouponScreen({ venue, theme, coupon, onBack, onDone }: {
-  venue: PlayBundle["venue"]; theme: Theme;
+function CouponScreen({ venue, theme, copy: playCopy, coupon, onBack, onDone }: {
+  venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"];
   coupon: { id: string; code: string; rewardLabel: string };
   onBack: () => void; onDone: () => void;
 }) {
@@ -607,19 +611,19 @@ function CouponScreen({ venue, theme, coupon, onBack, onDone }: {
     <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", overflow: "hidden" }}>
       <div style={{ flexShrink: 0, padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1 }}>‹</button>
-        <div style={{ fontSize: 15, fontWeight: 700, color: theme.text, fontFamily: theme.fontDisplay }}>Kuponun</div>
+        <div style={{ fontSize: 15, fontWeight: 700, color: theme.text, fontFamily: theme.fontDisplay }}>{playCopy.couponTitle}</div>
         <div style={{ width: 36 }} />
       </div>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 24px", gap: 18, minHeight: 0 }}>
-        <div style={{ fontFamily: theme.fontDisplay, fontSize: "clamp(44px,12vw,72px)", fontWeight: 900, color: theme.accent, textAlign: "center", lineHeight: 1, textShadow: `0 0 32px ${theme.glow}`, animation: "pop-in 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>🎉 KAZANDIN</div>
+        <div style={{ fontFamily: theme.fontDisplay, fontSize: "clamp(44px,12vw,72px)", fontWeight: 900, color: theme.accent, textAlign: "center", lineHeight: 1, textShadow: `0 0 32px ${theme.glow}`, animation: "pop-in 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>{playCopy.won}</div>
         <h1 style={{ margin: 0, fontSize: "clamp(22px,6vw,30px)", fontWeight: 800, textAlign: "center", color: theme.text, lineHeight: 1.15 }}>{coupon.rewardLabel}</h1>
-        <p style={{ margin: 0, fontSize: 14, color: theme.muted, textAlign: "center", maxWidth: 340, lineHeight: 1.55 }}>Bu kodu garsona göster. Garson "Kullanıldı" işaretledikten sonra ödülünü alabilirsin.</p>
+        <p style={{ margin: 0, fontSize: 14, color: theme.muted, textAlign: "center", maxWidth: 340, lineHeight: 1.55 }}>{playCopy.couponHelp}</p>
         <div style={{ width: "100%", maxWidth: 360, padding: "22px 20px", background: theme.ctaCardBgIdle, border: `1.5px dashed ${theme.border}`, borderRadius: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: theme.muted, textTransform: "uppercase", textAlign: "center", fontFamily: theme.fontLabel }}>{venue.name}</div>
           <div style={{ marginTop: 14, padding: "18px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 10, fontFamily: "monospace", fontSize: 26, fontWeight: 800, color: theme.accent, letterSpacing: "0.16em", textAlign: "center", border: `1px solid ${theme.border}` }}>{coupon.code}</div>
-          <button onClick={copy} style={{ marginTop: 14, width: "100%", padding: "12px", background: "transparent", border: `1px solid ${theme.border}`, borderRadius: 10, color: theme.accent, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{copied ? "✓ Kopyalandı" : "Kodu Kopyala"}</button>
+          <button onClick={copy} style={{ marginTop: 14, width: "100%", padding: "12px", background: "transparent", border: `1px solid ${theme.border}`, borderRadius: 10, color: theme.accent, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{copied ? playCopy.copied : playCopy.copyCode}</button>
         </div>
-        <button onClick={onDone} style={{ ...primaryBtn(theme), maxWidth: 360 }}>Tamam</button>
+        <button onClick={onDone} style={{ ...primaryBtn(theme), maxWidth: 360 }}>{playCopy.done}</button>
       </div>
       <style>{`@keyframes pop-in{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}`}</style>
     </div>
@@ -629,8 +633,8 @@ function CouponScreen({ venue, theme, coupon, onBack, onDone }: {
 /* ═══════════════════════════════════════════════
    CUSTOMER AUTH SCREEN
 ═══════════════════════════════════════════════ */
-function CustomerAuthScreen({ venue, theme, onBack, onSuccess }: {
-  venue: PlayBundle["venue"]; theme: Theme;
+function CustomerAuthScreen({ venue, theme, copy, onBack, onSuccess }: {
+  venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"];
   onBack: () => void; onSuccess: (customerId: string) => void;
 }) {
   const [email, setEmail] = useState(""); const [fullName, setFullName] = useState("");
@@ -640,7 +644,7 @@ function CustomerAuthScreen({ venue, theme, onBack, onSuccess }: {
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
-    if (!consent) { setErr("Devam edebilmek için KVKK onayı gereklidir."); return; }
+    if (!consent) { setErr(copy.consentRequired); return; }
     setErr(""); setAuthStage("busy");
     const sb = createClient();
     const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(window.location.pathname)}`, shouldCreateUser: true } });
@@ -673,31 +677,31 @@ function CustomerAuthScreen({ venue, theme, onBack, onSuccess }: {
         {authStage === "sent" ? (
           <div style={{ width: "100%", maxWidth: 360, textAlign: "center" }}>
             <div style={{ fontSize: 56, marginBottom: 16 }}>📬</div>
-            <h2 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 800, color: theme.text }}>E-posta Gönderildi</h2>
-            <p style={{ margin: "0 0 24px", fontSize: 14, color: theme.muted, lineHeight: 1.6 }}><strong style={{ color: theme.accent }}>{email}</strong> adresine giriş linki gönderdik.</p>
-            <button onClick={() => setAuthStage("form")} style={{ ...secondaryBtn(theme), width: "100%" }}>E-posta değiştir</button>
+            <h2 style={{ margin: "0 0 10px", fontSize: 22, fontWeight: 800, color: theme.text }}>{copy.emailSent}</h2>
+            <p style={{ margin: "0 0 24px", fontSize: 14, color: theme.muted, lineHeight: 1.6 }}>{copy.emailSentHelp.replace("{email}", email)}</p>
+            <button onClick={() => setAuthStage("form")} style={{ ...secondaryBtn(theme), width: "100%" }}>{copy.changeEmail}</button>
           </div>
         ) : (
           <form onSubmit={handleSend} style={{ width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ textAlign: "center", marginBottom: 8 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: theme.muted, textTransform: "uppercase", marginBottom: 10, fontFamily: theme.fontLabel }}>Üye Girişi</div>
-              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: theme.text, fontFamily: theme.fontDisplay }}>Hesabına Giriş Yap</h2>
-              <p style={{ margin: "8px 0 0", fontSize: 13, color: theme.muted }}>E-postana sihirli link gönderiyoruz.</p>
+              <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", color: theme.muted, textTransform: "uppercase", marginBottom: 10, fontFamily: theme.fontLabel }}>{copy.memberLogin}</div>
+              <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, color: theme.text, fontFamily: theme.fontDisplay }}>{copy.authTitle}</h2>
+              <p style={{ margin: "8px 0 0", fontSize: 13, color: theme.muted }}>{copy.authSubtitle}</p>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>Ad Soyad</label>
-              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ahmet Yılmaz" style={inputStyle(theme)} />
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>{copy.fullName}</label>
+              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder={copy.fullNamePlaceholder} style={inputStyle(theme)} />
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>E-posta *</label>
-              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="ornek@email.com" style={inputStyle(theme)} />
+              <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: theme.muted, textTransform: "uppercase" }}>{copy.authTitle.includes("Log") ? "Email *" : "E-posta *"}</label>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={copy.emailPlaceholder} style={inputStyle(theme)} />
             </div>
             <label style={{ display: "flex", alignItems: "flex-start", gap: 10, cursor: "pointer" }}>
               <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} style={{ marginTop: 2, width: 16, height: 16, accentColor: theme.accent, flexShrink: 0 }} />
-              <span style={{ fontSize: 12, color: theme.muted, lineHeight: 1.5 }}><strong style={{ color: theme.accent }}>{venue.name}</strong> tarafından kampanya bilgilendirmesi ve KVKK kapsamında veri işlenmesini kabul ediyorum.</span>
+              <span style={{ fontSize: 12, color: theme.muted, lineHeight: 1.5 }}>{copy.consentText.replace("{venue}", venue.name)}</span>
             </label>
             {err && <div style={{ padding: "10px 14px", borderRadius: 10, background: "rgba(255,100,80,0.1)", border: "1px solid rgba(255,100,80,0.3)", color: "#ff8060", fontSize: 13 }}>{err}</div>}
-            <button type="submit" disabled={authStage === "busy" || !email} style={{ ...primaryBtn(theme), opacity: authStage === "busy" || !email ? 0.6 : 1 }}>{authStage === "busy" ? "Gönderiliyor…" : "Giriş Linki Gönder"}</button>
+            <button type="submit" disabled={authStage === "busy" || !email} style={{ ...primaryBtn(theme), opacity: authStage === "busy" || !email ? 0.6 : 1 }}>{authStage === "busy" ? copy.sending : copy.sendLoginLink}</button>
           </form>
         )}
       </div>

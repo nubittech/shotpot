@@ -39,7 +39,7 @@ function DecoCorner({ pos }: { pos: "tl"|"tr"|"br"|"bl" }) {
   );
 }
 
-export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
+export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, labels, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
   const display = (venueName ?? "MIDNIGHT TAP").toUpperCase();
   const { positions, phase } = useSlotEngine({ spinning, outcome });
   const isAnim = phase === "spinning" || phase === "settling";
@@ -67,7 +67,7 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           textShadow:"0 1px 0 #5a4218, 0 0 18px rgba(202,161,74,0.4)" }}>Jackpot</div>
         <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.2em",color:"#f5d27a",
           padding:"7px 12px",borderRadius:2,background:"rgba(202,161,74,0.06)",
-          border:"1px solid rgba(202,161,74,0.5)" }}>{tokens} JETON</div>
+          border:"1px solid rgba(202,161,74,0.5)" }}>{tokens} {labels?.tokens ?? "JETON"}</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:16,borderRadius:6,position:"relative",zIndex:2,
@@ -124,7 +124,7 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
 
         <div style={{ marginTop:12,textAlign:"center",fontSize:11,fontWeight:600,letterSpacing:"0.3em",
           color:"rgba(202,161,74,0.85)",textTransform:"uppercase" }}>
-          ✦ ÜÇLÜ EŞLEŞİM ÖDER ✦
+          {labels?.triplePays ?? "✦ ÜÇLÜ EŞLEŞİM ÖDER ✦"}
         </div>
 
         {/* Lever */}
@@ -133,7 +133,7 @@ export function V3Deco({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
         </div>
       </div>
 
-      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} />
+      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} labels={labels} />
       <Confetti run={won} colors={CONFETTI} />
     </div>
   );

@@ -23,8 +23,8 @@ Kategoriler:
 - `dashboard`: İşletme paneli, menü, kartlar ve silme uyarıları.
 - `dashboardPages`: Dashboard alt sayfaları: analitik, müşteriler, kuponlar ve müşteri detayları.
 - `studio`: Slot kurulum akışı.
-- `play`: Müşteri oyun/fiş/kupon akışı.
-- `scan`: Garson kupon doğrulama ekranı.
+- `play`: İşletme diline göre çalışan müşteri oyun, fiş okuma, jackpot ve kupon akışı.
+- `scan`: İşletme diline göre çalışan garson kupon doğrulama ekranı.
 - `billing`: Paddle plan ve ödeme ekranı.
 - `legal`: Yasal sayfaların başlıkları.
 
@@ -46,7 +46,13 @@ Dil kapsamındaki sayfalar:
   - `apps/web/app/dashboard/DeleteVenueButton.tsx`
   - `apps/web/app/dashboard/LogoutButton.tsx`
 - Studio: `apps/web/app/studio/page.tsx`.
-- Play/scan: `apps/web/app/play/[slug]/page.tsx`, `apps/web/app/scan/page.tsx`.
+- Play/scan:
+  - `apps/web/app/play/[slug]/page.tsx`
+  - `apps/web/app/play/[slug]/PlayClient.tsx`
+  - `apps/web/app/scan/page.tsx`
+  - `apps/web/app/api/play/venue-language/route.ts`
+  - `apps/web/components/SlotMachine.tsx`
+  - `apps/web/components/slot/*`
 - Legal: `apps/web/app/terms/page.tsx`, `apps/web/app/privacy/page.tsx`, `apps/web/app/refund/page.tsx`.
 
 Yeni dil eklerken kontrol sırası:

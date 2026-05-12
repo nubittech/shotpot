@@ -5,6 +5,7 @@ export interface SlotVariantProps {
   spinning: boolean;
   canSpin: boolean;
   onSpin: () => void;
+  labels?: import("../SlotMachine").SlotLabels;
   venueName?: string;
   onBack?: () => void;
   onReset?: () => void;

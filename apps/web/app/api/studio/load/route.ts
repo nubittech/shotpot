@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     const v = venue as unknown as {
       id: string; slug: string; name: string; plan: string;
       billing_cycle?: string;
-      currency: string; receipt_mode: string; timezone: string;
+      currency: string; receipt_mode: string; interface_language?: string; timezone: string;
       token_threshold: number; owner_user_id: string;
     };
 
@@ -52,6 +52,7 @@ export async function GET(req: NextRequest) {
         billingCycle: v.billing_cycle ?? "monthly",
         currency: v.currency ?? "TRY",
         receiptMode: v.receipt_mode ?? "ocr",
+        interfaceLanguage: v.interface_language ?? "tr",
         timezone: v.timezone ?? "Europe/Istanbul",
         tokenThreshold: v.token_threshold,
       },

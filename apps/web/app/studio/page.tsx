@@ -58,6 +58,7 @@ const STEP_LABELS = [
 type SymCfg = { reward: string; coupon: string; share: number };
 type Currency = "TRY" | "USD" | "EUR";
 type ReceiptMode = "ocr" | "qr" | "both";
+type InterfaceLanguage = "tr" | "en";
 
 const CURRENCY_META: Record<Currency, { symbol: string; label: string; defaultThreshold: number; defaultTimezone: string }> = {
   TRY: { symbol: "₺", label: "Türk Lirası (₺)", defaultThreshold: 50, defaultTimezone: "Europe/Istanbul" },
@@ -89,6 +90,7 @@ type State = {
   billingCycle: "monthly" | "yearly";
   currency: Currency;
   receiptMode: ReceiptMode;
+  interfaceLanguage: InterfaceLanguage;
   timezone: string;
   tokenThreshold: number;
   selected: SymId[];
@@ -161,6 +163,7 @@ async function openPaddleCheckoutFromStudio(args: {
   slug: string;
   plan: State["plan"];
   billingCycle: State["billingCycle"];
+  interfaceLanguage: InterfaceLanguage;
 }) {
   const checkoutPlan = checkoutPlanFromStudio(args.plan);
   const checkoutPeriod = checkoutPeriodFromStudio(args.billingCycle);
@@ -185,7 +188,7 @@ async function openPaddleCheckoutFromStudio(args: {
     customData: { venue_id: args.venueId, plan: checkoutPlan, billing_cycle: checkoutPeriod },
     settings: {
       displayMode: "overlay",
-      locale: "en",
+      locale: args.interfaceLanguage,
       successUrl: `${window.location.origin}/dashboard/billing/${args.slug}?success=1`,
     },
   });
@@ -213,6 +216,7 @@ function StudioInner() {
     billingCycle: "monthly",
     currency: "TRY",
     receiptMode: "ocr",
+    interfaceLanguage: "tr",
     timezone: "Europe/Istanbul",
     tokenThreshold: 50,
     selected: ["beer", "wine", "shot"],
@@ -275,6 +279,7 @@ function StudioInner() {
           billingCycle:   ((v as { billingCycle?: string }).billingCycle as State["billingCycle"]) ?? prev.billingCycle,
           currency:       ((v as { currency?: string }).currency as Currency) ?? prev.currency,
           receiptMode:    ((v as { receiptMode?: string }).receiptMode as ReceiptMode) ?? prev.receiptMode,
+          interfaceLanguage: ((v as { interfaceLanguage?: string }).interfaceLanguage as InterfaceLanguage) ?? prev.interfaceLanguage,
           timezone:       (v as { timezone?: string }).timezone   ?? prev.timezone,
           tokenThreshold: (v as { tokenThreshold?: number }).tokenThreshold ?? prev.tokenThreshold,
           variant:        cfg?.variant ?? prev.variant,
@@ -346,6 +351,7 @@ function StudioInner() {
         tokenThreshold: st.tokenThreshold,
         plan: st.plan,
         billingCycle: st.billingCycle,
+        interfaceLanguage: st.interfaceLanguage,
         planPrice: planPrice(st.plan, st.billingCycle),
         rewards: probabilities.symbols.map(({ id }) => ({
           icon: symEmoji(id),
@@ -370,6 +376,7 @@ function StudioInner() {
         billingCycle: st.billingCycle,
         currency: st.currency,
         receiptMode: st.receiptMode,
+        interfaceLanguage: st.interfaceLanguage,
         timezone: st.timezone,
         tokenThreshold: st.tokenThreshold,
         variant: st.variant,
@@ -403,6 +410,7 @@ function StudioInner() {
             slug: checkoutSlug,
             plan: st.plan,
             billingCycle: st.billingCycle,
+            interfaceLanguage: st.interfaceLanguage,
           });
           update({ saved: true });
           return;
@@ -620,6 +628,28 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
             maxLength={48}
             style={{ ...inputStyle, fontFamily: "monospace", fontSize: 12 }}
           />
+        </Field>
+        <Field label="Müşteri Arayüz Dili" hint="Fiş okuma, jackpot, kupon ve garson ekranı bu dilde görünür.">
+          <div style={{ display: "flex", gap: 8 }}>
+            {([
+              { id: "tr", label: "Türkçe", sub: "TR" },
+              { id: "en", label: "English", sub: "EN" },
+            ] as Array<{ id: InterfaceLanguage; label: string; sub: string }>).map((lang) => (
+              <button
+                key={lang.id}
+                onClick={() => update({ interfaceLanguage: lang.id })}
+                type="button"
+                style={{
+                  flex: 1, padding: "12px 14px", borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: "pointer",
+                  background: st.interfaceLanguage === lang.id ? "rgba(255,216,78,0.12)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${st.interfaceLanguage === lang.id ? "#ffd84e" : "rgba(255,255,255,0.1)"}`,
+                  color: st.interfaceLanguage === lang.id ? "#ffd84e" : "rgba(244,239,230,0.7)",
+                }}
+              >
+                {lang.label} · {lang.sub}
+              </button>
+            ))}
+          </div>
         </Field>
         <Field
           label="Abonelik Tipi"
@@ -988,6 +1018,7 @@ function StepPreview({
               val={selectedPlanLabel}
             />
             <Row label="Ücret" val={selectedPlanPrice} accent />
+            <Row label="Müşteri dili" val={st.interfaceLanguage === "en" ? "English" : "Türkçe"} />
             <Row label="Para birimi" val={`${CURRENCY_META[st.currency].symbol} ${st.currency}`} />
             <Row label="Jeton eşiği" val={`Her ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} = 1 jeton`} />
             <Row label="Zaman dilimi" val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />

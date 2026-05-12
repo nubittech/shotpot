@@ -38,7 +38,7 @@ function BulbRow() {
   );
 }
 
-export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueName, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
+export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueName, labels, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
   const display = (venueName ?? "MIDNIGHT TAP").toUpperCase();
   const { positions, phase } = useSlotEngine({ spinning, outcome });
   const isAnim = phase === "spinning" || phase === "settling";
@@ -56,7 +56,7 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
           <button onClick={onBack} style={{ width:34,height:34,borderRadius:"50%",background:"rgba(232,200,118,0.08)",border:"1px solid rgba(232,200,118,0.25)",color:"#e8c876",cursor:"pointer",fontSize:14 }}>‹</button>
         ) : <div style={{ width:34 }} />}
         <div style={{ fontFamily:"'Playfair Display',Georgia,serif",fontSize:30,fontWeight:900,color:"#e8c876",letterSpacing:"0.02em",textShadow:"0 2px 12px rgba(232,200,118,0.5),0 0 1px #fff8d0" }}>Jackpot</div>
-        <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.14em",color:"#e8c876",padding:"7px 12px",borderRadius:12,background:"rgba(232,200,118,0.1)",border:"1px solid rgba(232,200,118,0.25)" }}>{tokens} JETON</div>
+        <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.14em",color:"#e8c876",padding:"7px 12px",borderRadius:12,background:"rgba(232,200,118,0.1)",border:"1px solid rgba(232,200,118,0.25)" }}>{tokens} {labels?.tokens ?? "JETON"}</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:14,borderRadius:22,position:"relative",
@@ -113,8 +113,8 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
           border:"1px solid rgba(232,200,118,0.25)",fontSize:11,fontWeight:600,
           letterSpacing:"0.12em",color:"#e8c876",textTransform:"uppercase",
           display:"flex",justifyContent:"space-between" }}>
-          <span>3 aynı · kazan</span>
-          <span style={{ color:"#ff8a4a" }}>★ 7-7-7 · jackpot</span>
+          <span>{labels?.payline ?? "3 aynı · kazan"}</span>
+          <span style={{ color:"#ff8a4a" }}>{labels?.jackpotLine ?? "★ 7-7-7 · jackpot"}</span>
         </div>
 
         {/* Lever */}
@@ -128,7 +128,7 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
           border:"1.5px solid #5a2a08",boxShadow:"inset 0 2px 3px rgba(0,0,0,0.7)",
           display:"flex",alignItems:"center",justifyContent:"center",
           fontSize:10,color:"#caa14a",fontWeight:700,letterSpacing:"0.22em" }}>
-          FİŞ DOĞRULANDI
+          {labels?.receiptVerified ?? "FİŞ DOĞRULANDI"}
         </div>
       </div>
 
@@ -137,7 +137,7 @@ export function V1Classic({ tokens, outcome, spinning, canSpin, onSpin, venueNam
         background:"conic-gradient(from 0deg,rgba(255,200,80,0.16) 0deg,transparent 20deg,rgba(255,200,80,0.16) 40deg,transparent 60deg,rgba(255,200,80,0.16) 80deg,transparent 100deg,rgba(255,200,80,0.16) 120deg,transparent 140deg,rgba(255,200,80,0.16) 160deg,transparent 180deg,rgba(255,200,80,0.16) 200deg,transparent 220deg,rgba(255,200,80,0.16) 240deg,transparent 260deg,rgba(255,200,80,0.16) 280deg,transparent 300deg,rgba(255,200,80,0.16) 320deg,transparent 340deg)",
         animation:"win-rays 14s linear infinite",pointerEvents:"none",zIndex:1 }} />}
 
-      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} />
+      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} labels={labels} />
       <Confetti run={won} colors={CONFETTI} />
     </div>
   );

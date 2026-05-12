@@ -6,6 +6,7 @@ export type BillingCycle = "monthly" | "yearly";
 export type SlotVariantDB = "v1" | "v2" | "v3";
 export type Currency = "TRY" | "USD" | "EUR";
 export type ReceiptMode = "ocr" | "qr" | "both";
+export type InterfaceLanguage = "tr" | "en";
 export type VenueTier = "standard" | "pro";
 export type LoyaltyTier = "bronze" | "silver" | "gold";
 
@@ -21,6 +22,7 @@ export interface Venue {
   token_threshold: number;
   currency: Currency;
   receipt_mode: ReceiptMode;
+  interface_language: InterfaceLanguage;
   timezone: string;
   created_at: string;
   updated_at: string;

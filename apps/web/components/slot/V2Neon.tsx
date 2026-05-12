@@ -24,7 +24,7 @@ const DRAWER = {
   titleFont:"'Bebas Neue','Impact',sans-serif",
 };
 
-export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
+export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, labels, onBack, onReset, onShowCoupon, onExit }: SlotVariantProps) {
   const display = (venueName ?? "MIDNIGHT TAP").toUpperCase();
   const { positions, phase } = useSlotEngine({ spinning, outcome });
   const isAnim = phase === "spinning" || phase === "settling";
@@ -57,7 +57,7 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           animation:"neon-flicker 6s linear infinite" }}>JACKPOT</div>
         <div style={{ fontSize:12,fontWeight:700,letterSpacing:"0.18em",color:"#00e8ff",
           padding:"7px 12px",borderRadius:12,background:"rgba(0,232,255,0.08)",
-          border:"1px solid rgba(0,232,255,0.4)",textShadow:"0 0 6px #00e8ff" }}>{tokens} JETON</div>
+          border:"1px solid rgba(0,232,255,0.4)",textShadow:"0 0 6px #00e8ff" }}>{tokens} {labels?.tokens ?? "JETON"}</div>
       </div>
 
       <div style={{ margin:"8px 48px 0 18px",padding:14,borderRadius:22,position:"relative",
@@ -109,8 +109,8 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           border:"1px solid rgba(0,232,255,0.25)",fontSize:11,fontWeight:600,letterSpacing:"0.14em",
           color:"#00e8ff",textTransform:"uppercase",display:"flex",justifyContent:"space-between",
           textShadow:"0 0 4px rgba(0,232,255,0.5)" }}>
-          <span>3 aynı · kazan</span>
-          <span style={{ color:"#ff7ac2" }}>★ 7-7-7 · jackpot</span>
+          <span>{labels?.payline ?? "3 aynı · kazan"}</span>
+          <span style={{ color:"#ff7ac2" }}>{labels?.jackpotLine ?? "★ 7-7-7 · jackpot"}</span>
         </div>
 
         {/* Lever */}
@@ -122,10 +122,10 @@ export function V2Neon({ tokens, outcome, spinning, canSpin, onSpin, venueName, 
           border:"1px solid rgba(255,45,138,0.3)",boxShadow:"inset 0 0 6px rgba(255,45,138,0.4)",
           display:"flex",alignItems:"center",justifyContent:"center",
           fontSize:10,color:"#ff7ac2",fontWeight:700,letterSpacing:"0.24em",
-          textShadow:"0 0 4px #ff2d8a" }}>FİŞ · DOĞRULANDI</div>
+          textShadow:"0 0 4px #ff2d8a" }}>{labels?.receiptVerifiedShort ?? "FİŞ · DOĞRULANDI"}</div>
       </div>
 
-      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} />
+      <ResultDrawer phase={phase} payout={outcome !== "No Reward" ? outcome : null} onReset={onReset ?? (() => {})} onShowCoupon={onShowCoupon} onExit={onExit} canContinue={tokens > 0} palette={DRAWER} labels={labels} />
       <Confetti run={won} colors={CONFETTI} />
     </div>
   );

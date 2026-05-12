@@ -25,11 +25,37 @@ interface ResultDrawerProps {
   onExit?: () => void;
   canContinue?: boolean;
   palette: DrawerPalette;
+  labels?: {
+    won: string;
+    ready: string;
+    couponAdded: string;
+    showCoupon: string;
+    notThisRound: string;
+    nextTime: string;
+    tryAgainHint: string;
+    scanAgainHint: string;
+    retry: string;
+    exit: string;
+    backMenu: string;
+  };
 }
 
-export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, canContinue = true, palette }: ResultDrawerProps) {
+export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, canContinue = true, palette, labels }: ResultDrawerProps) {
   const visible = phase === "result-win" || phase === "result-lose";
   const won = phase === "result-win";
+  const t = labels ?? {
+    won: "KAZANDIN",
+    ready: "Ödülünüz hazır",
+    couponAdded: "Kupon cüzdanınıza eklendi · Barman'a gösterin",
+    showCoupon: "KUPONU GÖR",
+    notThisRound: "BU TUR DEĞİL",
+    nextTime: "Bir dahaki sefere.",
+    tryAgainHint: "Jetonların var — tekrar dene.",
+    scanAgainHint: "Yeni fiş yükleyince tekrar oyna.",
+    retry: "TEKRAR DENE",
+    exit: "ÇIKIŞ",
+    backMenu: "MENÜYE DÖN",
+  };
 
   return (
     <div style={{
@@ -50,17 +76,17 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
           color: palette.winText,
           textAlign: "center",
         }}>
-          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.2em" }}>KAZANDIN</div>
+          <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.2em" }}>{t.won}</div>
           <div style={{
             fontFamily: palette.titleFont,
             fontSize: 28, fontWeight: 900,
             margin: "6px 0 8px",
             textShadow: palette.winShadow,
           }}>
-            {payout ?? "Ödülünüz hazır"}
+            {payout ?? t.ready}
           </div>
           <div style={{ fontSize: 12, opacity: 0.72, fontWeight: 600, lineHeight: 1.5 }}>
-            Kupon cüzdanınıza eklendi · Barman'a gösterin
+            {t.couponAdded}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
             <button onClick={onShowCoupon ?? onReset} style={{
@@ -68,7 +94,7 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
               background: palette.btnBg, color: palette.btnText,
               fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer",
             }}>
-              KUPONU GÖR
+              {t.showCoupon}
             </button>
             <button onClick={onReset} style={{
               padding: "13px 18px", borderRadius: 12,
@@ -76,7 +102,7 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
               background: "transparent",
               color: palette.winText, fontSize: 13, fontWeight: 700, cursor: "pointer",
             }}>
-              Tamam
+              OK
             </button>
           </div>
         </div>
@@ -90,17 +116,17 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
           color: palette.loseText, textAlign: "center",
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.2em", opacity: 0.6 }}>
-            BU TUR DEĞİL
+            {t.notThisRound}
           </div>
           <div style={{
             fontFamily: palette.titleFont,
             fontSize: 26, fontWeight: 700,
             margin: "6px 0 6px",
           }}>
-            Bir dahaki sefere.
+            {t.nextTime}
           </div>
           <div style={{ fontSize: 12, opacity: 0.65, fontWeight: 500, lineHeight: 1.5 }}>
-            {canContinue ? "Jetonların var — tekrar dene." : "Yeni fiş yükleyince tekrar oyna."}
+            {canContinue ? t.tryAgainHint : t.scanAgainHint}
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
             {canContinue && (
@@ -109,7 +135,7 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
                 background: palette.btnBg, color: palette.btnText,
                 fontSize: 13, fontWeight: 700, letterSpacing: "0.08em", cursor: "pointer",
               }}>
-                TEKRAR DENE
+                {t.retry}
               </button>
             )}
             <button onClick={onExit ?? onReset} style={{
@@ -120,7 +146,7 @@ export function ResultDrawer({ phase, payout, onReset, onShowCoupon, onExit, can
               color: palette.loseText, fontSize: 13, fontWeight: 700,
               letterSpacing: "0.1em", cursor: "pointer",
             }}>
-              {canContinue ? "ÇIKIŞ" : "MENÜYE DÖN"}
+              {canContinue ? t.exit : t.backMenu}
             </button>
           </div>
         </div>
