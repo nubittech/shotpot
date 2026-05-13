@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
+import { getClientCopy } from "../../lib/i18n/client";
 
 declare global {
   interface Window {
@@ -46,15 +47,8 @@ const VARIANTS: { id: SlotVariant; label: string; desc: string; bg: string; acce
   },
 ];
 
-const STEP_LABELS = [
-  "Slot Tasarımı",
-  "İşletme Bilgileri",
-  "Semboller & Ödüller",
-  "Kazanma Oranları",
-  "Önizleme & Kaydet",
-];
-
 /* ─── Types ──────────────────────────────────────────────────── */
+type StudioCopy = ReturnType<typeof getClientCopy>["studio"];
 type SymCfg = { reward: string; coupon: string; share: number };
 type Currency = "TRY" | "USD" | "EUR";
 type ReceiptMode = "ocr" | "qr" | "both";
@@ -117,17 +111,19 @@ function totalSymShare(selected: SymId[], symCfg: Partial<Record<SymId, SymCfg>>
   return selected.reduce((s, id) => s + (symCfg[id]?.share ?? 0), 0);
 }
 
-function planLabel(plan: State["plan"]) {
-  return plan === "kampanya" ? "Kampanya" : "İşletme";
+function planLabel(plan: State["plan"], copy: StudioCopy) {
+  return plan === "kampanya" ? copy.campaign : copy.business;
 }
 
-function billingLabel(cycle: State["billingCycle"]) {
-  return cycle === "yearly" ? "Yıllık" : "Aylık";
+function billingLabel(cycle: State["billingCycle"], copy: StudioCopy) {
+  return cycle === "yearly" ? copy.annual : copy.monthly;
 }
 
-function planPrice(plan: State["plan"], cycle: State["billingCycle"]) {
-  if (plan === "kampanya") return cycle === "yearly" ? "$20/yıl" : "$5/ay";
-  return cycle === "yearly" ? "$50/yıl" : "$10/ay";
+function planPrice(plan: State["plan"], cycle: State["billingCycle"], copy?: StudioCopy) {
+  const monthSuffix = copy?.monthSuffix ?? "/ay";
+  const yearSuffix = copy?.yearSuffix ?? "/yıl";
+  if (plan === "kampanya") return cycle === "yearly" ? `$20${yearSuffix}` : `$5${monthSuffix}`;
+  return cycle === "yearly" ? `$50${yearSuffix}` : `$10${monthSuffix}`;
 }
 
 function checkoutPlanFromStudio(plan: State["plan"]) {
@@ -196,14 +192,17 @@ async function openPaddleCheckoutFromStudio(args: {
 
 /* ─── Main Component ─────────────────────────────────────────── */
 export default function StudioPage() {
+  const copyText = getClientCopy();
   return (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0b0b0d", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(244,239,230,0.5)", fontFamily: "Inter, sans-serif" }}>Yükleniyor…</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0b0b0d", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(244,239,230,0.5)", fontFamily: "Inter, sans-serif" }}>{copyText.common.loading}</div>}>
       <StudioInner />
     </Suspense>
   );
 }
 
 function StudioInner() {
+  const copyText = getClientCopy();
+  const studioCopy = copyText.studio;
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("slug");
 
@@ -248,7 +247,7 @@ function StudioInner() {
         const data = await res.json();
         if (cancelled) return;
         if (!res.ok) {
-          setLoadError(data.error ?? "Konfigürasyon yüklenemedi.");
+          setLoadError(data.error ?? studioCopy.loadError);
           return;
         }
         const v = data.venue as State extends infer T ? Partial<Record<keyof T, unknown>> : never;
@@ -291,7 +290,7 @@ function StudioInner() {
           symCfg:         newSelected.length ? newCfg : prev.symCfg,
         }));
       } catch {
-        if (!cancelled) setLoadError("Bağlantı hatası.");
+        if (!cancelled) setLoadError(studioCopy.connectionError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -345,14 +344,14 @@ function StudioInner() {
 
       // Always sync to localStorage so main page picks it up instantly
       const localPayload = {
-        name: st.name || "İşletme",
+        name: st.name || studioCopy.business,
         logoSymbol: st.name.slice(0, 2).toUpperCase() || "??",
         slotVariant: st.variant,
         tokenThreshold: st.tokenThreshold,
         plan: st.plan,
         billingCycle: st.billingCycle,
         interfaceLanguage: st.interfaceLanguage,
-        planPrice: planPrice(st.plan, st.billingCycle),
+        planPrice: planPrice(st.plan, st.billingCycle, studioCopy),
         rewards: probabilities.symbols.map(({ id }) => ({
           icon: symEmoji(id),
           label: st.symCfg[id]?.reward ?? id,
@@ -371,7 +370,7 @@ function StudioInner() {
       // Persist to Supabase (venues + symbol_configs + campaigns)
       const sbPayload = {
         slug: st.slug,
-        name: st.name || "İşletme",
+        name: st.name || studioCopy.business,
         plan: st.plan,
         billingCycle: st.billingCycle,
         currency: st.currency,
@@ -397,9 +396,9 @@ function StudioInner() {
         body: JSON.stringify(sbPayload),
       });
       if (!sbRes.ok) {
-        const err = await sbRes.json().catch(() => ({ error: "Konfigürasyon kaydedilemedi." }));
+        const err = await sbRes.json().catch(() => ({ error: studioCopy.saveError }));
         console.error("Supabase save failed:", err);
-        setSaveError(err.error ?? "Konfigürasyon kaydedilemedi. Lütfen tekrar dene.");
+        setSaveError(err.error ?? studioCopy.saveErrorRetry);
         return;
       } else {
         const savedVenue = await sbRes.json().catch(() => null) as { venueId?: string; slug?: string } | null;
@@ -429,7 +428,7 @@ function StudioInner() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: st.name || "İşletme",
+            name: st.name || studioCopy.business,
             logoSymbol: st.name.slice(0, 2).toUpperCase() || "??",
             headline: "Gecenin Ritmi",
             subheadline: "Modern gastronomi deneyimi",
@@ -456,7 +455,7 @@ function StudioInner() {
     } catch (error) {
       console.error("Checkout failed:", error);
       setSaveError(
-        "Ödeme ekranı açılamadı. Paddle verification, Vercel env değişkenleri veya tarayıcı pop-up/extension ayarlarını kontrol edip tekrar dene."
+        studioCopy.checkoutOpenError
       );
     } finally {
       update({ saving: false });
@@ -470,10 +469,10 @@ function StudioInner() {
         <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: "-0.01em", color: "#ffd84e" }}>Receipt Reward</div>
         <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.1)" }} />
         <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", fontWeight: 500 }}>
-          {editSlug ? `Düzenleme · ${editSlug}` : "İşletme Kurulum Paneli"}
+          {editSlug ? `${studioCopy.editing} · ${editSlug}` : studioCopy.setupPanel}
         </div>
         {loading && (
-          <div style={{ marginLeft: "auto", fontSize: 11, color: "rgba(244,239,230,0.4)" }}>Konfigürasyon yükleniyor…</div>
+          <div style={{ marginLeft: "auto", fontSize: 11, color: "rgba(244,239,230,0.4)" }}>{studioCopy.loadingConfig}</div>
         )}
         {loadError && (
           <div style={{ marginLeft: "auto", fontSize: 11, color: "#ff7e5a" }}>{loadError}</div>
@@ -482,14 +481,14 @@ function StudioInner() {
 
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "40px 24px 80px" }}>
         {/* Step bar */}
-        <StepBar current={st.step} labels={STEP_LABELS} onGo={goTo} />
+        <StepBar current={st.step} labels={studioCopy.steps} onGo={goTo} />
 
         <div style={{ marginTop: 40 }}>
-          {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} />}
-          {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} />}
-          {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} />}
-          {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} />}
-          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} />}
+          {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} copy={studioCopy} />}
+          {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} copy={studioCopy} />}
+          {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} copy={studioCopy} />}
+          {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} copy={studioCopy} />}
+          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} copy={studioCopy} />}
         </div>
       </div>
     </div>
@@ -497,7 +496,7 @@ function StudioInner() {
 }
 
 /* ─── Step Bar ───────────────────────────────────────────────── */
-function StepBar({ current, labels, onGo }: { current: number; labels: string[]; onGo: (i: number) => void }) {
+function StepBar({ current, labels, onGo }: { current: number; labels: readonly string[]; onGo: (i: number) => void }) {
   return (
     <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
       {labels.map((label, i) => {
@@ -544,13 +543,14 @@ function StepBar({ current, labels, onGo }: { current: number; labels: string[];
 }
 
 /* ─── Step 0: Variant ────────────────────────────────────────── */
-function StepVariant({ st, update, onNext }: { st: State; update: (p: Partial<State>) => void; onNext: () => void }) {
+function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; copy: StudioCopy }) {
   return (
     <div style={{ display: "grid", gap: 24 }}>
-      <StepHeader title="Slot Tasarımı Seç" sub="Müşterilerin göreceği slot makinesinin görünümünü belirle. Kurulum sonrası değiştirilebilir." />
+      <StepHeader title={copy.slotDesignTitle} sub={copy.slotDesignHelp} />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {VARIANTS.map((v) => {
           const active = st.variant === v.id;
+          const variantCopy = copy.variants[v.id];
           return (
             <button
               key={v.id}
@@ -572,31 +572,31 @@ function StepVariant({ st, update, onNext }: { st: State; update: (p: Partial<St
                   fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
                   color: v.accent,
                 }}>
-                  {v.label}
+                  {variantCopy.label}
                 </div>
               </div>
               {/* Info */}
               <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#f4efe6" }}>{v.label}</div>
-                <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 4, lineHeight: 1.4 }}>{v.desc}</div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#f4efe6" }}>{variantCopy.label}</div>
+                <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 4, lineHeight: 1.4 }}>{variantCopy.desc}</div>
               </div>
             </button>
           );
         })}
       </div>
-      <NavRow onNext={onNext} nextLabel="Devam Et" />
+      <NavRow onNext={onNext} nextLabel={copy.continue} />
     </div>
   );
 }
 
 /* ─── Step 1: Info ───────────────────────────────────────────── */
-function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void }) {
+function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy }) {
   const meta = CURRENCY_META[st.currency];
   const exampleAmount = st.currency === "TRY" ? 225 : st.currency === "USD" ? 15 : 12;
   const exampleTokens = Math.floor(exampleAmount / st.tokenThreshold);
   const planPrices: Record<State["plan"], Record<State["billingCycle"], string>> = {
-    kampanya: { monthly: "$5/ay", yearly: "$20/yıl" },
-    isletme: { monthly: "$10/ay", yearly: "$50/yıl" },
+    kampanya: { monthly: planPrice("kampanya", "monthly", copy), yearly: planPrice("kampanya", "yearly", copy) },
+    isletme: { monthly: planPrice("isletme", "monthly", copy), yearly: planPrice("isletme", "yearly", copy) },
   };
 
   function handleCurrencyChange(c: Currency) {
@@ -609,18 +609,18 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
 
   return (
     <div style={{ display: "grid", gap: 28, maxWidth: 520 }}>
-      <StepHeader title="İşletme Bilgileri" sub="Bu bilgiler slot makinenizde ve müşteri arayüzünde görünür." />
+      <StepHeader title={copy.businessInfo} sub={copy.businessInfoHelp} />
       <div style={{ display: "grid", gap: 20 }}>
-        <Field label="İşletme Adı" hint="Slot makinesinin üst kısmında büyük harfle gösterilir.">
+        <Field label={copy.businessName} hint={copy.businessNameHint}>
           <input
             value={st.name}
             onChange={(e) => update({ name: e.target.value, slug: st.slug || autoSlug(e.target.value) })}
-            placeholder="Örn. MIDNIGHT TAP"
+            placeholder={copy.businessNamePlaceholder}
             maxLength={24}
             style={inputStyle}
           />
         </Field>
-        <Field label="URL Slug" hint={`Müşteri linki: /play/${st.slug || "midnight-tap"}`}>
+        <Field label={copy.urlSlug} hint={`${copy.customerLink}: /play/${st.slug || "midnight-tap"}`}>
           <input
             value={st.slug}
             onChange={(e) => update({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })}
@@ -629,11 +629,11 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
             style={{ ...inputStyle, fontFamily: "monospace", fontSize: 12 }}
           />
         </Field>
-        <Field label="Müşteri Arayüz Dili" hint="Fiş okuma, jackpot, kupon ve garson ekranı bu dilde görünür.">
+        <Field label={copy.customerInterfaceLanguage} hint={copy.customerInterfaceLanguageHelp}>
           <div style={{ display: "flex", gap: 8 }}>
             {([
-              { id: "tr", label: "Türkçe", sub: "TR" },
-              { id: "en", label: "English", sub: "EN" },
+              { id: "tr", label: copy.languageTurkish, sub: "TR" },
+              { id: "en", label: copy.languageEnglish, sub: "EN" },
             ] as Array<{ id: InterfaceLanguage; label: string; sub: string }>).map((lang) => (
               <button
                 key={lang.id}
@@ -652,8 +652,8 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
           </div>
         </Field>
         <Field
-          label="Abonelik Tipi"
-          hint={`Seçili paket: ${st.plan === "kampanya" ? "Kampanya" : "İşletme"} · ${planPrices[st.plan][st.billingCycle]}`}
+          label={copy.subscriptionType}
+          hint={`${copy.selectedPackage}: ${planLabel(st.plan, copy)} · ${planPrices[st.plan][st.billingCycle]}`}
         >
           <div style={{ display: "grid", gap: 10 }}>
             <div style={{ display: "flex", gap: 8 }}>
@@ -669,7 +669,7 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
                     color: st.billingCycle === cycle ? "#ffd84e" : "rgba(244,239,230,0.65)",
                   }}
                 >
-                  {cycle === "monthly" ? "Aylık" : "Yıllık"}
+                  {billingLabel(cycle, copy)}
                 </button>
               ))}
             </div>
@@ -686,14 +686,14 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
                     color: st.plan === p ? "#ffd84e" : "rgba(244,239,230,0.7)",
                   }}
                 >
-                  {p === "kampanya" ? "Kampanya" : "İşletme"} · {planPrices[p][st.billingCycle]}
+                  {planLabel(p, copy)} · {planPrices[p][st.billingCycle]}
                 </button>
               ))}
             </div>
           </div>
         </Field>
         {/* Currency selector */}
-        <Field label="Para Birimi" hint="Fişten okunan tutar bu para biriminde değerlendirilecek.">
+        <Field label={copy.currency} hint={copy.currencyHelp}>
           <div style={{ display: "flex", gap: 8 }}>
             {(["TRY", "USD", "EUR"] as Currency[]).map((c) => (
               <button
@@ -715,11 +715,15 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
 
         {/* Token threshold */}
         <Field
-          label="Jeton Kazanma Eşiği"
-          hint={`Her ${st.tokenThreshold} ${meta.symbol} harcama = 1 jeton · Örnek: ${exampleAmount} ${meta.symbol} fiş → ${exampleTokens} jeton`}
+          label={copy.tokenThreshold}
+          hint={copy.tokenThresholdHint
+            .replace("{threshold}", String(st.tokenThreshold))
+            .replace("{symbol}", meta.symbol)
+            .replace("{amount}", String(exampleAmount))
+            .replace("{tokens}", String(exampleTokens))}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>Her</span>
+            <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{copy.every}</span>
             <input
               type="number"
               min={1}
@@ -728,12 +732,12 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
               onChange={(e) => update({ tokenThreshold: Math.max(1, Number(e.target.value)) })}
               style={{ ...inputStyle, width: 110 }}
             />
-            <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{meta.symbol} = 1 jeton</span>
+            <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{meta.symbol} {copy.oneToken}</span>
           </div>
         </Field>
 
         {/* Timezone */}
-        <Field label="Zaman Dilimi" hint="Fiş tarih/saati bu zaman dilimine göre değerlendirilir. 1 saatten eski fişler reddedilir.">
+        <Field label={copy.timezone} hint={copy.timezoneHelp}>
           <select
             value={st.timezone}
             onChange={(e) => update({ timezone: e.target.value })}
@@ -749,18 +753,18 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
 
         {/* Receipt mode */}
         <Field
-          label="Fiş Doğrulama Modu"
+          label={copy.receiptMode}
           hint={
-            st.receiptMode === "ocr"   ? "Müşteri fişi fotoğraflar, AI tutarı ve tarihi okur. Tüm POS'larda çalışır."
-          : st.receiptMode === "qr"    ? "Sadece QR kodlu fişler kabul edilir. Maksimum güvenlik (Adisyo, Revo, Simpra)."
-          : "QR varsa otomatik okunur, yoksa AI fotoğraf okuma devreye girer."
+            st.receiptMode === "ocr"   ? copy.receiptModeHints.ocr
+          : st.receiptMode === "qr"    ? copy.receiptModeHints.qr
+          : copy.receiptModeHints.both
           }
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {([
-              { id: "ocr",  label: "Standart",  sub: "Fotoğraf + AI" },
-              { id: "qr",   label: "QR",        sub: "POS QR" },
-              { id: "both", label: "Otomatik",  sub: "QR → AI" },
+              { id: "ocr",  label: copy.receiptModes.ocr.label,  sub: copy.receiptModes.ocr.sub },
+              { id: "qr",   label: copy.receiptModes.qr.label,   sub: copy.receiptModes.qr.sub },
+              { id: "both", label: copy.receiptModes.both.label, sub: copy.receiptModes.both.sub },
             ] as Array<{ id: ReceiptMode; label: string; sub: string }>).map((m) => (
               <button
                 key={m.id}
@@ -781,13 +785,13 @@ function StepInfo({ st, update, onNext, onBack }: { st: State; update: (p: Parti
           </div>
         </Field>
       </div>
-      <NavRow onBack={onBack} onNext={onNext} nextLabel="Devam Et" nextDisabled={!st.name.trim() || !st.slug.trim()} />
+      <NavRow onBack={onBack} onNext={onNext} nextLabel={copy.continue} backLabel={copy.back} nextDisabled={!st.name.trim() || !st.slug.trim()} />
     </div>
   );
 }
 
 /* ─── Step 2: Symbols & Rewards ──────────────────────────────── */
-function StepSymbols({ st, update, onNext, onBack }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void }) {
+function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy }) {
   function toggleSym(id: SymId) {
     const cur = st.selected;
     if (cur.includes(id)) {
@@ -811,13 +815,13 @@ function StepSymbols({ st, update, onNext, onBack }: { st: State; update: (p: Pa
   return (
     <div style={{ display: "grid", gap: 32 }}>
       <StepHeader
-        title="Semboller & Ödüller"
-        sub={`Sembol havuzundan maksimum ${MAX_SYMBOLS} sembol seç. Her sembol üçlemesi için kazanç mesajı ve kupon kodu belirle. Jackpot (7) her zaman aktiftir.`}
+        title={copy.symbolsTitle}
+        sub={copy.symbolsHelp.replace("{max}", String(MAX_SYMBOLS))}
       />
 
       {/* Symbol pool */}
       <div>
-        <SectionLabel>Sembol Havuzu ({st.selected.length}/{MAX_SYMBOLS} seçildi)</SectionLabel>
+        <SectionLabel>{copy.symbolPool} ({copy.selectedCount.replace("{selected}", String(st.selected.length)).replace("{max}", String(MAX_SYMBOLS))})</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
           {SELECTABLE_SYMS.map((id) => {
             const selected = st.selected.includes(id);
@@ -852,7 +856,7 @@ function StepSymbols({ st, update, onNext, onBack }: { st: State; update: (p: Pa
       {/* Reward config per selected symbol */}
       {st.selected.length > 0 && (
         <div>
-          <SectionLabel>Ödül Konfigürasyonu</SectionLabel>
+          <SectionLabel>{copy.rewardConfig}</SectionLabel>
           <div style={{ display: "grid", gap: 12 }}>
             {/* Jackpot always */}
             <RewardRow
@@ -863,6 +867,8 @@ function StepSymbols({ st, update, onNext, onBack }: { st: State; update: (p: Pa
               coupon={st.jackpotCoupon}
               onReward={(v) => update({ jackpotReward: v })}
               onCoupon={(v) => update({ jackpotCoupon: v })}
+              rewardPlaceholder={copy.rewardPlaceholder}
+              couponPlaceholder={copy.couponPlaceholder}
             />
             {st.selected.map((id) => (
               <RewardRow
@@ -873,26 +879,29 @@ function StepSymbols({ st, update, onNext, onBack }: { st: State; update: (p: Pa
                 coupon={st.symCfg[id]?.coupon ?? ""}
                 onReward={(v) => setCfg(id, { reward: v })}
                 onCoupon={(v) => setCfg(id, { coupon: v.toUpperCase() })}
+                rewardPlaceholder={copy.rewardPlaceholder}
+                couponPlaceholder={copy.couponPlaceholder}
               />
             ))}
           </div>
         </div>
       )}
 
-      <NavRow onBack={onBack} onNext={onNext} nextLabel="Devam Et" nextDisabled={!canNext} />
+      <NavRow onBack={onBack} onNext={onNext} nextLabel={copy.continue} backLabel={copy.back} nextDisabled={!canNext} />
     </div>
   );
 }
 
 /* ─── Step 3: Rates ──────────────────────────────────────────── */
 function StepRates({
-  st, update, probabilities, onNext, onBack,
+  st, update, probabilities, onNext, onBack, copy,
 }: {
   st: State;
   update: (p: Partial<State>) => void;
   probabilities: ReturnType<typeof computeProbs>;
   onNext: () => void;
   onBack: () => void;
+  copy: StudioCopy;
 }) {
   function setSymShare(id: SymId, val: number) {
     update({
@@ -908,13 +917,13 @@ function StepRates({
   return (
     <div style={{ display: "grid", gap: 32, maxWidth: 600 }}>
       <StepHeader
-        title="Kazanma Oranları"
-        sub="Önce genel kazanma oranını belirle, sonra bu kazançları jackpot ve semboller arasında dağıt."
+        title={copy.ratesTitle}
+        sub={copy.ratesHelp}
       />
 
       <div style={{ display: "grid", gap: 24 }}>
         {/* Overall win rate */}
-        <Field label={`Genel Kazanma Oranı — %${st.winRate}`} hint="Her spin için kazanma olasılığı">
+        <Field label={`${copy.overallWinRate} — %${st.winRate}`} hint={copy.overallWinHint}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="range" min={5} max={90} step={5}
@@ -927,7 +936,10 @@ function StepRates({
         </Field>
 
         {/* Jackpot share */}
-        <Field label={`Jackpot Payı — Kazançların %${st.jackpotShare}'i`} hint={`= Her spin için %${((st.winRate * st.jackpotShare) / 100).toFixed(1)} jackpot ihtimali`}>
+        <Field
+          label={`${copy.jackpotShare} — ${copy.jackpotShareLabel.replace("{share}", String(st.jackpotShare))}`}
+          hint={copy.jackpotShareHint.replace("{percent}", ((st.winRate * st.jackpotShare) / 100).toFixed(1))}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <input
               type="range" min={1} max={50} step={1}
@@ -941,9 +953,9 @@ function StepRates({
 
         {/* Per-symbol share */}
         <div>
-          <SectionLabel>Sembol Dağılımı</SectionLabel>
+          <SectionLabel>{copy.symbolDistribution}</SectionLabel>
           <p style={{ margin: "0 0 12px", fontSize: 12, color: "rgba(244,239,230,0.45)", lineHeight: 1.5 }}>
-            Her sembolün kazanç payını belirle (göreceli ağırlık). Toplam ağırlığa oranla hesaplanır.
+            {copy.symbolDistributionHelp}
           </p>
           <div style={{ display: "grid", gap: 10 }}>
             {st.selected.map((id) => {
@@ -976,17 +988,17 @@ function StepRates({
         {probabilities.symbols.map(({ id, prob }) => (
           <Pill key={id} label={id} value={`%${(prob * 100).toFixed(2)}`} color="rgba(255,255,255,0.5)" />
         ))}
-        <Pill label="Kazanmaz" value={`%${(probabilities.lose * 100).toFixed(1)}`} color="#ff7e5a" />
+        <Pill label={copy.noReward} value={`%${(probabilities.lose * 100).toFixed(1)}`} color="#ff7e5a" />
       </div>
 
-      <NavRow onBack={onBack} onNext={onNext} nextLabel="Önizleme" />
+      <NavRow onBack={onBack} onNext={onNext} nextLabel={copy.preview} backLabel={copy.back} />
     </div>
   );
 }
 
 /* ─── Step 4: Preview & Save ─────────────────────────────────── */
 function StepPreview({
-  st, probabilities, saving, saved, saveError, onSave, onBack,
+  st, probabilities, saving, saved, saveError, onSave, onBack, copy,
 }: {
   st: State;
   probabilities: ReturnType<typeof computeProbs>;
@@ -995,49 +1007,50 @@ function StepPreview({
   saveError: string | null;
   onSave: () => void;
   onBack: () => void;
+  copy: StudioCopy;
 }) {
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
-  const selectedPlanLabel = `${planLabel(st.plan)} · ${billingLabel(st.billingCycle)}`;
-  const selectedPlanPrice = planPrice(st.plan, st.billingCycle);
+  const selectedPlanLabel = `${planLabel(st.plan, copy)} · ${billingLabel(st.billingCycle, copy)}`;
+  const selectedPlanPrice = planPrice(st.plan, st.billingCycle, copy);
   const checkoutPlan = checkoutPlanFromStudio(st.plan);
   const checkoutPeriod = checkoutPeriodFromStudio(st.billingCycle);
   const checkoutHref = `/dashboard/billing/${st.slug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
-      <StepHeader title="Önizleme & Kaydet" sub="Konfigürasyonunu gözden geçir. Kaydettikten sonra seçilen paketin ödeme ekranına yönleneceksin." />
+      <StepHeader title={copy.previewSave} sub={copy.previewSaveHelp} />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
         {/* Left: summary */}
         <div style={{ display: "grid", gap: 16 }}>
-          <SummaryCard title="İşletme">
-            <Row label="Adı" val={st.name} />
-            <Row label="Müşteri linki" val={`/play/${st.slug}`} accent />
+          <SummaryCard title={copy.summaryBusiness}>
+            <Row label={copy.rows.name} val={st.name} />
+            <Row label={copy.customerLink} val={`/play/${st.slug}`} accent />
             <Row
-              label="Abonelik"
+              label={copy.rows.subscription}
               val={selectedPlanLabel}
             />
-            <Row label="Ücret" val={selectedPlanPrice} accent />
-            <Row label="Müşteri dili" val={st.interfaceLanguage === "en" ? "English" : "Türkçe"} />
-            <Row label="Para birimi" val={`${CURRENCY_META[st.currency].symbol} ${st.currency}`} />
-            <Row label="Jeton eşiği" val={`Her ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} = 1 jeton`} />
-            <Row label="Zaman dilimi" val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />
-            <Row label="Fiş modu" val={st.receiptMode === "ocr" ? "Standart (Foto+AI)" : st.receiptMode === "qr" ? "QR" : "Otomatik"} />
-            <Row label="Slot tasarımı" val={variantInfo.label} />
+            <Row label={copy.rows.price} val={selectedPlanPrice} accent />
+            <Row label={copy.rows.customerLanguage} val={st.interfaceLanguage === "en" ? copy.languageEnglish : copy.languageTurkish} />
+            <Row label={copy.rows.currency} val={`${CURRENCY_META[st.currency].symbol} ${st.currency}`} />
+            <Row label={copy.rows.tokenThreshold} val={`${copy.every} ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} ${copy.oneToken}`} />
+            <Row label={copy.rows.timezone} val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />
+            <Row label={copy.rows.receiptMode} val={copy.scanModeLabels[st.receiptMode]} />
+            <Row label={copy.rows.slotDesign} val={copy.variants[variantInfo.id].label} />
           </SummaryCard>
 
-          <SummaryCard title="Kazanma Oranları">
-            <Row label="Genel kazanma" val={`%${st.winRate}`} />
-            <Row label="Jackpot ihtimali" val={`%${(probabilities.jackpot * 100).toFixed(2)}`} accent />
+          <SummaryCard title={copy.ratesTitle}>
+            <Row label={copy.rows.overallWin} val={`%${st.winRate}`} />
+            <Row label={copy.rows.jackpotChance} val={`%${(probabilities.jackpot * 100).toFixed(2)}`} accent />
             {probabilities.symbols.map(({ id, prob }) => (
               <Row key={id} label={id.charAt(0).toUpperCase() + id.slice(1)} val={`%${(prob * 100).toFixed(2)}`} />
             ))}
-            <Row label="Kazanmaz" val={`%${(probabilities.lose * 100).toFixed(1)}`} dim />
+            <Row label={copy.noReward} val={`%${(probabilities.lose * 100).toFixed(1)}`} dim />
           </SummaryCard>
         </div>
 
         {/* Right: reward list */}
-        <SummaryCard title="Sembol & Ödüller">
+        <SummaryCard title={copy.rewardSummary}>
           <div style={{ display: "grid", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ width: 32, height: 32 }}>{SYMBOL_REGISTRY.seven.render({ size: 32, tone: "warm" })}</div>
@@ -1063,33 +1076,33 @@ function StepPreview({
 
       {saved && (
         <div style={{ padding: 20, borderRadius: 16, background: "rgba(142,242,161,0.08)", border: "1px solid rgba(142,242,161,0.22)", color: "#8ef2a1" }}>
-          <div style={{ fontWeight: 800, fontSize: 15 }}>✓ Konfigürasyon kaydedildi</div>
+          <div style={{ fontWeight: 800, fontSize: 15 }}>✓ {copy.saved}</div>
           <div style={{ marginTop: 6, color: "rgba(210,255,218,0.78)", fontSize: 13, lineHeight: 1.45 }}>
-            Seçilen paket: <strong>{selectedPlanLabel} · {selectedPlanPrice}</strong>. Ödeme sayfasına yönlendirme hazır.
+            {copy.savedPackage.replace("{plan}", `${selectedPlanLabel} · ${selectedPlanPrice}`)}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 14 }}>
-            <a href="/dashboard" style={successActionPrimary}>Dashboard&apos;a Git</a>
-            <a href={checkoutHref} style={successActionSecondary}>Ödemeye Git</a>
-            <a href={`/play/${st.slug}`} target="_blank" rel="noreferrer" style={successActionSecondary}>Müşteri Sayfası</a>
+            <a href="/dashboard" style={successActionPrimary}>{copy.goDashboard}</a>
+            <a href={checkoutHref} style={successActionSecondary}>{copy.goPayment}</a>
+            <a href={`/play/${st.slug}`} target="_blank" rel="noreferrer" style={successActionSecondary}>{copy.customerPage}</a>
           </div>
         </div>
       )}
 
       {saveError && (
         <div style={{ padding: 18, borderRadius: 14, background: "rgba(255,126,90,0.1)", border: "1px solid rgba(255,126,90,0.28)", color: "#ffb199", fontSize: 13, lineHeight: 1.5 }}>
-          <strong style={{ color: "#ffdfd2" }}>Ödeme başlatılamadı.</strong>
+          <strong style={{ color: "#ffdfd2" }}>{copy.paymentFailed}</strong>
           <div style={{ marginTop: 6 }}>{saveError}</div>
           <div style={{ marginTop: 10, color: "rgba(255,223,210,0.72)" }}>
-            İşletme ödeme tamamlanana kadar aktif görünmez. Plan sayfasından tekrar ödeme başlatabilirsin.
+            {copy.paymentPendingHelp}
           </div>
         </div>
       )}
 
       <div style={{ display: "flex", gap: 12 }}>
-        <button onClick={onBack} style={secondaryBtn} type="button">{saved ? "← Düzenlemeye Devam Et" : "← Geri"}</button>
+        <button onClick={onBack} style={secondaryBtn} type="button">{saved ? `← ${copy.keepEditing}` : `← ${copy.back}`}</button>
         {saved ? (
           <a href={checkoutHref} style={{ ...primaryBtn, flex: 1, textAlign: "center", textDecoration: "none" }}>
-            Ödemeye Git
+            {copy.goPayment}
           </a>
         ) : (
           <button
@@ -1098,12 +1111,12 @@ function StepPreview({
             style={{ ...primaryBtn, opacity: saving ? 0.7 : 1, flex: 1 }}
             type="button"
           >
-            {saving ? "Kaydediliyor…" : "Kaydet ve Ödemeye Geç"}
+            {saving ? copy.saving : copy.saveAndCheckout}
           </button>
         )}
       </div>
       <div style={{ marginTop: -20, color: "rgba(244,239,230,0.38)", fontSize: 12, lineHeight: 1.5 }}>
-        İşletme kaydedildikten sonra seçilen paketle ödeme sayfasına yönlendirilirsin.
+        {copy.checkoutAfterSave}
       </div>
     </div>
   );
@@ -1136,7 +1149,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function RewardRow({
-  icon, label, isJackpot = false, reward, coupon, onReward, onCoupon,
+  icon, label, isJackpot = false, reward, coupon, onReward, onCoupon, rewardPlaceholder, couponPlaceholder,
 }: {
   icon: React.ReactNode;
   label: string;
@@ -1145,6 +1158,8 @@ function RewardRow({
   coupon: string;
   onReward: (v: string) => void;
   onCoupon: (v: string) => void;
+  rewardPlaceholder: string;
+  couponPlaceholder: string;
 }) {
   return (
     <div style={{
@@ -1160,13 +1175,13 @@ function RewardRow({
       <input
         value={reward}
         onChange={(e) => onReward(e.target.value)}
-        placeholder="Kazanç mesajı"
+        placeholder={rewardPlaceholder}
         style={inputStyle}
       />
       <input
         value={coupon}
         onChange={(e) => onCoupon(e.target.value)}
-        placeholder="Kupon kodu"
+        placeholder={couponPlaceholder}
         style={{ ...inputStyle, fontFamily: "monospace", letterSpacing: "0.05em" }}
       />
     </div>
@@ -1204,10 +1219,10 @@ function Row({ label, val, accent, dim }: { label: string; val: string; accent?:
   );
 }
 
-function NavRow({ onBack, onNext, nextLabel, nextDisabled }: { onBack?: () => void; onNext: () => void; nextLabel: string; nextDisabled?: boolean }) {
+function NavRow({ onBack, onNext, nextLabel, backLabel = "Geri", nextDisabled }: { onBack?: () => void; onNext: () => void; nextLabel: string; backLabel?: string; nextDisabled?: boolean }) {
   return (
     <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-      {onBack && <button onClick={onBack} style={secondaryBtn} type="button">← Geri</button>}
+      {onBack && <button onClick={onBack} style={secondaryBtn} type="button">← {backLabel}</button>}
       <button onClick={onNext} disabled={nextDisabled} style={{ ...primaryBtn, opacity: nextDisabled ? 0.4 : 1 }} type="button">
         {nextLabel} →
       </button>
