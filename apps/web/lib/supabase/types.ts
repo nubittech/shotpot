@@ -1,4 +1,4 @@
-// Hand-written DB types matching db/migrations/002–005
+// Hand-written DB types matching db/migrations/002–007
 // Replace later with: `npx supabase gen types typescript --project-id iffxaoiwrxsrfpsysqkc > lib/supabase/types.ts`
 
 export type PlanTier = "kampanya" | "isletme";
@@ -9,6 +9,8 @@ export type ReceiptMode = "ocr" | "qr" | "both";
 export type InterfaceLanguage = "tr" | "en";
 export type VenueTier = "standard" | "pro";
 export type LoyaltyTier = "bronze" | "silver" | "gold";
+export type GameType = "slot" | "wheel";
+export type WheelVariantDB = "boho" | "irish" | "medit";
 
 export interface Venue {
   id: string;
@@ -24,6 +26,8 @@ export interface Venue {
   receipt_mode: ReceiptMode;
   interface_language: InterfaceLanguage;
   timezone: string;
+  game_type: GameType;      // migration 007: slot | wheel
+  wheel_variant: WheelVariantDB; // migration 007: boho | irish | medit
   created_at: string;
   updated_at: string;
 }

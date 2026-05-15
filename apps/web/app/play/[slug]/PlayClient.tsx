@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { SlotMachine } from "../../../components/SlotMachine";
 import { getCopy, type Locale } from "../../../lib/i18n";
 import { createClient } from "../../../lib/supabase/browser";
 import type { PlayBundle } from "../../../lib/play";
-import type { SlotVariantDB } from "../../../lib/supabase/types";
+import type { SlotVariantDB, WheelVariantDB } from "../../../lib/supabase/types";
+
+const SpinWheel = dynamic(() => import("../../../components/wheel/SpinWheel"), { ssr: false });
 
 type SpinResponse = {
   outcome: string; win: boolean; isJackpot: boolean;
@@ -224,11 +227,35 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} copy={playCopy} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
   if (stage === "scan") return <ScanScreen venue={venue} theme={theme} copy={playCopy} locale={copyText.meta.locale} guestToken={guestToken} customerId={customerId} onComplete={handleScanComplete} onBack={() => setStage("home")} />;
   if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={result.coupon} onBack={() => { setResult(null); setStage("play"); }} onDone={() => { setResult(null); setStage("home"); }} />;
-  if (stage === "play") return (
-    <div style={{ position: "fixed", inset: 0, background: "#000" }}>
-      <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} labels={playCopy.slot} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => result?.coupon && setStage("coupon")} onExit={() => { setResult(null); setStage("home"); }} />
-    </div>
-  );
+  if (stage === "play") {
+    const gameType = (venue as unknown as { game_type?: string }).game_type ?? "slot";
+    const wheelVariant = (venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant ?? "boho";
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "#000" }}>
+        {gameType === "wheel" ? (
+          <SpinWheel
+            variant={wheelVariant}
+            venueName={venue.name}
+            canSpin={tokens > 0 && !spinning}
+            spinning={spinning}
+            tokens={tokens}
+            result={result ? {
+              win: result.win,
+              isJackpot: result.isJackpot,
+              rewardLabel: result.coupon?.rewardLabel ?? (result.win ? "Kazandın!" : ""),
+              couponCode: result.coupon?.code ?? "",
+            } : null}
+            onSpin={pullLever}
+            onShowCoupon={() => result?.coupon && setStage("coupon")}
+            onBack={() => setStage("home")}
+            onReset={() => setResult(null)}
+          />
+        ) : (
+          <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} labels={playCopy.slot} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => result?.coupon && setStage("coupon")} onExit={() => { setResult(null); setStage("home"); }} />
+        )}
+      </div>
+    );
+  }
 
   return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
 }

@@ -12,6 +12,8 @@ type SavePayload = {
   interfaceLanguage?: "tr" | "en";
   timezone?: string;
   tokenThreshold: number;
+  gameType?: "slot" | "wheel";
+  wheelVariant?: "boho" | "irish" | "medit";
   variant: "v1" | "v2" | "v3";
   winRate: number;       // 0..1 (e.g. 0.30)
   jackpotShare: number;  // 0..1 (e.g. 0.10)
@@ -77,6 +79,8 @@ export async function POST(req: NextRequest) {
         interface_language: body.interfaceLanguage ?? "tr",
         timezone: body.timezone ?? "Europe/Istanbul",
         token_threshold: body.tokenThreshold,
+        game_type: body.gameType ?? "slot",
+        wheel_variant: body.wheelVariant ?? "boho",
         owner_user_id: user.id,
         active: existingRow?.active ?? false,
       }, { onConflict: "slug" })

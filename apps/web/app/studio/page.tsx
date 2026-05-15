@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
 import { getClientCopy } from "../../lib/i18n/client";
+import { getWheelSegmentDefs, defaultWheelSegmentCfg, type WheelSegmentDef } from "../../components/wheel/segments";
 
 declare global {
   interface Window {
@@ -75,9 +76,15 @@ const TIMEZONES: Array<{ tz: string; label: string }> = [
   { tz: "Asia/Singapore",    label: "Singapur (UTC+8)" },
 ];
 
+type GameType = "slot" | "wheel";
+type WheelVariant = "boho" | "irish" | "medit";
+
 type State = {
   step: number;
+  gameType: GameType;
   variant: SlotVariant;
+  wheelVariant: WheelVariant;
+  wheelSegmentCfg: Record<string, { reward: string; coupon: string }>;
   name: string;
   slug: string;
   plan: "kampanya" | "isletme";
@@ -208,7 +215,10 @@ function StudioInner() {
 
   const [st, setSt] = useState<State>({
     step: 0,
+    gameType: "slot",
     variant: "v1",
+    wheelVariant: "boho",
+    wheelSegmentCfg: defaultWheelSegmentCfg("boho"),
     name: "",
     slug: "",
     plan: "kampanya",
@@ -281,6 +291,9 @@ function StudioInner() {
           interfaceLanguage: ((v as { interfaceLanguage?: string }).interfaceLanguage as InterfaceLanguage) ?? prev.interfaceLanguage,
           timezone:       (v as { timezone?: string }).timezone   ?? prev.timezone,
           tokenThreshold: (v as { tokenThreshold?: number }).tokenThreshold ?? prev.tokenThreshold,
+          gameType:       ((v as { game_type?: string }).game_type as GameType) ?? prev.gameType,
+          wheelVariant:   ((v as { wheel_variant?: string }).wheel_variant as WheelVariant) ?? prev.wheelVariant,
+          wheelSegmentCfg: defaultWheelSegmentCfg(((v as { wheel_variant?: string }).wheel_variant as WheelVariant) ?? prev.wheelVariant),
           variant:        cfg?.variant ?? prev.variant,
           winRate:        cfg ? Math.round(cfg.winRate * 100) : prev.winRate,
           jackpotShare:   cfg ? Math.round(cfg.jackpotShare * 100) : prev.jackpotShare,
@@ -378,17 +391,26 @@ function StudioInner() {
         interfaceLanguage: st.interfaceLanguage,
         timezone: st.timezone,
         tokenThreshold: st.tokenThreshold,
+        gameType: st.gameType,
+        wheelVariant: st.wheelVariant,
         variant: st.variant,
         winRate: st.winRate / 100,
         jackpotShare: st.jackpotShare / 100,
         jackpotReward: st.jackpotReward,
         jackpotCoupon: st.jackpotCoupon,
-        campaigns: st.selected.map((id) => ({
-          symbolId: id,
-          rewardLabel: st.symCfg[id]?.reward ?? id,
-          couponPrefix: st.symCfg[id]?.coupon ?? id.toUpperCase(),
-          share: (st.symCfg[id]?.share ?? 20) / 100,
-        })),
+        campaigns: st.gameType === "wheel"
+          ? getWheelSegmentDefs(st.wheelVariant).map((seg) => ({
+              symbolId: seg.id,
+              rewardLabel: seg.type === 'lose' ? '' : (st.wheelSegmentCfg[seg.id]?.reward ?? seg.defaultPrize ?? ''),
+              couponPrefix: seg.type === 'lose' ? 'LOSE' : (st.wheelSegmentCfg[seg.id]?.coupon ?? seg.defaultCoupon),
+              share: 1 / getWheelSegmentDefs(st.wheelVariant).length,
+            }))
+          : st.selected.map((id) => ({
+              symbolId: id,
+              rewardLabel: st.symCfg[id]?.reward ?? id,
+              couponPrefix: st.symCfg[id]?.coupon ?? id.toUpperCase(),
+              share: (st.symCfg[id]?.share ?? 20) / 100,
+            })),
       };
       const sbRes = await fetch("/api/studio/save", {
         method: "POST",
@@ -481,7 +503,12 @@ function StudioInner() {
 
       <div style={{ maxWidth: 880, margin: "0 auto", padding: "40px 24px 80px" }}>
         {/* Step bar */}
-        <StepBar current={st.step} labels={studioCopy.steps} onGo={goTo} />
+        {(() => {
+          const stepLabels = st.gameType === "wheel"
+            ? ["Oyun & Tasarım", "İşletme Bilgileri", "Ödüller", "Kazanma Oranları", "Önizleme & Kaydet"]
+            : studioCopy.steps;
+          return <StepBar current={st.step} labels={stepLabels} onGo={goTo} />;
+        })()}
 
         <div style={{ marginTop: 40 }}>
           {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} copy={studioCopy} />}
@@ -543,47 +570,136 @@ function StepBar({ current, labels, onGo }: { current: number; labels: readonly 
 }
 
 /* ─── Step 0: Variant ────────────────────────────────────────── */
+const WHEEL_VARIANTS: { id: WheelVariant; label: string; desc: string; bg: string; accent: string; preview: string }[] = [
+  {
+    id: "boho",
+    label: "Bohem Kafé",
+    desc: "Açık krem zemin, el yazısı, doğal ahşap",
+    bg: "linear-gradient(135deg, #f5efe0 0%, #e8d8c0 100%)",
+    accent: "#c17f5a",
+    preview: "🌿",
+  },
+  {
+    id: "irish",
+    label: "Irish Pub",
+    desc: "Koyu orman yeşili, Kelt motifleri, viski amber",
+    bg: "linear-gradient(135deg, #0d1a0e 0%, #1a2e1c 100%)",
+    accent: "#c8922a",
+    preview: "☘",
+  },
+  {
+    id: "medit",
+    label: "Akdeniz",
+    desc: "Beyaz seramik, Yunan çini motifi, yaz enerjisi",
+    bg: "linear-gradient(135deg, #f0f4f8 0%, #dde6ea 100%)",
+    accent: "#1a6b8a",
+    preview: "☀",
+  },
+];
+
 function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; copy: StudioCopy }) {
   return (
-    <div style={{ display: "grid", gap: 24 }}>
-      <StepHeader title={copy.slotDesignTitle} sub={copy.slotDesignHelp} />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
-        {VARIANTS.map((v) => {
-          const active = st.variant === v.id;
-          const variantCopy = copy.variants[v.id];
-          return (
-            <button
-              key={v.id}
-              onClick={() => update({ variant: v.id })}
-              style={{
-                background: "none", border: `2px solid ${active ? "#ffd84e" : "rgba(255,255,255,0.08)"}`,
-                borderRadius: 20, padding: 0, cursor: "pointer", textAlign: "left",
-                transition: "border-color 0.15s", overflow: "hidden",
-                boxShadow: active ? "0 0 0 1px rgba(255,216,78,0.3), 0 0 32px rgba(255,216,78,0.08)" : "none",
-              }}
-              type="button"
-            >
-              {/* Preview area */}
-              <div style={{ height: 160, background: v.bg, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-                <div style={{ fontSize: 40 }}>{v.preview}</div>
-                <div style={{
-                  padding: "4px 16px", borderRadius: 999,
-                  border: `1px solid ${v.accent}44`, background: `${v.accent}22`,
-                  fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase",
-                  color: v.accent,
-                }}>
-                  {variantCopy.label}
-                </div>
-              </div>
-              {/* Info */}
-              <div style={{ padding: "14px 16px", background: "rgba(255,255,255,0.03)" }}>
-                <div style={{ fontWeight: 700, fontSize: 14, color: "#f4efe6" }}>{variantCopy.label}</div>
-                <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 4, lineHeight: 1.4 }}>{variantCopy.desc}</div>
-              </div>
-            </button>
-          );
-        })}
+    <div style={{ display: "grid", gap: 28 }}>
+      <StepHeader title="Oyun Motoru & Tasarım" sub="Müşterilerin göreceği oyun tipini ve görünümünü seç. Kurulum sonrası değiştirilebilir." />
+
+      {/* Game type toggle */}
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Oyun Tipi</div>
+        <div style={{ display: "flex", gap: 10 }}>
+          {([
+            { id: "slot" as GameType, label: "🎰 Slot Makinesi", desc: "Klasik kumar estetiği, retro kol" },
+            { id: "wheel" as GameType, label: "🎡 Şans Çarkı", desc: "Kafé, restoran, beach bar için" },
+          ]).map((g) => {
+            const active = st.gameType === g.id;
+            return (
+              <button
+                key={g.id}
+                onClick={() => update({ gameType: g.id as GameType, ...(g.id === 'wheel' ? { wheelSegmentCfg: defaultWheelSegmentCfg(st.wheelVariant) } : {}) })}
+                type="button"
+                style={{
+                  flex: 1, padding: "14px 16px", borderRadius: 14, textAlign: "left", cursor: "pointer",
+                  background: active ? "rgba(255,216,78,0.08)" : "rgba(255,255,255,0.03)",
+                  border: `2px solid ${active ? "#ffd84e" : "rgba(255,255,255,0.08)"}`,
+                  boxShadow: active ? "0 0 0 1px rgba(255,216,78,0.2)" : "none",
+                }}
+              >
+                <div style={{ fontSize: 15, fontWeight: 700, color: active ? "#ffd84e" : "#f4efe6" }}>{g.label}</div>
+                <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 4 }}>{g.desc}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Slot variants */}
+      {st.gameType === "slot" && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Slot Teması</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+            {VARIANTS.map((v) => {
+              const active = st.variant === v.id;
+              const variantCopy = copy.variants[v.id];
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => update({ variant: v.id })}
+                  style={{
+                    background: "none", border: `2px solid ${active ? "#ffd84e" : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 16, padding: 0, cursor: "pointer", textAlign: "left",
+                    transition: "border-color 0.15s", overflow: "hidden",
+                    boxShadow: active ? "0 0 0 1px rgba(255,216,78,0.3), 0 0 24px rgba(255,216,78,0.08)" : "none",
+                  }}
+                  type="button"
+                >
+                  <div style={{ height: 120, background: v.bg, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 32 }}>{v.preview}</div>
+                    <div style={{ padding: "3px 12px", borderRadius: 999, border: `1px solid ${v.accent}44`, background: `${v.accent}22`, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v.accent }}>{variantCopy.label}</div>
+                  </div>
+                  <div style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#f4efe6" }}>{variantCopy.label}</div>
+                    <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)", marginTop: 3, lineHeight: 1.4 }}>{variantCopy.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Wheel variants */}
+      {st.gameType === "wheel" && (
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Çark Teması</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+            {WHEEL_VARIANTS.map((v) => {
+              const active = st.wheelVariant === v.id;
+              return (
+                <button
+                  key={v.id}
+                  onClick={() => update({ wheelVariant: v.id, wheelSegmentCfg: defaultWheelSegmentCfg(v.id) })}
+                  style={{
+                    background: "none", border: `2px solid ${active ? v.accent : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 16, padding: 0, cursor: "pointer", textAlign: "left",
+                    transition: "border-color 0.15s", overflow: "hidden",
+                    boxShadow: active ? `0 0 0 1px ${v.accent}50, 0 0 24px ${v.accent}20` : "none",
+                  }}
+                  type="button"
+                >
+                  <div style={{ height: 120, background: v.bg, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 32 }}>{v.preview}</div>
+                    <div style={{ padding: "3px 12px", borderRadius: 999, border: `1px solid ${v.accent}44`, background: `${v.accent}22`, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v.accent }}>{v.label}</div>
+                  </div>
+                  <div style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)" }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#f4efe6" }}>{v.label}</div>
+                    <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)", marginTop: 3, lineHeight: 1.4 }}>{v.desc}</div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <NavRow onNext={onNext} nextLabel={copy.continue} />
     </div>
   );
@@ -792,6 +908,97 @@ function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p:
 
 /* ─── Step 2: Symbols & Rewards ──────────────────────────────── */
 function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy }) {
+  // For wheel mode: show segment reward editor
+  if (st.gameType === "wheel") {
+    const defs = getWheelSegmentDefs(st.wheelVariant);
+    const prizeDefs = defs.filter((d: WheelSegmentDef) => d.type !== 'lose');
+    const loseDefs = defs.filter((d: WheelSegmentDef) => d.type === 'lose');
+
+    function setWheelCfg(id: string, patch: Partial<{ reward: string; coupon: string }>) {
+      update({
+        wheelSegmentCfg: {
+          ...st.wheelSegmentCfg,
+          [id]: { ...(st.wheelSegmentCfg[id] ?? { reward: '', coupon: '' }), ...patch },
+        },
+      });
+    }
+
+    const canNextWheel = prizeDefs.filter((d: WheelSegmentDef) => d.type !== 'jackpot').every((d: WheelSegmentDef) =>
+      st.wheelSegmentCfg[d.id]?.reward?.trim() && st.wheelSegmentCfg[d.id]?.coupon?.trim()
+    );
+
+    return (
+      <div style={{ display: "grid", gap: 32 }}>
+        <StepHeader
+          title="Çark Ödülleri"
+          sub="Her ödüllü segment için kazanç mesajı ve kupon kodu belirle. Kaybet segmentleri otomatik yönetilir."
+        />
+
+        {/* Prize + Jackpot segments */}
+        <div>
+          <SectionLabel>Ödüllü Segmentler</SectionLabel>
+          <div style={{ display: "grid", gap: 10 }}>
+            {prizeDefs.map((seg: WheelSegmentDef) => (
+              <div key={seg.id} style={{
+                display: "grid", gridTemplateColumns: "60px 1fr 1fr", gap: 10, alignItems: "center",
+                padding: 12, borderRadius: 12,
+                background: seg.type === 'jackpot' ? "rgba(255,216,78,0.06)" : "rgba(255,255,255,0.03)",
+                border: `1px solid ${seg.type === 'jackpot' ? "rgba(255,216,78,0.2)" : "rgba(255,255,255,0.06)"}`,
+              }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    background: seg.color, display: "flex", alignItems: "center",
+                    justifyContent: "center", fontSize: 18,
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                  }}>{seg.icon}</div>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: seg.type === 'jackpot' ? "#ffd84e" : "rgba(244,239,230,0.4)", textTransform: "uppercase" }}>{seg.label}</span>
+                </div>
+                <input
+                  value={st.wheelSegmentCfg[seg.id]?.reward ?? ''}
+                  onChange={(e) => setWheelCfg(seg.id, { reward: e.target.value })}
+                  placeholder="Kazanç mesajı"
+                  style={inputStyle}
+                />
+                <input
+                  value={st.wheelSegmentCfg[seg.id]?.coupon ?? ''}
+                  onChange={(e) => setWheelCfg(seg.id, { coupon: e.target.value.toUpperCase() })}
+                  placeholder="Kupon kodu"
+                  style={{ ...inputStyle, fontFamily: "monospace", letterSpacing: "0.05em" }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Lose segments — read-only */}
+        <div>
+          <SectionLabel>Kaybet Segmentleri ({loseDefs.length} adet — otomatik)</SectionLabel>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {loseDefs.map((seg: WheelSegmentDef) => (
+              <div key={seg.id} style={{
+                display: "flex", alignItems: "center", gap: 8, padding: "8px 14px",
+                borderRadius: 10, background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)", opacity: 0.6,
+              }}>
+                <div style={{ width: 20, height: 20, borderRadius: "50%", background: seg.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>{seg.icon}</div>
+                <span style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", fontWeight: 600 }}>{seg.label}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ margin: "8px 0 0", fontSize: 11, color: "rgba(244,239,230,0.3)", lineHeight: 1.5 }}>
+            Kaybet segmentleri kupon üretmez. Kazanma oranı bir sonraki adımda ayarlanır.
+          </p>
+        </div>
+
+        <NavRow onBack={onBack} onNext={onNextWheel} nextLabel="Devam Et" nextDisabled={!canNextWheel} />
+      </div>
+    );
+
+    function onNextWheel() { onNext(); }
+  }
+
+  // ---- Original slot mode below ----
   function toggleSym(id: SymId) {
     const cur = st.selected;
     if (cur.includes(id)) {
@@ -1036,7 +1243,11 @@ function StepPreview({
             <Row label={copy.rows.tokenThreshold} val={`${copy.every} ${st.tokenThreshold} ${CURRENCY_META[st.currency].symbol} ${copy.oneToken}`} />
             <Row label={copy.rows.timezone} val={(TIMEZONES.find(t => t.tz === st.timezone)?.label ?? st.timezone)} />
             <Row label={copy.rows.receiptMode} val={copy.scanModeLabels[st.receiptMode]} />
-            <Row label={copy.rows.slotDesign} val={copy.variants[variantInfo.id].label} />
+            {st.gameType === "slot"
+              ? <Row label={copy.rows.slotDesign} val={copy.variants[variantInfo.id].label} />
+              : <Row label="Çark teması" val={st.wheelVariant === "boho" ? "Bohem Kafé" : st.wheelVariant === "irish" ? "Irish Pub" : "Akdeniz"} />
+            }
+            <Row label="Oyun motoru" val={st.gameType === "slot" ? "🎰 Slot Makinesi" : "🎡 Şans Çarkı"} />
           </SummaryCard>
 
           <SummaryCard title={copy.ratesTitle}>
