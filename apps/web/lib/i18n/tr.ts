@@ -253,9 +253,9 @@ export const tr = {
       v3: { label: "Art Déco", desc: "Altın çizgiler, krem zemin, klasik şıklık" },
     },
     wheelVariants: {
-      boho: { label: "Bohem Kafé", desc: "Açık krem zemin, el yazısı, doğal ahşap" },
-      irish: { label: "Irish Pub", desc: "Koyu orman yeşili, Kelt motifleri, viski amber" },
-      medit: { label: "Akdeniz", desc: "Beyaz seramik, Yunan çini motifi, yaz enerjisi" },
+      boho: { label: "Bohem", desc: "Açık krem zemin, el yazısı, doğal ahşap" },
+      irish: { label: "Irish", desc: "Koyu orman yeşili, Kelt motifleri, viski amber" },
+      medit: { label: "Sunset", desc: "Beyaz seramik, Yunan çini motifi, yaz enerjisi" },
     },
     businessInfo: "İşletme Bilgileri",
     businessInfoHelp: "Bu bilgiler slot makinenizde ve müşteri arayüzünde görünür.",

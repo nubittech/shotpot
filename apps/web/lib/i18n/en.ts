@@ -255,9 +255,9 @@ export const en: Translation = {
       v3: { label: "Art Deco", desc: "Gold lines, cream tones, classic elegance" },
     },
     wheelVariants: {
-      boho: { label: "Boho Cafe", desc: "Light cream base, handwritten feel, natural wood" },
-      irish: { label: "Irish Pub", desc: "Dark forest green, Celtic motifs, whiskey amber" },
-      medit: { label: "Mediterranean", desc: "White ceramic, Greek tile motifs, summer energy" },
+      boho: { label: "Bohem", desc: "Light cream base, handwritten feel, natural wood" },
+      irish: { label: "Irish", desc: "Dark forest green, Celtic motifs, whiskey amber" },
+      medit: { label: "Sunset", desc: "White ceramic, Greek tile motifs, summer energy" },
     },
     businessInfo: "Business Info",
     businessInfoHelp: "These details appear in your slot machine and customer interface.",
