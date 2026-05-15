@@ -505,7 +505,7 @@ function StudioInner() {
         {/* Step bar */}
         {(() => {
           const stepLabels = st.gameType === "wheel"
-            ? ["Oyun & Tasarım", "İşletme Bilgileri", "Ödüller", "Kazanma Oranları", "Önizleme & Kaydet"]
+            ? copyText.studio.wheelSteps
             : studioCopy.steps;
           return <StepBar current={st.step} labels={stepLabels} onGo={goTo} />;
         })()}
@@ -570,27 +570,21 @@ function StepBar({ current, labels, onGo }: { current: number; labels: readonly 
 }
 
 /* ─── Step 0: Variant ────────────────────────────────────────── */
-const WHEEL_VARIANTS: { id: WheelVariant; label: string; desc: string; bg: string; accent: string; preview: string }[] = [
+const WHEEL_VARIANTS: { id: WheelVariant; bg: string; accent: string; preview: string }[] = [
   {
     id: "boho",
-    label: "Bohem Kafé",
-    desc: "Açık krem zemin, el yazısı, doğal ahşap",
     bg: "linear-gradient(135deg, #f5efe0 0%, #e8d8c0 100%)",
     accent: "#c17f5a",
     preview: "🌿",
   },
   {
     id: "irish",
-    label: "Irish Pub",
-    desc: "Koyu orman yeşili, Kelt motifleri, viski amber",
     bg: "linear-gradient(135deg, #0d1a0e 0%, #1a2e1c 100%)",
     accent: "#c8922a",
     preview: "☘",
   },
   {
     id: "medit",
-    label: "Akdeniz",
-    desc: "Beyaz seramik, Yunan çini motifi, yaz enerjisi",
     bg: "linear-gradient(135deg, #f0f4f8 0%, #dde6ea 100%)",
     accent: "#1a6b8a",
     preview: "☀",
@@ -600,15 +594,15 @@ const WHEEL_VARIANTS: { id: WheelVariant; label: string; desc: string; bg: strin
 function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; copy: StudioCopy }) {
   return (
     <div style={{ display: "grid", gap: 28 }}>
-      <StepHeader title="Oyun Motoru & Tasarım" sub="Müşterilerin göreceği oyun tipini ve görünümünü seç. Kurulum sonrası değiştirilebilir." />
+      <StepHeader title={copy.gameEngineTitle} sub={copy.gameEngineHelp} />
 
       {/* Game type toggle */}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Oyun Tipi</div>
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>{copy.gameType}</div>
         <div style={{ display: "flex", gap: 10 }}>
           {([
-            { id: "slot" as GameType, label: "🎰 Slot Makinesi", desc: "Klasik kumar estetiği, retro kol" },
-            { id: "wheel" as GameType, label: "🎡 Şans Çarkı", desc: "Kafé, restoran, beach bar için" },
+            { id: "slot" as GameType, label: `🎰 ${copy.gameTypes.slot.label}`, desc: copy.gameTypes.slot.desc },
+            { id: "wheel" as GameType, label: `🎡 ${copy.gameTypes.wheel.label}`, desc: copy.gameTypes.wheel.desc },
           ]).map((g) => {
             const active = st.gameType === g.id;
             return (
@@ -634,7 +628,7 @@ function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Part
       {/* Slot variants */}
       {st.gameType === "slot" && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Slot Teması</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>{copy.slotTheme}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
             {VARIANTS.map((v) => {
               const active = st.variant === v.id;
@@ -669,10 +663,11 @@ function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Part
       {/* Wheel variants */}
       {st.gameType === "wheel" && (
         <div>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>Çark Teması</div>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.5)", marginBottom: 10 }}>{copy.wheelTheme}</div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
             {WHEEL_VARIANTS.map((v) => {
               const active = st.wheelVariant === v.id;
+              const variantCopy = copy.wheelVariants[v.id];
               return (
                 <button
                   key={v.id}
@@ -687,11 +682,11 @@ function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Part
                 >
                   <div style={{ height: 120, background: v.bg, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8 }}>
                     <div style={{ fontSize: 32 }}>{v.preview}</div>
-                    <div style={{ padding: "3px 12px", borderRadius: 999, border: `1px solid ${v.accent}44`, background: `${v.accent}22`, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v.accent }}>{v.label}</div>
+                    <div style={{ padding: "3px 12px", borderRadius: 999, border: `1px solid ${v.accent}44`, background: `${v.accent}22`, fontSize: 10, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: v.accent }}>{variantCopy.label}</div>
                   </div>
                   <div style={{ padding: "10px 14px", background: "rgba(255,255,255,0.03)" }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, color: "#f4efe6" }}>{v.label}</div>
-                    <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)", marginTop: 3, lineHeight: 1.4 }}>{v.desc}</div>
+                    <div style={{ fontWeight: 700, fontSize: 13, color: "#f4efe6" }}>{variantCopy.label}</div>
+                    <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)", marginTop: 3, lineHeight: 1.4 }}>{variantCopy.desc}</div>
                   </div>
                 </button>
               );
@@ -1245,9 +1240,9 @@ function StepPreview({
             <Row label={copy.rows.receiptMode} val={copy.scanModeLabels[st.receiptMode]} />
             {st.gameType === "slot"
               ? <Row label={copy.rows.slotDesign} val={copy.variants[variantInfo.id].label} />
-              : <Row label="Çark teması" val={st.wheelVariant === "boho" ? "Bohem Kafé" : st.wheelVariant === "irish" ? "Irish Pub" : "Akdeniz"} />
+              : <Row label={copy.rows.wheelTheme} val={copy.wheelVariants[st.wheelVariant].label} />
             }
-            <Row label="Oyun motoru" val={st.gameType === "slot" ? "🎰 Slot Makinesi" : "🎡 Şans Çarkı"} />
+            <Row label={copy.rows.gameEngine} val={st.gameType === "slot" ? `🎰 ${copy.gameTypes.slot.label}` : `🎡 ${copy.gameTypes.wheel.label}`} />
           </SummaryCard>
 
           <SummaryCard title={copy.ratesTitle}>
