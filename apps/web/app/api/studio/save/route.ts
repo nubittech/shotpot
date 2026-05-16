@@ -107,7 +107,15 @@ export async function POST(req: NextRequest) {
 
     if (cfgErr) return NextResponse.json({ error: cfgErr.message }, { status: 500 });
 
-    // 3) Replace campaigns: delete then insert (simple + correct)
+    // 3) Replace campaigns: delete then insert.
+    //    Snapshot existing rows first so we can restore them if the insert
+    //    fails — otherwise a failed insert would leave the venue with zero
+    //    campaigns (symbol rewards silently wiped).
+    const { data: prevCampaigns } = await sb
+      .from("campaigns")
+      .select("venue_id, symbol_id, reward_label, coupon_prefix, share")
+      .eq("venue_id", venueId);
+
     const { error: delErr } = await sb.from("campaigns").delete().eq("venue_id", venueId);
     if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
 
@@ -120,7 +128,13 @@ export async function POST(req: NextRequest) {
         share: c.share,
       }));
       const { error: insErr } = await sb.from("campaigns").insert(rows);
-      if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });
+      if (insErr) {
+        // Restore the snapshot so we don't lose the venue's symbols
+        if (prevCampaigns?.length) {
+          await sb.from("campaigns").insert(prevCampaigns);
+        }
+        return NextResponse.json({ error: insErr.message }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ ok: true, venueId, slug });
