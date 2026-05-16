@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, useEffect, Suspense, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
@@ -84,7 +84,7 @@ type State = {
   gameType: GameType;
   variant: SlotVariant;
   wheelVariant: WheelVariant;
-  wheelSegmentCfg: Record<string, { reward: string; coupon: string }>;
+  wheelSegmentCfg: Record<string, { reward: string; coupon: string; share: number }>;
   name: string;
   slug: string;
   plan: "kampanya" | "isletme";
@@ -266,6 +266,10 @@ function StudioInner() {
           symbolId: string; rewardLabel: string; couponPrefix: string; share: number; active: boolean;
         }>;
 
+        const loadedGameType = ((v as { game_type?: string }).game_type as GameType) ?? "slot";
+        const loadedWheelVariant = ((v as { wheel_variant?: string }).wheel_variant as WheelVariant) ?? "boho";
+
+        // ── Slot symbols ──
         const newSelected: SymId[] = [];
         const newCfg: Partial<Record<SymId, SymCfg>> = {};
         for (const c of camps) {
@@ -276,6 +280,29 @@ function StudioInner() {
               reward: c.rewardLabel,
               coupon: c.couponPrefix,
               share: Math.round((c.share ?? 0.2) * 100),
+            };
+          }
+        }
+
+        // ── Wheel segments ── campaigns hold prize segments; jackpot segment
+        //    reward comes from symbol_configs (jackpot_reward / coupon_prefix).
+        const newWheelCfg = defaultWheelSegmentCfg(loadedWheelVariant);
+        if (loadedGameType === "wheel") {
+          for (const c of camps) {
+            if (newWheelCfg[c.symbolId]) {
+              newWheelCfg[c.symbolId] = {
+                reward: c.rewardLabel,
+                coupon: c.couponPrefix,
+                share: Math.round((c.share ?? 0.2) * 100),
+              };
+            }
+          }
+          const jpSeg = getWheelSegmentDefs(loadedWheelVariant).find((d) => d.type === "jackpot");
+          if (jpSeg && cfg) {
+            newWheelCfg[jpSeg.id] = {
+              reward: cfg.jackpotReward ?? newWheelCfg[jpSeg.id].reward,
+              coupon: cfg.jackpotCoupon ?? newWheelCfg[jpSeg.id].coupon,
+              share: newWheelCfg[jpSeg.id].share,
             };
           }
         }
@@ -291,9 +318,9 @@ function StudioInner() {
           interfaceLanguage: ((v as { interfaceLanguage?: string }).interfaceLanguage as InterfaceLanguage) ?? prev.interfaceLanguage,
           timezone:       (v as { timezone?: string }).timezone   ?? prev.timezone,
           tokenThreshold: (v as { tokenThreshold?: number }).tokenThreshold ?? prev.tokenThreshold,
-          gameType:       ((v as { game_type?: string }).game_type as GameType) ?? prev.gameType,
-          wheelVariant:   ((v as { wheel_variant?: string }).wheel_variant as WheelVariant) ?? prev.wheelVariant,
-          wheelSegmentCfg: defaultWheelSegmentCfg(((v as { wheel_variant?: string }).wheel_variant as WheelVariant) ?? prev.wheelVariant),
+          gameType:       loadedGameType,
+          wheelVariant:   loadedWheelVariant,
+          wheelSegmentCfg: newWheelCfg,
           variant:        cfg?.variant ?? prev.variant,
           winRate:        cfg ? Math.round(cfg.winRate * 100) : prev.winRate,
           jackpotShare:   cfg ? Math.round(cfg.jackpotShare * 100) : prev.jackpotShare,
@@ -320,6 +347,20 @@ function StudioInner() {
     const win = st.winRate / 100;
     const jpProb = win * (st.jackpotShare / 100);
     const symWin = win - jpProb;
+
+    if (st.gameType === "wheel") {
+      const prizeSegs = getWheelSegmentDefs(st.wheelVariant).filter((d) => d.type === "prize");
+      const total = prizeSegs.reduce((s, seg) => s + (st.wheelSegmentCfg[seg.id]?.share ?? 0), 0);
+      return {
+        jackpot: jpProb,
+        lose: 1 - win,
+        symbols: prizeSegs.map((seg) => ({
+          id: seg.id,
+          prob: total > 0 ? symWin * ((st.wheelSegmentCfg[seg.id]?.share ?? 0) / total) : 0,
+        })),
+      };
+    }
+
     const total = totalSymShare(st.selected, st.symCfg);
     return {
       jackpot: jpProb,
@@ -329,7 +370,7 @@ function StudioInner() {
         prob: total > 0 ? symWin * ((st.symCfg[id]?.share ?? 0) / total) : 0,
       })),
     };
-  }, [st.winRate, st.jackpotShare, st.selected, st.symCfg]);
+  }, [st.winRate, st.jackpotShare, st.selected, st.symCfg, st.gameType, st.wheelVariant, st.wheelSegmentCfg]);
 
   /* ── Save ────────────────────────────────────────────────── */
   async function handleSave() {
@@ -344,9 +385,9 @@ function StudioInner() {
           couponCodePrefix: st.jackpotCoupon,
         },
         ...probabilities.symbols.map(({ id, prob }) => ({
-          name: st.symCfg[id]?.reward ?? id,
+          name: st.symCfg[id as SymId]?.reward ?? id,
           probability: prob,
-          couponCodePrefix: st.symCfg[id]?.coupon ?? id.toUpperCase(),
+          couponCodePrefix: st.symCfg[id as SymId]?.coupon ?? id.toUpperCase(),
         })),
         {
           name: "No Reward",
@@ -366,8 +407,8 @@ function StudioInner() {
         interfaceLanguage: st.interfaceLanguage,
         planPrice: planPrice(st.plan, st.billingCycle, studioCopy),
         rewards: probabilities.symbols.map(({ id }) => ({
-          icon: symEmoji(id),
-          label: st.symCfg[id]?.reward ?? id,
+          icon: symEmoji(id as SymId),
+          label: st.symCfg[id as SymId]?.reward ?? id,
         })),
         rules,
       };
@@ -381,6 +422,14 @@ function StudioInner() {
       }).catch(() => {});
 
       // Persist to Supabase (venues + symbol_configs + campaigns)
+      //
+      // Wheel mode mirrors the slot model exactly:
+      //   · jackpot segment  → symbol_configs.jackpot_reward / jackpot_coupon_prefix
+      //   · prize segments   → campaigns (the win pool, each with its own share)
+      //   · lose segments    → not persisted (no campaign = lose outcome)
+      const wheelDefs = st.gameType === "wheel" ? getWheelSegmentDefs(st.wheelVariant) : [];
+      const wheelJackpotSeg = wheelDefs.find((d) => d.type === "jackpot");
+
       const sbPayload = {
         slug: st.slug,
         name: st.name || studioCopy.business,
@@ -396,15 +445,21 @@ function StudioInner() {
         variant: st.variant,
         winRate: st.winRate / 100,
         jackpotShare: st.jackpotShare / 100,
-        jackpotReward: st.jackpotReward,
-        jackpotCoupon: st.jackpotCoupon,
+        jackpotReward: st.gameType === "wheel" && wheelJackpotSeg
+          ? (st.wheelSegmentCfg[wheelJackpotSeg.id]?.reward ?? wheelJackpotSeg.defaultPrize ?? "")
+          : st.jackpotReward,
+        jackpotCoupon: st.gameType === "wheel" && wheelJackpotSeg
+          ? (st.wheelSegmentCfg[wheelJackpotSeg.id]?.coupon ?? wheelJackpotSeg.defaultCoupon)
+          : st.jackpotCoupon,
         campaigns: st.gameType === "wheel"
-          ? getWheelSegmentDefs(st.wheelVariant).map((seg) => ({
-              symbolId: seg.id,
-              rewardLabel: seg.type === 'lose' ? '' : (st.wheelSegmentCfg[seg.id]?.reward ?? seg.defaultPrize ?? ''),
-              couponPrefix: seg.type === 'lose' ? 'LOSE' : (st.wheelSegmentCfg[seg.id]?.coupon ?? seg.defaultCoupon),
-              share: 1 / getWheelSegmentDefs(st.wheelVariant).length,
-            }))
+          ? wheelDefs
+              .filter((seg) => seg.type === "prize")
+              .map((seg) => ({
+                symbolId: seg.id,
+                rewardLabel: st.wheelSegmentCfg[seg.id]?.reward ?? seg.defaultPrize ?? "",
+                couponPrefix: st.wheelSegmentCfg[seg.id]?.coupon ?? seg.defaultCoupon,
+                share: (st.wheelSegmentCfg[seg.id]?.share ?? 20) / 100,
+              }))
           : st.selected.map((id) => ({
               symbolId: id,
               rewardLabel: st.symCfg[id]?.reward ?? id,
@@ -460,8 +515,8 @@ function StudioInner() {
             accent: "#ffd84e",
             accentSoft: "#ffd84e",
             rewards: probabilities.symbols.map(({ id }) => ({
-              icon: symEmoji(id),
-              label: st.symCfg[id]?.reward ?? id,
+              icon: symEmoji(id as SymId),
+              label: st.symCfg[id as SymId]?.reward ?? id,
             })),
             slotVariant: st.variant,
             tokenThreshold: st.tokenThreshold,
@@ -909,11 +964,11 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
     const prizeDefs = defs.filter((d: WheelSegmentDef) => d.type !== 'lose');
     const loseDefs = defs.filter((d: WheelSegmentDef) => d.type === 'lose');
 
-    function setWheelCfg(id: string, patch: Partial<{ reward: string; coupon: string }>) {
+    function setWheelCfg(id: string, patch: Partial<{ reward: string; coupon: string; share: number }>) {
       update({
         wheelSegmentCfg: {
           ...st.wheelSegmentCfg,
-          [id]: { ...(st.wheelSegmentCfg[id] ?? { reward: '', coupon: '' }), ...patch },
+          [id]: { ...(st.wheelSegmentCfg[id] ?? { reward: '', coupon: '', share: 20 }), ...patch },
         },
       });
     }
@@ -1105,6 +1160,8 @@ function StepRates({
   onBack: () => void;
   copy: StudioCopy;
 }) {
+  const isWheel = st.gameType === "wheel";
+
   function setSymShare(id: SymId, val: number) {
     update({
       symCfg: {
@@ -1113,8 +1170,42 @@ function StepRates({
       },
     });
   }
+  function setWheelShare(id: string, val: number) {
+    update({
+      wheelSegmentCfg: {
+        ...st.wheelSegmentCfg,
+        [id]: { ...(st.wheelSegmentCfg[id] ?? { reward: "", coupon: "", share: 20 }), share: Math.max(1, val) },
+      },
+    });
+  }
 
-  const symTotal = totalSymShare(st.selected, st.symCfg);
+  // Normalized distribution rows — slot symbols OR wheel prize segments.
+  type DistRow = { id: string; label: string; icon: ReactNode; share: number; setShare: (v: number) => void };
+  const distRows: DistRow[] = isWheel
+    ? getWheelSegmentDefs(st.wheelVariant)
+        .filter((seg) => seg.type === "prize")
+        .map((seg) => ({
+          id: seg.id,
+          label: seg.label,
+          icon: (
+            <div style={{
+              width: 24, height: 24, borderRadius: "50%", background: seg.color,
+              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+            }}>{seg.icon}</div>
+          ),
+          share: st.wheelSegmentCfg[seg.id]?.share ?? 20,
+          setShare: (v: number) => setWheelShare(seg.id, v),
+        }))
+    : st.selected.map((id) => ({
+        id,
+        label: id.charAt(0).toUpperCase() + id.slice(1),
+        icon: <div style={{ width: 24, height: 24 }}>{SYMBOL_REGISTRY[id].render({ size: 24, tone: "warm" })}</div>,
+        share: st.symCfg[id]?.share ?? 20,
+        setShare: (v: number) => setSymShare(id, v),
+      }));
+
+  const distTotal = distRows.reduce((s, r) => s + r.share, 0);
+  const labelFor = (id: string) => distRows.find((r) => r.id === id)?.label ?? id;
 
   return (
     <div style={{ display: "grid", gap: 32, maxWidth: 600 }}>
@@ -1153,29 +1244,28 @@ function StepRates({
           </div>
         </Field>
 
-        {/* Per-symbol share */}
+        {/* Per-symbol / per-segment share */}
         <div>
           <SectionLabel>{copy.symbolDistribution}</SectionLabel>
           <p style={{ margin: "0 0 12px", fontSize: 12, color: "rgba(244,239,230,0.45)", lineHeight: 1.5 }}>
             {copy.symbolDistributionHelp}
           </p>
           <div style={{ display: "grid", gap: 10 }}>
-            {st.selected.map((id) => {
-              const share = st.symCfg[id]?.share ?? 20;
-              const prob = probabilities.symbols.find((s) => s.id === id)?.prob ?? 0;
+            {distRows.map((row) => {
+              const prob = probabilities.symbols.find((s) => s.id === row.id)?.prob ?? 0;
               return (
-                <div key={id} style={{ display: "grid", gridTemplateColumns: "120px 1fr 60px 80px", gap: 10, alignItems: "center" }}>
+                <div key={row.id} style={{ display: "grid", gridTemplateColumns: "120px 1fr 60px 80px", gap: 10, alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 600, color: "rgba(244,239,230,0.7)" }}>
-                    <div style={{ width: 24, height: 24 }}>{SYMBOL_REGISTRY[id].render({ size: 24, tone: "warm" })}</div>
-                    {id.charAt(0).toUpperCase() + id.slice(1)}
+                    {row.icon}
+                    {row.label}
                   </div>
                   <input
                     type="range" min={1} max={100}
-                    value={share}
-                    onChange={(e) => setSymShare(id, Number(e.target.value))}
+                    value={row.share}
+                    onChange={(e) => row.setShare(Number(e.target.value))}
                     style={{ accentColor: "#ffd84e" }}
                   />
-                  <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", textAlign: "right" }}>{share}/{symTotal}</div>
+                  <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", textAlign: "right" }}>{row.share}/{distTotal}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: "#ffd84e", textAlign: "right" }}>%{(prob * 100).toFixed(1)}</div>
                 </div>
               );
@@ -1188,7 +1278,7 @@ function StepRates({
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <Pill label="Jackpot" value={`%${(probabilities.jackpot * 100).toFixed(2)}`} color="#ffd84e" />
         {probabilities.symbols.map(({ id, prob }) => (
-          <Pill key={id} label={id} value={`%${(prob * 100).toFixed(2)}`} color="rgba(255,255,255,0.5)" />
+          <Pill key={id} label={labelFor(id)} value={`%${(prob * 100).toFixed(2)}`} color="rgba(255,255,255,0.5)" />
         ))}
         <Pill label={copy.noReward} value={`%${(probabilities.lose * 100).toFixed(1)}`} color="#ff7e5a" />
       </div>
@@ -1217,6 +1307,49 @@ function StepPreview({
   const checkoutPlan = checkoutPlanFromStudio(st.plan);
   const checkoutPeriod = checkoutPeriodFromStudio(st.billingCycle);
   const checkoutHref = `/dashboard/billing/${st.slug}?checkout=1&plan=${checkoutPlan}&period=${checkoutPeriod}`;
+
+  const isWheel = st.gameType === "wheel";
+  const wheelDefs = isWheel ? getWheelSegmentDefs(st.wheelVariant) : [];
+  const wheelJackpotSeg = wheelDefs.find((d) => d.type === "jackpot");
+
+  // Reward rows for the right-hand summary card (jackpot + prize entries).
+  type RewardRowView = { id: string; label: string; icon: ReactNode; reward: string; coupon: string; jackpot?: boolean };
+  const jackpotRow: RewardRowView = isWheel && wheelJackpotSeg
+    ? {
+        id: wheelJackpotSeg.id,
+        label: `${wheelJackpotSeg.icon} · Jackpot`,
+        icon: <div style={{ width: 32, height: 32, borderRadius: "50%", background: wheelJackpotSeg.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>{wheelJackpotSeg.icon}</div>,
+        reward: st.wheelSegmentCfg[wheelJackpotSeg.id]?.reward ?? "",
+        coupon: st.wheelSegmentCfg[wheelJackpotSeg.id]?.coupon ?? "",
+        jackpot: true,
+      }
+    : {
+        id: "seven",
+        label: "7 · Jackpot",
+        icon: <div style={{ width: 32, height: 32 }}>{SYMBOL_REGISTRY.seven.render({ size: 32, tone: "warm" })}</div>,
+        reward: st.jackpotReward,
+        coupon: st.jackpotCoupon,
+        jackpot: true,
+      };
+  const prizeRows: RewardRowView[] = isWheel
+    ? wheelDefs.filter((seg) => seg.type === "prize").map((seg) => ({
+        id: seg.id,
+        label: seg.label,
+        icon: <div style={{ width: 32, height: 32, borderRadius: "50%", background: seg.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>{seg.icon}</div>,
+        reward: st.wheelSegmentCfg[seg.id]?.reward ?? "",
+        coupon: st.wheelSegmentCfg[seg.id]?.coupon ?? "",
+      }))
+    : st.selected.map((id) => ({
+        id,
+        label: id.charAt(0).toUpperCase() + id.slice(1),
+        icon: <div style={{ width: 32, height: 32 }}>{SYMBOL_REGISTRY[id].render({ size: 32, tone: "warm" })}</div>,
+        reward: st.symCfg[id]?.reward ?? "",
+        coupon: st.symCfg[id]?.coupon ?? "",
+      }));
+  const ratesLabelFor = (id: string) =>
+    isWheel
+      ? (wheelDefs.find((d) => d.id === id)?.label ?? id)
+      : id.charAt(0).toUpperCase() + id.slice(1);
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
@@ -1249,7 +1382,7 @@ function StepPreview({
             <Row label={copy.rows.overallWin} val={`%${st.winRate}`} />
             <Row label={copy.rows.jackpotChance} val={`%${(probabilities.jackpot * 100).toFixed(2)}`} accent />
             {probabilities.symbols.map(({ id, prob }) => (
-              <Row key={id} label={id.charAt(0).toUpperCase() + id.slice(1)} val={`%${(prob * 100).toFixed(2)}`} />
+              <Row key={id} label={ratesLabelFor(id)} val={`%${(prob * 100).toFixed(2)}`} />
             ))}
             <Row label={copy.noReward} val={`%${(probabilities.lose * 100).toFixed(1)}`} dim />
           </SummaryCard>
@@ -1259,20 +1392,20 @@ function StepPreview({
         <SummaryCard title={copy.rewardSummary}>
           <div style={{ display: "grid", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ width: 32, height: 32 }}>{SYMBOL_REGISTRY.seven.render({ size: 32, tone: "warm" })}</div>
+              {jackpotRow.icon}
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#ffd84e" }}>7 · Jackpot</div>
-                <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)" }}>{st.jackpotReward}</div>
-                <div style={{ fontSize: 10, color: "rgba(244,239,230,0.35)", fontFamily: "monospace" }}>{st.jackpotCoupon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#ffd84e" }}>{jackpotRow.label}</div>
+                <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)" }}>{jackpotRow.reward}</div>
+                <div style={{ fontSize: 10, color: "rgba(244,239,230,0.35)", fontFamily: "monospace" }}>{jackpotRow.coupon}</div>
               </div>
             </div>
-            {st.selected.map((id) => (
-              <div key={id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-                <div style={{ width: 32, height: 32 }}>{SYMBOL_REGISTRY[id].render({ size: 32, tone: "warm" })}</div>
+            {prizeRows.map((row) => (
+              <div key={row.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                {row.icon}
                 <div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(244,239,230,0.85)" }}>{id.charAt(0).toUpperCase() + id.slice(1)}</div>
-                  <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)" }}>{st.symCfg[id]?.reward}</div>
-                  <div style={{ fontSize: 10, color: "rgba(244,239,230,0.35)", fontFamily: "monospace" }}>{st.symCfg[id]?.coupon}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "rgba(244,239,230,0.85)" }}>{row.label}</div>
+                  <div style={{ fontSize: 11, color: "rgba(244,239,230,0.5)" }}>{row.reward}</div>
+                  <div style={{ fontSize: 10, color: "rgba(244,239,230,0.35)", fontFamily: "monospace" }}>{row.coupon}</div>
                 </div>
               </div>
             ))}
@@ -1517,7 +1650,7 @@ function computeProbs(winRate: number, jackpotShare: number, selected: SymId[], 
     jackpot: jpProb,
     lose: 1 - win,
     symbols: selected.map((id) => ({
-      id,
+      id: id as string,
       prob: total > 0 ? symWin * ((symCfg[id]?.share ?? 0) / total) : 0,
     })),
   };

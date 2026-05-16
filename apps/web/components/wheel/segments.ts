@@ -50,10 +50,10 @@ export function getWheelSegmentDefs(variant: 'boho' | 'irish' | 'medit'): WheelS
   return BOHO_SEGMENT_DEFS;
 }
 
-export function defaultWheelSegmentCfg(variant: 'boho' | 'irish' | 'medit'): Record<string, { reward: string; coupon: string }> {
-  const cfg: Record<string, { reward: string; coupon: string }> = {};
+export function defaultWheelSegmentCfg(variant: 'boho' | 'irish' | 'medit'): Record<string, { reward: string; coupon: string; share: number }> {
+  const cfg: Record<string, { reward: string; coupon: string; share: number }> = {};
   for (const seg of getWheelSegmentDefs(variant)) {
-    cfg[seg.id] = { reward: seg.defaultPrize ?? '', coupon: seg.defaultCoupon };
+    cfg[seg.id] = { reward: seg.defaultPrize ?? '', coupon: seg.defaultCoupon, share: 20 };
   }
   return cfg;
 }
