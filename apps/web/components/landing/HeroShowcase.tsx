@@ -9,15 +9,13 @@ const C = {
   e400: "#e8533a", lineS: "rgba(232,200,118,0.28)",
 };
 
-/* Slot reels — doubled for seamless loop */
+/* Slot reels — drink symbols (not gambling icons), doubled for seamless loop */
 const REELS = [
-  ["7", "♥", "BAR", "★", "7", "♥", "7", "♥", "BAR", "★", "7", "♥"],
-  ["BAR", "7", "★", "♥", "BAR", "7", "BAR", "7", "★", "♥", "BAR", "7"],
-  ["♥", "BAR", "7", "7", "★", "♥", "♥", "BAR", "7", "7", "★", "♥"],
+  ["🍺", "🍷", "🍸", "🥃", "🍹", "🍺", "🍺", "🍷", "🍸", "🥃", "🍹", "🍺"],
+  ["🍸", "🥃", "🍺", "🍹", "🍷", "🍸", "🍸", "🥃", "🍺", "🍹", "🍷", "🍸"],
+  ["🍷", "🍹", "🥃", "🍺", "🍸", "🍷", "🍷", "🍹", "🥃", "🍺", "🍸", "🍷"],
 ];
-const symColor = (s: string) =>
-  s === "7" ? C.b300 : s === "♥" ? C.e400 : s === "★" ? "#f7d83a" : C.i300;
-const symSize = (s: string) => (s === "BAR" ? "clamp(13px,1.8vw,18px)" : "clamp(26px,4vw,52px)");
+const SYM_SIZE = "clamp(30px,4.6vw,56px)";
 
 const BULBS = [
   ...Array.from({ length: 14 }, (_, i) => ({ x: `${5 + i * (90 / 13)}%`, y: "8px", d: i * 0.05 })),
@@ -161,20 +159,16 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
             {/* Slot machine */}
             <div className="slot-stage" style={{ position: "relative", aspectRatio: "1 / 1.08", perspective: "1200px" }}>
               {[
-                { top: "-18px", left: "12%", delay: "0s", sym: "$", size: 24 },
-                { top: "18%", right: "-10px", delay: "1.2s", sym: "★", size: 18, fontSize: 10 },
-                { bottom: "8%", left: "-6px", delay: "2.5s", sym: "7", size: 20, fontSize: 11 },
+                { top: "-22px", left: "10%", delay: "0s", sym: "🍸", fontSize: 26 },
+                { top: "16%", right: "-14px", delay: "1.2s", sym: "🍺", fontSize: 22 },
+                { bottom: "6%", left: "-10px", delay: "2.5s", sym: "🍷", fontSize: 24 },
               ].map((c, i) => (
                 <div key={i} style={{
                   position: "absolute",
                   ...Object.fromEntries(Object.entries(c).filter(([k]) => ["top", "bottom", "left", "right"].includes(k))) as CSSProperties,
-                  width: c.size, height: c.size, borderRadius: "50%",
-                  background: "radial-gradient(circle at 30% 30%, #fff4d4, #c89a4a)",
-                  boxShadow: "0 8px 16px rgba(232,200,118,0.4), inset 0 0 0 1px rgba(0,0,0,0.3)",
                   animation: `coin-float 5s ease-in-out ${c.delay} infinite`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "'Playfair Display', serif", fontWeight: 900,
-                  color: "#2a1808", fontSize: c.fontSize ?? 13, zIndex: 10,
+                  fontSize: c.fontSize, zIndex: 10,
+                  filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.45))",
                 }}>{c.sym}</div>
               ))}
 
@@ -230,11 +224,9 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                         {syms.map((sym, si) => (
                           <div key={si} style={{
                             aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center",
-                            fontFamily: "'Playfair Display', serif", fontWeight: 900,
-                            fontSize: symSize(sym), color: symColor(sym),
-                            textShadow: "0 2px 4px rgba(0,0,0,0.6)",
+                            fontSize: SYM_SIZE,
+                            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
                             borderBottom: "1px solid rgba(232,200,118,0.06)",
-                            letterSpacing: sym === "BAR" ? "0.04em" : 0,
                           }}>{sym}</div>
                         ))}
                       </div>
