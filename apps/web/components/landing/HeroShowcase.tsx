@@ -159,17 +159,25 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
             {/* Slot machine */}
             <div className="slot-stage" style={{ position: "relative", aspectRatio: "1 / 1.08", perspective: "1200px" }}>
               {[
-                { top: "-22px", left: "10%", delay: "0s", sym: "🍸", fontSize: 26 },
-                { top: "16%", right: "-14px", delay: "1.2s", sym: "🍺", fontSize: 22 },
-                { bottom: "6%", left: "-10px", delay: "2.5s", sym: "🍷", fontSize: 24 },
+                { top: "-24px", left: "10%", delay: "0s", size: 32 },
+                { top: "16%", right: "-16px", delay: "1.2s", size: 22 },
+                { bottom: "6%", left: "-12px", delay: "2.5s", size: 27 },
               ].map((c, i) => (
                 <div key={i} style={{
                   position: "absolute",
                   ...Object.fromEntries(Object.entries(c).filter(([k]) => ["top", "bottom", "left", "right"].includes(k))) as CSSProperties,
+                  width: c.size, height: c.size, borderRadius: "50%",
+                  background: "radial-gradient(circle at 32% 28%, #fff4d4 0%, #e8c876 42%, #b8862e 100%)",
+                  boxShadow: "0 8px 16px rgba(232,200,118,0.4), inset 0 2px 3px rgba(255,255,255,0.65), inset 0 -2px 4px rgba(90,60,16,0.5)",
                   animation: `coin-float 5s ease-in-out ${c.delay} infinite`,
-                  fontSize: c.fontSize, zIndex: 10,
-                  filter: "drop-shadow(0 6px 12px rgba(0,0,0,0.45))",
-                }}>{c.sym}</div>
+                  zIndex: 10,
+                }}>
+                  {/* inner ring — token rim */}
+                  <div style={{
+                    position: "absolute", inset: "16%", borderRadius: "50%",
+                    border: "1.5px solid rgba(120,80,20,0.45)",
+                  }} />
+                </div>
               ))}
 
               <div data-slot-cabinet style={{
