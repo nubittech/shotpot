@@ -4,6 +4,7 @@ import { getServerCopy, getServerLocale } from "../lib/i18n/server";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { LandingPricing } from "./LandingPricing";
 import { HeroShowcase } from "../components/landing/HeroShowcase";
+import { ShotpotLogo } from "../components/ShotpotLogo";
 
 /* ─── Design tokens ─── */
 const C = {
@@ -129,15 +130,11 @@ export default async function HomePage() {
       }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           {/* Brand */}
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 34, height: 34, borderRadius: 9,
-              background: "linear-gradient(160deg, #e8c876, #5a3414)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "'Playfair Display', serif", fontWeight: 900,
-              color: "#1a0f06", fontSize: 17,
-            }}>J</div>
-            <span style={{ fontWeight: 700, fontSize: 16, color: C.i100, letterSpacing: "0.01em" }}>{copy.meta.brand}</span>
+          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11 }}>
+            <ShotpotLogo size={34} />
+            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 900, fontSize: 19, color: C.i100, letterSpacing: "-0.01em" }}>
+              Shot<span style={{ color: C.b300 }}>pot</span>
+            </span>
           </Link>
 
           {/* Nav links */}
@@ -321,8 +318,10 @@ export default async function HomePage() {
           <div className="foot-grid" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 48, marginBottom: 40 }}>
             <div>
               <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: "linear-gradient(160deg, #e8c876, #5a3414)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Playfair Display',serif", fontWeight: 900, color: "#1a0f06", fontSize: 14 }}>J</div>
-                <span style={{ fontWeight: 700, fontSize: 15, color: C.i100 }}>{copy.meta.brand}</span>
+                <ShotpotLogo size={30} />
+                <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 900, fontSize: 17, color: C.i100 }}>
+                  Shot<span style={{ color: C.b300 }}>pot</span>
+                </span>
               </Link>
               <p style={{ marginTop: 16, maxWidth: 300, fontSize: 14, color: C.i400, lineHeight: 1.6 }}>{landing.footer.description}</p>
             </div>
