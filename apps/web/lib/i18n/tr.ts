@@ -44,17 +44,17 @@ export const tr = {
       faq: "SSS",
     },
     hero: {
-      eyebrow: "Barlar için sadakat çarkı · B2B",
+      eyebrow: "Barlar için oyunlaştırılmış kampanya sistemi",
       titleLine1: "Müşteri fişini taratır.",
       titleLine2: "Çark döner.",
-      titleLine3: "Bara geri gelir.",
-      body: "Jackpot, fişten doğan ikinci bir tur. Her ödeme sonrası müşteriniz slot makinesini çevirir; kazandığı ikram sadece sizin barınızda geçerlidir. Sadakat — eğlenceli, şeffaf, anında.",
+      titleLine3: "Kazanan müşteri tekrar gelir.",
+      body: "Ödeme anını bir sadakat fırsatına dönüştürün. Siz kampanyayı kurarsınız — müşteri çarkı çevirir, kazandığı indirim veya özel menüyü kullanmak için geri döner. Kim geldi, ne sıklıkla geldi, hangi kampanya tuttu — hepsini görürsünüz. Müşterinizi tanıdıkça teklifleriniz daha iyi, sadakatleri daha güçlü olur.",
       primaryCta: "Mekanını bağla",
       secondaryCta: "Nasıl çalışır",
       metrics: {
-        activeBars: "aktif mekan",
-        repeatVisit: "ortalama tekrar ziyaret",
-        setupFee: "kurulum ücreti",
+        m1: "0₺ kurulum",
+        m2: "Sıfır teknik bilgi",
+        m3: "Mevcut QR menünüze entegre çalışır",
       },
     },
     how: {

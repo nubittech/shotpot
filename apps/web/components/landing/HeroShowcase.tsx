@@ -44,35 +44,35 @@ type BarCopy = {
   body: string;
   primaryCta: string;
   secondaryCta: string;
-  metrics: { activeBars: string; repeatVisit: string; setupFee: string };
+  metrics: { m1: string; m2: string; m3: string };
 };
 
 const CAFE_COPY = {
   tr: {
-    eyebrow: "Kafeler için sadakat çarkı",
-    t1: "Misafirin fişini taratır.",
+    eyebrow: "Kafeler için oyunlaştırılmış kampanya sistemi",
+    t1: "Misafir fişini taratır.",
     t2: "Çark döner.",
-    t3: "Tekrar uğrar.",
-    body: "Jackpot her fişi küçük bir sürprize çevirir. Ödeme sonrası misafirin çarkı çevirir; kazandığı ikram yalnızca senin kafende geçerli. Sadakat — sıcak, samimi, anında.",
-    primary: "Mekânını bağla",
+    t3: "Kazanan misafir tekrar uğrar.",
+    body: "Ödeme anını bir sadakat fırsatına dönüştürün. Siz kampanyayı kurarsınız — misafir çarkı çevirir, kazandığı indirim veya özel menüyü kullanmak için geri döner. Kim geldi, ne sıklıkla geldi, hangi kampanya tuttu — hepsini görürsünüz. Misafirinizi tanıdıkça teklifleriniz daha iyi, sadakatleri daha güçlü olur.",
+    primary: "Mekanını bağla",
     secondary: "Nasıl çalışır",
-    m1: "aktif kafe",
-    m2: "ortalama tekrar ziyaret",
-    m3: "kurulum ücreti",
+    m1: "0₺ kurulum",
+    m2: "Sıfır teknik bilgi",
+    m3: "Mevcut QR menünüze entegre çalışır",
     venue: "Bahçe Kafé",
     tagline: "— küçük ikramlar bekliyor —",
   },
   en: {
-    eyebrow: "Loyalty wheel for cafés",
+    eyebrow: "Gamified campaign system for cafés",
     t1: "Your guest scans a receipt.",
     t2: "The wheel turns.",
-    t3: "They come back.",
-    body: "Jackpot turns every receipt into a little surprise. After paying, your guest spins the wheel; the treat only works at your café. Loyalty — warm, friendly, instant.",
+    t3: "They win, they come back.",
+    body: "Turn the moment of payment into a loyalty opportunity. You set the campaign — your guest spins, wins a discount or something special, and returns to use it. See who visits, how often, and which campaigns land. The better you know your guests, the better you make them feel at home.",
     primary: "Connect your venue",
     secondary: "How it works",
-    m1: "active cafés",
-    m2: "average repeat visits",
-    m3: "setup fee",
+    m1: "0 setup fee",
+    m2: "No technical knowledge",
+    m3: "Works with your existing QR menu",
     venue: "Garden Café",
     tagline: "— little treats await —",
   },
@@ -147,12 +147,12 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                   {bar.secondaryCta}
                 </a>
               </div>
-              <div className="hero-metrics" style={{ marginTop: 36, display: "flex", gap: 24, alignItems: "center", color: C.i400, fontSize: 13, flexWrap: "wrap" }}>
-                <div><strong style={{ color: C.b300, fontWeight: 700 }}>40+</strong> {bar.metrics.activeBars}</div>
-                <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
-                <div><strong style={{ color: C.b300, fontWeight: 700 }}>%34</strong> {bar.metrics.repeatVisit}</div>
-                <div className="hero-metric-divider" style={{ width: 1, height: 20, background: C.lineS }} />
-                <div><strong style={{ color: C.b300, fontWeight: 700 }}>0₺</strong> {bar.metrics.setupFee}</div>
+              <div className="hero-metrics" style={{ marginTop: 36, display: "flex", gap: 16, alignItems: "center", color: C.i300, fontSize: 13, flexWrap: "wrap" }}>
+                <div style={{ fontWeight: 600 }}>{bar.metrics.m1}</div>
+                <div className="hero-metric-divider" style={{ width: 1, height: 16, background: C.lineS }} />
+                <div style={{ fontWeight: 600 }}>{bar.metrics.m2}</div>
+                <div className="hero-metric-divider" style={{ width: 1, height: 16, background: C.lineS }} />
+                <div style={{ fontWeight: 600 }}>{bar.metrics.m3}</div>
               </div>
             </div>
 
@@ -314,12 +314,12 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                   {cafe.secondary}
                 </a>
               </div>
-              <div className="hero-metrics" style={{ marginTop: 32, display: "flex", gap: 22, alignItems: "center", color: "#8a6a4a", fontSize: 14, flexWrap: "wrap", fontFamily: "'Caveat', cursive", fontWeight: 700 }}>
-                <div><strong style={{ color: "#c17f5a", fontWeight: 700, fontSize: 18 }}>40+</strong> {cafe.m1}</div>
-                <div className="hero-metric-divider" style={{ width: 1, height: 18, background: "rgba(58,36,16,0.2)" }} />
-                <div><strong style={{ color: "#c17f5a", fontWeight: 700, fontSize: 18 }}>%34</strong> {cafe.m2}</div>
-                <div className="hero-metric-divider" style={{ width: 1, height: 18, background: "rgba(58,36,16,0.2)" }} />
-                <div><strong style={{ color: "#c17f5a", fontWeight: 700, fontSize: 18 }}>0₺</strong> {cafe.m3}</div>
+              <div className="hero-metrics" style={{ marginTop: 32, display: "flex", gap: 14, alignItems: "center", color: "#8a6a4a", fontSize: 15, flexWrap: "wrap", fontFamily: "'Caveat', cursive", fontWeight: 700 }}>
+                <div>{cafe.m1}</div>
+                <div className="hero-metric-divider" style={{ width: 1, height: 16, background: "rgba(58,36,16,0.2)" }} />
+                <div>{cafe.m2}</div>
+                <div className="hero-metric-divider" style={{ width: 1, height: 16, background: "rgba(58,36,16,0.2)" }} />
+                <div>{cafe.m3}</div>
               </div>
             </div>
 

@@ -46,17 +46,17 @@ export const en: Translation = {
       faq: "FAQ",
     },
     hero: {
-      eyebrow: "Loyalty wheel for bars · B2B",
+      eyebrow: "Gamified campaign system for bars",
       titleLine1: "Your customer scans a receipt.",
       titleLine2: "The wheel spins.",
-      titleLine3: "They come back.",
-      body: "Jackpot turns every receipt into a second round. After each payment, your customer spins your slot machine; the reward only works at your bar. Loyalty — fun, transparent, instant.",
+      titleLine3: "They win, they come back.",
+      body: "Turn the moment of payment into a loyalty opportunity. You set the campaign — your customer spins, wins a discount or an exclusive offer, and returns to use it. See who visits, how often, and which campaigns actually work. The better you know your customers, the better you reward them.",
       primaryCta: "Connect your venue",
       secondaryCta: "How it works",
       metrics: {
-        activeBars: "active venues",
-        repeatVisit: "average repeat visits",
-        setupFee: "setup fee",
+        m1: "0 setup fee",
+        m2: "No technical knowledge",
+        m3: "Works with your existing QR menu",
       },
     },
     how: {
