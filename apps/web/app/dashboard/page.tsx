@@ -520,6 +520,7 @@ export default async function DashboardPage() {
                             <ABtn href={`/dashboard/analytics/${v.slug}`} label={common.analytics} icon="chart" />
                             <ABtn href={`/dashboard/customers/${v.slug}`} label={common.customers} icon="people" variant="purple" />
                             <ABtn href={`/dashboard/gifts/${v.slug}`} label="Hediye" icon="gift" variant="purple" />
+                            <ABtn href={`/dashboard/menus/${v.slug}`} label="Menü" icon="menu" variant="purple" />
                           </>
                         )}
                         <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />

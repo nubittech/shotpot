@@ -16,9 +16,11 @@ type SpinResponse = {
   coupon: { id: string; code: string; rewardLabel: string } | null;
   animationHint: "standard" | "win" | "jackpot";
 };
-type Stage = "home" | "auth" | "scan" | "play" | "coupon" | "gift";
+type Stage = "home" | "auth" | "scan" | "play" | "coupon" | "gift" | "menu";
 type RecentCoupon = { id: string; rewardLabel: string; code: string };
 type ScannedInfo  = { amount: number; currency: string; time: string } | null;
+type PlayMenuItem = { id: string; name: string; description: string | null; oldPrice: number | null; newPrice: number | null };
+type PlayMenu     = { id: string; title: string; description: string | null; validTo: string | null; items: PlayMenuItem[] };
 
 /* ═══════════════════════════════════════════════
    THEME SYSTEM
@@ -184,6 +186,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [scannedInfo, setScannedInfo]   = useState<ScannedInfo>(null);
   const [giftPending, setGiftPending]   = useState(0);
   const [couponBack, setCouponBack]     = useState<Stage>("play");
+  const [menus, setMenus]               = useState<PlayMenu[]>([]);
 
   useEffect(() => { setGuestToken(getOrCreateGuestToken()); }, []);
 
@@ -193,6 +196,16 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       if (g.ok) {
         const gd = await g.json() as { pending?: number };
         setGiftPending(gd.pending ?? 0);
+      }
+    } catch { /* silent */ }
+  }
+
+  async function refreshMenus() {
+    try {
+      const r = await fetch("/api/play/menus", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: venue.slug }) });
+      if (r.ok) {
+        const d = await r.json() as { menus?: PlayMenu[] };
+        setMenus(d.menus ?? []);
       }
     } catch { /* silent */ }
   }
@@ -211,6 +224,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
         setRecentCoupons((d2.coupons ?? []).slice(0, 3).map((c) => ({ id: c.id, rewardLabel: c.reward_label, code: c.code })));
       }
       await refreshGiftStatus();
+      await refreshMenus();
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPro, venue.slug]);
@@ -253,6 +267,10 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   function handleGiftPress() {
     if (giftPending > 0) { setResult(null); setStage("gift"); }
+  }
+
+  function handleMenuPress() {
+    if (menus.length > 0) setStage("menu");
   }
 
   if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} copy={playCopy} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
@@ -315,16 +333,18 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     );
   }
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
+  if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} />;
+
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menuCount={menus.length} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
 }
 
 /* ═══════════════════════════════════════════════
    HOME SCREEN
 ═══════════════════════════════════════════════ */
-function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, scannedInfo, recentCoupons, onJackpot, onGift, onProfile }: {
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menuCount, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
-  tokens: number; giftPending: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
-  onJackpot: () => void; onGift: () => void; onProfile: () => void;
+  tokens: number; giftPending: number; menuCount: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
+  onJackpot: () => void; onGift: () => void; onMenu: () => void; onProfile: () => void;
 }) {
   const hasEarned = scannedInfo !== null;
   const currSym   = scannedInfo?.currency === "USD" ? "$" : scannedInfo?.currency === "EUR" ? "€" : "₺";
@@ -443,6 +463,33 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
               : copy.receiptReason}
           </div>
         </button>
+
+        {/* ── Personalized menu card ── */}
+        {menuCount > 0 && (
+          <button onClick={onMenu} style={{
+            width: "100%", textAlign: "left", cursor: "pointer",
+            border: `1px solid ${theme.border}`,
+            background: theme.cardBg,
+            borderRadius: 18, padding: "18px 20px", marginBottom: 26,
+            display: "flex", alignItems: "center", gap: 14,
+          }}>
+            <div style={{ fontSize: 30, lineHeight: 1, flexShrink: 0 }}>📋</div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: 10, fontWeight: 800, letterSpacing: "0.2em",
+                color: theme.muted, textTransform: "uppercase", fontFamily: theme.fontLabel,
+              }}>{copy.menuEyebrow}</div>
+              <div style={{
+                fontSize: "clamp(18px, 5.5vw, 23px)", fontWeight: 900,
+                fontFamily: theme.fontDisplay, color: theme.text, lineHeight: 1.1, marginTop: 3,
+              }}>{copy.menuTitle}</div>
+              <div style={{ fontSize: 12.5, color: theme.muted, marginTop: 4, lineHeight: 1.45 }}>
+                {copy.menuHint.replace("{count}", String(menuCount))}
+              </div>
+            </div>
+            <div style={{ fontSize: 22, color: theme.accent, flexShrink: 0 }}>→</div>
+          </button>
+        )}
 
         {/* ── Last week ── */}
         {recentCoupons.length > 0 && (
@@ -824,6 +871,74 @@ function CustomerAuthScreen({ venue, theme, copy, onBack, onSuccess }: {
             <button type="submit" disabled={authStage === "busy" || !email} style={{ ...primaryBtn(theme), opacity: authStage === "busy" || !email ? 0.6 : 1 }}>{authStage === "busy" ? copy.sending : copy.sendLoginLink}</button>
           </form>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   PERSONALIZED MENU SCREEN
+═══════════════════════════════════════════════ */
+function MenuScreen({ theme, copy, menus, currency, onBack }: {
+  theme: Theme; copy: ReturnType<typeof getCopy>["play"];
+  menus: PlayMenu[]; currency: string; onBack: () => void;
+}) {
+  const sym = currency === "USD" ? "$" : currency === "EUR" ? "€" : "₺";
+  const fmt = (n: number | null) => (n == null ? "" : `${sym}${Number(n).toFixed(0)}`);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", overflow: "hidden" }}>
+      <div style={{ flexShrink: 0, padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <button onClick={onBack} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.04)", border: `1px solid ${theme.border}`, color: theme.accent, fontSize: 18, cursor: "pointer", lineHeight: 1 }}>‹</button>
+        <div style={{ fontSize: 15, fontWeight: 700, color: theme.text, fontFamily: theme.fontDisplay }}>{copy.menuTitle}</div>
+        <div style={{ width: 36 }} />
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px 40px" }}>
+        <div style={{ fontSize: 13, color: theme.muted, marginBottom: 18, lineHeight: 1.5 }}>
+          {copy.menuScreenHelp}
+        </div>
+
+        {menus.map((m) => (
+          <div key={m.id} style={{
+            background: theme.cardBg, border: `1px solid ${theme.border}`,
+            borderRadius: 18, padding: "18px 18px 8px", marginBottom: 16,
+          }}>
+            <div style={{ fontSize: 18, fontWeight: 900, color: theme.text, fontFamily: theme.fontDisplay }}>{m.title}</div>
+            {m.description && (
+              <div style={{ fontSize: 13, color: theme.muted, marginTop: 4, lineHeight: 1.5 }}>{m.description}</div>
+            )}
+            {m.validTo && (
+              <div style={{ fontSize: 11, color: theme.accent, marginTop: 6, fontWeight: 700 }}>
+                {copy.menuValidTo.replace("{date}", new Date(m.validTo).toLocaleDateString("tr-TR", { day: "numeric", month: "long" }))}
+              </div>
+            )}
+
+            <div style={{ marginTop: 12 }}>
+              {m.items.map((it) => (
+                <div key={it.id} style={{
+                  display: "flex", alignItems: "flex-start", justifyContent: "space-between",
+                  gap: 14, padding: "12px 0", borderTop: `1px solid ${theme.border}`,
+                }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: theme.text }}>{it.name}</div>
+                    {it.description && (
+                      <div style={{ fontSize: 12, color: theme.muted, marginTop: 2, lineHeight: 1.45 }}>{it.description}</div>
+                    )}
+                  </div>
+                  <div style={{ flexShrink: 0, textAlign: "right" }}>
+                    {it.oldPrice != null && (
+                      <span style={{ fontSize: 12, color: theme.muted, textDecoration: "line-through", marginRight: 6 }}>{fmt(it.oldPrice)}</span>
+                    )}
+                    {it.newPrice != null && (
+                      <span style={{ fontSize: 16, fontWeight: 900, color: theme.accent }}>{fmt(it.newPrice)}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

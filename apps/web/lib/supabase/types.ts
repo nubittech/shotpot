@@ -33,6 +33,32 @@ export interface Venue {
   updated_at: string;
 }
 
+/** Personalized campaign menu (migration 010) */
+export interface CustomerMenu {
+  id: string;
+  venue_id: string;
+  title: string;
+  description: string | null;
+  audience: "all" | "active30" | "dormant30" | "loyalty_gold" | "consented";
+  active: boolean;
+  valid_from: string | null;
+  valid_to: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** A line item inside a personalized campaign menu (migration 010) */
+export interface CustomerMenuItem {
+  id: string;
+  menu_id: string;
+  name: string;
+  description: string | null;
+  old_price: number | null;
+  new_price: number | null;
+  sort_order: number;
+  created_at: string;
+}
+
 /** Gift wheel spin grant (migration 009) — receipt-free spin */
 export interface GiftSpin {
   id: string;
@@ -190,6 +216,8 @@ export interface Database {
       spins:               { Row: Spin;              Insert: Partial<Spin>;              Update: Partial<Spin>; };
       coupons:             { Row: Coupon;            Insert: Partial<Coupon>;            Update: Partial<Coupon>; };
       gift_spins:          { Row: GiftSpin;          Insert: Partial<GiftSpin>;          Update: Partial<GiftSpin>; };
+      customer_menus:      { Row: CustomerMenu;      Insert: Partial<CustomerMenu>;      Update: Partial<CustomerMenu>; };
+      customer_menu_items: { Row: CustomerMenuItem;  Insert: Partial<CustomerMenuItem>;  Update: Partial<CustomerMenuItem>; };
     };
   };
 }
