@@ -16,7 +16,7 @@ type SpinResponse = {
   coupon: { id: string; code: string; rewardLabel: string } | null;
   animationHint: "standard" | "win" | "jackpot";
 };
-type Stage = "home" | "auth" | "scan" | "play" | "coupon";
+type Stage = "home" | "auth" | "scan" | "play" | "coupon" | "gift";
 type RecentCoupon = { id: string; rewardLabel: string; code: string };
 type ScannedInfo  = { amount: number; currency: string; time: string } | null;
 
@@ -182,8 +182,20 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [customerId, setCustomerId]     = useState<string | null>(null);
   const [recentCoupons, setRecentCoupons] = useState<RecentCoupon[]>([]);
   const [scannedInfo, setScannedInfo]   = useState<ScannedInfo>(null);
+  const [giftPending, setGiftPending]   = useState(0);
+  const [couponBack, setCouponBack]     = useState<Stage>("play");
 
   useEffect(() => { setGuestToken(getOrCreateGuestToken()); }, []);
+
+  async function refreshGiftStatus() {
+    try {
+      const g = await fetch("/api/play/gift-status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: venue.slug }) });
+      if (g.ok) {
+        const gd = await g.json() as { pending?: number };
+        setGiftPending(gd.pending ?? 0);
+      }
+    } catch { /* silent */ }
+  }
 
   useEffect(() => {
     if (!isPro) return;
@@ -198,7 +210,9 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
         const d2 = await r2.json() as { coupons: Array<{ id: string; reward_label: string; code: string }> };
         setRecentCoupons((d2.coupons ?? []).slice(0, 3).map((c) => ({ id: c.id, rewardLabel: c.reward_label, code: c.code })));
       }
+      await refreshGiftStatus();
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPro, venue.slug]);
 
   async function pullLever() {
@@ -214,6 +228,19 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     finally { setSpinning(false); }
   }
 
+  async function spinGift() {
+    if (spinning || giftPending < 1) return;
+    setSpinning(true); setResult(null);
+    try {
+      const res = await fetch("/api/play/gift-spin", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: venue.slug }) });
+      await new Promise((r) => setTimeout(r, 1600));
+      if (!res.ok) return;
+      const data = (await res.json()) as SpinResponse;
+      setResult(data); setGiftPending((g) => Math.max(0, g - 1));
+    } catch { /* silent */ }
+    finally { setSpinning(false); }
+  }
+
   function handleScanComplete(earnedTokens: number, newReceiptId: string, info: ScannedInfo) {
     setTokens(earnedTokens); setReceiptId(newReceiptId); setScannedInfo(info); setStage("play");
   }
@@ -224,9 +251,40 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     setStage("scan");
   }
 
+  function handleGiftPress() {
+    if (giftPending > 0) { setResult(null); setStage("gift"); }
+  }
+
   if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} copy={playCopy} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
   if (stage === "scan") return <ScanScreen venue={venue} theme={theme} copy={playCopy} locale={copyText.meta.locale} guestToken={guestToken} customerId={customerId} onComplete={handleScanComplete} onBack={() => setStage("home")} />;
-  if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={result.coupon} onBack={() => { setResult(null); setStage("play"); }} onDone={() => { setResult(null); setStage("home"); }} />;
+  if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={result.coupon} onBack={() => { setResult(null); setStage(couponBack); }} onDone={() => { setResult(null); setStage("home"); }} />;
+
+  // Gift wheel — always a wheel, regardless of the venue game type
+  if (stage === "gift") {
+    const giftVariant = (venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant ?? "boho";
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "#000" }}>
+        <SpinWheel
+          variant={giftVariant}
+          venueName={venue.name}
+          canSpin={giftPending > 0 && !spinning}
+          spinning={spinning}
+          tokens={giftPending}
+          result={result ? {
+            win: result.win,
+            isJackpot: result.isJackpot,
+            rewardLabel: result.coupon?.rewardLabel ?? (result.win ? "Kazandın!" : ""),
+            couponCode: result.coupon?.code ?? "",
+          } : null}
+          onSpin={spinGift}
+          onShowCoupon={() => { if (result?.coupon) { setCouponBack("home"); setStage("coupon"); } }}
+          onBack={() => { setResult(null); setStage("home"); }}
+          onReset={() => setResult(null)}
+        />
+      </div>
+    );
+  }
+
   if (stage === "play") {
     const gameType = (venue as unknown as { game_type?: string }).game_type ?? "slot";
     const wheelVariant = (venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant ?? "boho";
@@ -246,27 +304,27 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
               couponCode: result.coupon?.code ?? "",
             } : null}
             onSpin={pullLever}
-            onShowCoupon={() => result?.coupon && setStage("coupon")}
+            onShowCoupon={() => { if (result?.coupon) { setCouponBack("play"); setStage("coupon"); } }}
             onBack={() => setStage("home")}
             onReset={() => setResult(null)}
           />
         ) : (
-          <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} labels={playCopy.slot} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => result?.coupon && setStage("coupon")} onExit={() => { setResult(null); setStage("home"); }} />
+          <SlotMachine tokens={tokens} outcome={result?.outcome ?? null} animationHint={result?.animationHint ?? null} logoSymbol={venue.name.slice(0, 2).toUpperCase()} spinning={spinning} canSpin={tokens > 0 && !spinning} onSpin={pullLever} variant={config.variant} venueName={venue.name} labels={playCopy.slot} onBack={() => setStage("home")} onReset={() => setResult(null)} onShowCoupon={() => { if (result?.coupon) { setCouponBack("play"); setStage("coupon"); } }} onExit={() => { setResult(null); setStage("home"); }} />
         )}
       </div>
     );
   }
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
 }
 
 /* ═══════════════════════════════════════════════
    HOME SCREEN
 ═══════════════════════════════════════════════ */
-function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, scannedInfo, recentCoupons, onJackpot, onProfile }: {
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, scannedInfo, recentCoupons, onJackpot, onGift, onProfile }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
-  tokens: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
-  onJackpot: () => void; onProfile: () => void;
+  tokens: number; giftPending: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
+  onJackpot: () => void; onGift: () => void; onProfile: () => void;
 }) {
   const hasEarned = scannedInfo !== null;
   const currSym   = scannedInfo?.currency === "USD" ? "$" : scannedInfo?.currency === "EUR" ? "€" : "₺";
@@ -310,6 +368,37 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, scannedInfo
               {copy.verifiedAt.replace("{amount}", `${currSym}${scannedInfo!.amount.toFixed(0)}`).replace("{time}", scannedInfo!.time)}
             </div>
           </div>
+        )}
+
+        {/* ── Gift wheel card ── */}
+        {giftPending > 0 && (
+          <button onClick={onGift} style={{
+            width: "100%", textAlign: "left", cursor: "pointer",
+            border: `1.5px solid ${theme.jackpotRim}`,
+            background: theme.ctaCardBg,
+            borderRadius: 18, padding: "18px 20px", marginBottom: 14,
+            boxShadow: `0 0 26px 2px ${theme.jackpotGlow}, 0 10px 28px rgba(0,0,0,0.4)`,
+            position: "relative", overflow: "hidden",
+            animation: "gift-pulse 2.2s ease-in-out infinite",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ fontSize: 34, lineHeight: 1, flexShrink: 0 }}>🎁</div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 10, fontWeight: 800, letterSpacing: "0.2em",
+                  color: theme.ctaMuted, textTransform: "uppercase", fontFamily: theme.fontLabel,
+                }}>{copy.giftEyebrow}</div>
+                <div style={{
+                  fontSize: "clamp(20px, 6vw, 26px)", fontWeight: 900,
+                  fontFamily: theme.fontDisplay, color: theme.ctaText, lineHeight: 1.1, marginTop: 3,
+                }}>{copy.giftTitle.replace("{count}", String(giftPending))}</div>
+                <div style={{ fontSize: 12.5, color: theme.ctaMuted, marginTop: 4, lineHeight: 1.45 }}>
+                  {copy.giftHint}
+                </div>
+              </div>
+              <div style={{ fontSize: 22, color: theme.ctaText, flexShrink: 0 }}>→</div>
+            </div>
+          </button>
         )}
 
         {/* ── CTA card ── */}
@@ -380,6 +469,10 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, scannedInfo
         @keyframes pulse-glow {
           0%,100% { box-shadow: 0 0 24px 4px ${theme.jackpotGlow}, 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.4); }
           50%      { box-shadow: 0 0 44px 8px ${theme.jackpotGlow}, 0 6px 14px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255,255,255,0.4), inset 0 -3px 4px rgba(0,0,0,0.4); }
+        }
+        @keyframes gift-pulse {
+          0%,100% { box-shadow: 0 0 22px 2px ${theme.jackpotGlow}, 0 10px 28px rgba(0,0,0,0.4); }
+          50%      { box-shadow: 0 0 40px 6px ${theme.jackpotGlow}, 0 10px 28px rgba(0,0,0,0.4); }
         }
       `}</style>
     </div>

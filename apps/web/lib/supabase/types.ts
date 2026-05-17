@@ -28,8 +28,24 @@ export interface Venue {
   timezone: string;
   game_type: GameType;      // migration 007: slot | wheel
   wheel_variant: WheelVariantDB; // migration 007: boho | irish | medit
+  gift_daily_enabled: boolean;   // migration 009: daily free gift wheel
   created_at: string;
   updated_at: string;
+}
+
+/** Gift wheel spin grant (migration 009) — receipt-free spin */
+export interface GiftSpin {
+  id: string;
+  venue_id: string;
+  customer_id: string;
+  source: "manual" | "daily";
+  status: "pending" | "used";
+  gift_date: string | null;
+  reward_label: string | null;
+  coupon_id: string | null;
+  created_at: string;
+  used_at: string | null;
+  expires_at: string | null;
 }
 
 export interface SymbolConfig {
@@ -173,6 +189,7 @@ export interface Database {
       receipts:            { Row: Receipt;           Insert: Partial<Receipt>;           Update: Partial<Receipt>; };
       spins:               { Row: Spin;              Insert: Partial<Spin>;              Update: Partial<Spin>; };
       coupons:             { Row: Coupon;            Insert: Partial<Coupon>;            Update: Partial<Coupon>; };
+      gift_spins:          { Row: GiftSpin;          Insert: Partial<GiftSpin>;          Update: Partial<GiftSpin>; };
     };
   };
 }
