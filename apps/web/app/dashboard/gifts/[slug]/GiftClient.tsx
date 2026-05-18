@@ -7,17 +7,19 @@ type Audiences = {
   all: number;
   active30: number;
   dormant30: number;
+  loyalty_silver: number;
   loyalty_gold: number;
   consented: number;
 };
 type Audience = keyof Audiences;
 
 const AUDIENCE_LABELS: Record<Audience, { label: string; emoji: string; desc: string }> = {
-  all:          { label: "Tümü",            emoji: "🌐", desc: "Tüm kayıtlı müşteriler" },
-  active30:     { label: "Aktif (Son 30g)", emoji: "✨", desc: "Son 30 gün içinde ziyaret eden" },
-  dormant30:    { label: "Uyuyan (30g+)",   emoji: "😴", desc: "30 gündür ziyaret etmeyen" },
-  loyalty_gold: { label: "Altın Üyeler",    emoji: "🥇", desc: "Gold seviye VIP müşteriler" },
-  consented:    { label: "Onaylı Pazarlama",emoji: "✅", desc: "KVKK pazarlama onayı veren" },
+  all:            { label: "Tümü",            emoji: "🌐", desc: "Tüm kayıtlı müşteriler" },
+  active30:       { label: "Aktif (Son 30g)", emoji: "✨", desc: "Son 30 gün içinde ziyaret eden" },
+  dormant30:      { label: "Uyuyan (30g+)",   emoji: "😴", desc: "30 gündür ziyaret etmeyen" },
+  loyalty_silver: { label: "Silver+ Üyeler",  emoji: "🥈", desc: "Silver ve Gold seviye üyeler" },
+  loyalty_gold:   { label: "Altın Üyeler",    emoji: "🥇", desc: "Gold seviye VIP müşteriler" },
+  consented:      { label: "Onaylı Pazarlama",emoji: "✅", desc: "KVKK pazarlama onayı veren" },
 };
 
 type Stats = { pending: number; used: number; granted: number; usageRate: number };

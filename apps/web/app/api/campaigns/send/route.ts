@@ -8,7 +8,7 @@ type SendBody = {
   title: string;
   body: string;
   reward_label?: string | null;
-  audience: "all" | "active30" | "dormant30" | "loyalty_gold" | "consented";
+  audience: "all" | "active30" | "dormant30" | "loyalty_silver" | "loyalty_gold" | "consented";
 };
 
 /**
@@ -61,10 +61,11 @@ export async function POST(req: NextRequest) {
     const d30 = new Date(now.getTime() - 30 * 86400_000).toISOString();
 
     switch (body.audience) {
-      case "active30":     q = q.gte("last_visit_at", d30); break;
-      case "dormant30":    q = q.lt("last_visit_at", d30); break;
-      case "loyalty_gold": q = q.eq("loyalty_tier", "gold"); break;
-      case "consented":    q = q.eq("consent_marketing", true); break;
+      case "active30":      q = q.gte("last_visit_at", d30); break;
+      case "dormant30":     q = q.lt("last_visit_at", d30); break;
+      case "loyalty_silver": q = q.in("loyalty_tier", ["silver", "gold"]); break;
+      case "loyalty_gold":  q = q.eq("loyalty_tier", "gold"); break;
+      case "consented":     q = q.eq("consent_marketing", true); break;
       // "all" → no extra filter
     }
 

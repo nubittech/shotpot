@@ -10,7 +10,7 @@ import { getServiceClient } from "../../../../lib/supabase/server";
  *  PATCH  /api/dashboard/gifts   { slug, dailyEnabled }      → toggle daily gift
  */
 
-type Audience = "all" | "active30" | "dormant30" | "loyalty_gold" | "consented";
+type Audience = "all" | "active30" | "dormant30" | "loyalty_silver" | "loyalty_gold" | "consented";
 
 async function authVenue(slug: string) {
   const cookieStore = cookies();
@@ -56,10 +56,11 @@ export async function POST(req: NextRequest) {
     let q = svc.from("customers").select("id").eq("venue_id", venue.id).is("deleted_at", null);
     const d30 = new Date(Date.now() - 30 * 86400_000).toISOString();
     switch (audience) {
-      case "active30":     q = q.gte("last_visit_at", d30); break;
-      case "dormant30":    q = q.lt("last_visit_at", d30); break;
-      case "loyalty_gold": q = q.eq("loyalty_tier", "gold"); break;
-      case "consented":    q = q.eq("consent_marketing", true); break;
+      case "active30":      q = q.gte("last_visit_at", d30); break;
+      case "dormant30":     q = q.lt("last_visit_at", d30); break;
+      case "loyalty_silver": q = q.in("loyalty_tier", ["silver", "gold"]); break;
+      case "loyalty_gold":  q = q.eq("loyalty_tier", "gold"); break;
+      case "consented":     q = q.eq("consent_marketing", true); break;
     }
     const { data: targets } = await q;
     const ids = (targets ?? []).map((t) => (t as { id: string }).id);

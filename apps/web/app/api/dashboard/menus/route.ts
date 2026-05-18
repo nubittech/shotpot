@@ -17,7 +17,7 @@ type MenuBody = {
   id?: string;
   title: string;
   description?: string | null;
-  audience?: "all" | "active30" | "dormant30" | "loyalty_gold" | "consented";
+  audience?: "all" | "active30" | "dormant30" | "loyalty_silver" | "loyalty_gold" | "consented";
   active?: boolean;
   validFrom?: string | null;
   validTo?: string | null;

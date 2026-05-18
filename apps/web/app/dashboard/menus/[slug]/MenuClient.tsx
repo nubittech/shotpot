@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Audience = "all" | "active30" | "dormant30" | "loyalty_gold" | "consented";
+type Audience = "all" | "active30" | "dormant30" | "loyalty_silver" | "loyalty_gold" | "consented";
 
 const AUDIENCE_LABELS: Record<Audience, string> = {
   all: "🌐 Tümü",
   active30: "✨ Aktif (30g)",
   dormant30: "😴 Uyuyan (30g+)",
+  loyalty_silver: "🥈 Silver+ Üyeler",
   loyalty_gold: "🥇 Altın Üyeler",
   consented: "✅ Onaylı Pazarlama",
 };

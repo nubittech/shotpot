@@ -33,6 +33,7 @@ export default async function CampaignsPage({ params }: Params) {
     { count: total },
     { count: active30 },
     { count: dormant30 },
+    { count: silver },
     { count: gold },
     { count: consented },
     { data: campaignsRaw },
@@ -40,6 +41,7 @@ export default async function CampaignsPage({ params }: Params) {
     svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null),
     svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).gte("last_visit_at", d30),
     svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).lt("last_visit_at", d30),
+    svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).in("loyalty_tier", ["silver", "gold"]),
     svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).eq("loyalty_tier", "gold"),
     svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).eq("consent_marketing", true),
     svc.from("marketing_campaigns").select("*").eq("venue_id", v.id).order("created_at", { ascending: false }).limit(20),
@@ -50,6 +52,7 @@ export default async function CampaignsPage({ params }: Params) {
     all: total ?? 0,
     active30: active30 ?? 0,
     dormant30: dormant30 ?? 0,
+    loyalty_silver: silver ?? 0,
     loyalty_gold: gold ?? 0,
     consented: consented ?? 0,
   };

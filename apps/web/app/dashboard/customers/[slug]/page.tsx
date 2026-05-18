@@ -4,6 +4,8 @@ import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import type { CustomerPro } from "../../../../lib/supabase/types";
 import { getServerCopy } from "../../../../lib/i18n/server";
+import { TierConfigPanel } from "./TierConfigPanel";
+import { tierThresholdsFromVenue } from "../../../../lib/loyalty";
 
 type Params = { params: { slug: string } };
 
@@ -26,14 +28,19 @@ export default async function CustomersPage({ params }: Params) {
   // Verify venue ownership
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, slug, tier")
+    .select("id, name, slug, tier, tier_silver_visits, tier_silver_spend, tier_gold_visits, tier_gold_spend")
     .eq("slug", params.slug)
     .eq("owner_user_id", user.id)
     .maybeSingle();
 
   if (!venue) redirect("/dashboard");
 
-  const v = venue as { id: string; name: string; slug: string; tier: string };
+  const v = venue as {
+    id: string; name: string; slug: string; tier: string;
+    tier_silver_visits: number; tier_silver_spend: number;
+    tier_gold_visits: number; tier_gold_spend: number;
+  };
+  const tierCfg = tierThresholdsFromVenue(v);
 
   if (v.tier !== "pro") {
     return (
@@ -79,6 +86,9 @@ export default async function CustomersPage({ params }: Params) {
           {customersCopy.sendCampaign}
         </Link>
       </div>
+
+      {/* VIP tier config */}
+      <TierConfigPanel slug={v.slug} initial={tierCfg} />
 
       {/* KPI row */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 24 }}>

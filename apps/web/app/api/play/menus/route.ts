@@ -62,7 +62,9 @@ export async function POST(req: NextRequest) {
     const lastVisit = c.last_visit_at ? new Date(c.last_visit_at).getTime() : 0;
     if (lastVisit >= d30) eligible.add("active30");
     else eligible.add("dormant30");
-    if (c.loyalty_tier === "gold") eligible.add("loyalty_gold");
+    // Higher tiers inherit lower-tier audiences: gold sees silver-targeted menus too.
+    if (c.loyalty_tier === "gold") { eligible.add("loyalty_gold"); eligible.add("loyalty_silver"); }
+    if (c.loyalty_tier === "silver") eligible.add("loyalty_silver");
     if (c.consent_marketing) eligible.add("consented");
 
     // Active, in-date menus for this venue

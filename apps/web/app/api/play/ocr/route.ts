@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { differenceInMinutes } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { computeTier, tierThresholdsFromVenue } from "../../../../lib/loyalty";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -82,7 +83,7 @@ export async function POST(req: NextRequest) {
     // 1) Fetch venue
     const { data: venue, error: vErr } = await sb
       .from("venues")
-      .select("id, name, token_threshold, currency, timezone, active")
+      .select("id, name, token_threshold, currency, timezone, active, tier_silver_visits, tier_silver_spend, tier_gold_visits, tier_gold_spend")
       .eq("slug", slug)
       .eq("active", true)
       .maybeSingle();
@@ -94,6 +95,8 @@ export async function POST(req: NextRequest) {
     const v = venue as {
       id: string; name: string; token_threshold: number;
       currency: string; timezone: string; active: boolean;
+      tier_silver_visits: number; tier_silver_spend: number;
+      tier_gold_visits: number; tier_gold_spend: number;
     };
 
     // 2) Fingerprint dedup — reject if same hash already used at this venue
@@ -239,10 +242,8 @@ export async function POST(req: NextRequest) {
         const c = cust as { total_visits: number; total_spend: number; loyalty_tier: string };
         const newVisits = c.total_visits + 1;
         const newSpend  = Number(c.total_spend) + Number(extract.amount);
-        // Loyalty: bronze < 5 visits, silver 5-19, gold 20+
-        let newTier = c.loyalty_tier;
-        if (newVisits >= 20)      newTier = "gold";
-        else if (newVisits >= 5)  newTier = "silver";
+        // Automatic VIP tier — reaches a tier on visits OR spend (venue-configured)
+        const newTier = computeTier(newVisits, newSpend, tierThresholdsFromVenue(v));
 
         await sb
           .from("customers")
