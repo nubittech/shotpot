@@ -429,25 +429,27 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
         >›</button>
       )}
 
-      {/* ── Dots / mode labels ── */}
+      {/* ── Bar / Café segmented toggle ── */}
       <div style={{
-        position: "absolute", bottom: 30, left: "50%", transform: "translateX(-50%)",
-        display: "flex", gap: 10, alignItems: "center", zIndex: 20,
+        position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)",
+        display: "flex", gap: 6, padding: 6, borderRadius: 999, zIndex: 20,
+        background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.14)",
+        backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
       }}>
         {[
-          { label: locale === "tr" ? "🎰 Bar" : "🎰 Bar", on: "#e8c876" },
-          { label: locale === "tr" ? "🎡 Kafe" : "🎡 Café", on: "#c17f5a" },
+          { label: "Bar", on: "#e8c876", fg: "#1a0f06" },
+          { label: locale === "tr" ? "Kafe" : "Café", on: "#c17f5a", fg: "#f5efe0" },
         ].map((d, i) => (
           <button
             key={i}
             className="hero-dot"
             onClick={() => setMode(i)}
             style={{
-              padding: "6px 14px", borderRadius: 999, cursor: "pointer",
-              fontSize: 12, fontWeight: 700,
-              border: `1px solid ${mode === i ? d.on : "rgba(140,120,90,0.35)"}`,
-              background: mode === i ? `${d.on}22` : "transparent",
-              color: mode === i ? d.on : "#8b7d5e",
+              padding: "13px 44px", borderRadius: 999, cursor: "pointer",
+              fontSize: 16, fontWeight: 800, border: "none",
+              background: mode === i ? d.on : "transparent",
+              color: mode === i ? d.fg : "rgba(255,255,255,0.6)",
             }}
           >{d.label}</button>
         ))}
