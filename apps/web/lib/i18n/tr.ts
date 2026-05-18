@@ -73,12 +73,12 @@ export const tr = {
       title: "Reklam değil — tekrar.",
       body: "Yeni müşteri bulmak pahalı. Geleni geri getirmek, akıllı.",
       cards: [
-        { icon: "★", title: "Sadakat, oyuna dönüşünce işler", desc: "Puan kartı unutulur. Çark çevirmek anlık bir heyecan — müşteri kazandığını arkadaşına gösterir, kampanyanız kendiliğinden yayılır." },
-        { icon: "▣", title: "Sıfır kurulum, QR menünüzle yan yana", desc: "POS değiştirmeyin, tablet eklemeyin. Müşteri kendi telefonundan, yalnızca size ait bir linkten girer." },
-        { icon: "↑", title: "Kampanyayı siz kurarsınız", desc: "Kazanma oranı, ödül havuzu, geçerlilik süresi — hepsi sizin elinizde. Saniyede açar, riskli görürseniz kapatırsınız." },
-        { icon: "⏱", title: "Fiş olmadan hediye çark gönderin", desc: "Hediye Çark ile kayıtlı müşterilerinize spin gönderin ya da günlük dağıtın. Ölü saatleri planlı şekilde doldurun." },
-        { icon: "◈", title: "Müşteriye özel kampanya menüsü", desc: "Her segmente özel indirimli menüler yayınlayın. Müşteri gelmeden o günün fırsatını telefonundan görür, gelme kararını verir." },
-        { icon: "◉", title: "Gerçek müşteri verisi", desc: "Kim ne sıklıkla geliyor, hangi kampanya tuttu, kim uzaklaştı — hepsi panelde. Kararları tahminle değil, veriyle alın." },
+        { icon: "★", title: "Kampanya yönetimini eğlenceli hale getirin", desc: "Müşterilerinize kişisel kampanyalar sunarak çapraz ve ek satış yapabilir, işletmenize olan sadakati artırabilirsiniz." },
+        { icon: "▣", title: "Mevcut sisteminize saniyeler içinde eklenir", desc: "Yeni cihaz, POS değişimi veya teknik kurulum gerekmez. QR menünüze eklemeniz yeterli." },
+        { icon: "↑", title: "Kampanyayı tamamen siz yönetirsiniz", desc: "Ödülleri, kazanma ihtimalini, süreyi ve bütçeyi anlık olarak kontrol edebilirsiniz." },
+        { icon: "⏱", title: "Sessiz saatleri hareketlendirin", desc: "Belirlediğiniz saatlerde müşterilere hediye çarkı gönderin, boş geçen saatleri fırsata çevirin." },
+        { icon: "◈", title: "Her müşteriye farklı teklifler sunun", desc: "Müşterilerinize kampanyalı menüleri kişisel profillerine göre sunarak işletmenizle olan etkileşimlerini ve bağlılıklarını artırabilirsiniz." },
+        { icon: "◉", title: "Kararlarınızı veriye göre alın", desc: "Hangi kampanya müşteri getiriyor, kim tekrar geliyor, hangi ödül daha iyi performans gösteriyor — hepsini tek ekranda yönetin." },
       ],
     },
     stats: [

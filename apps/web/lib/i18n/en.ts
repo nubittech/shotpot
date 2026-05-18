@@ -75,12 +75,12 @@ export const en: Translation = {
       title: "Not ads — repeat visits.",
       body: "Finding new customers is expensive. Bringing people back is smarter.",
       cards: [
-        { icon: "★", title: "Loyalty works when it's a game", desc: "Punch cards get forgotten. Spinning the wheel is a real thrill — customers show friends what they won, and your campaign spreads on its own." },
-        { icon: "▣", title: "Zero setup, fits your QR menu", desc: "No POS change, no tablets. Customers enter from their own phone, through a link that's only yours." },
-        { icon: "↑", title: "You build the campaign", desc: "Win rate, reward pool, validity — all yours. Launch one in seconds, close it the moment it feels risky." },
-        { icon: "⏱", title: "Send a gift wheel — no receipt needed", desc: "With the Gift Wheel, push a free spin to your registered customers, or schedule daily drops. Fill quiet hours on purpose." },
-        { icon: "◈", title: "Menus tailored to each customer", desc: "Publish discounted menus per segment. Customers see the day's offer on their phone before they visit — and decide to come." },
-        { icon: "◉", title: "Real customer data", desc: "Who returns, how often, which campaign landed, who drifted away — all on your dashboard. Decide with data, not guesses." },
+        { icon: "★", title: "Make campaign management fun", desc: "Offer personalized campaigns to your customers to cross-sell and upsell — and build stronger loyalty to your venue." },
+        { icon: "▣", title: "Live on your system in seconds", desc: "No new device, no POS change, no technical setup. Just add it to your QR menu." },
+        { icon: "↑", title: "You're fully in control of the campaign", desc: "Adjust rewards, win probability, duration and budget — instantly, anytime." },
+        { icon: "⏱", title: "Bring your quiet hours to life", desc: "Send a gift wheel to customers at the hours you choose, and turn empty hours into opportunity." },
+        { icon: "◈", title: "A different offer for every customer", desc: "Serve campaign menus tailored to each customer's profile, and deepen their engagement and loyalty with your venue." },
+        { icon: "◉", title: "Make decisions backed by data", desc: "Which campaign brings customers in, who returns, which reward performs best — manage it all on one screen." },
       ],
     },
     stats: [
