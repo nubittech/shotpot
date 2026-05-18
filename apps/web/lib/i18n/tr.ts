@@ -69,16 +69,16 @@ export const tr = {
       ],
     },
     benefits: {
-      eyebrow: "Bar sahipleri için",
+      eyebrow: "İşletme sahipleri için",
       title: "Reklam değil — tekrar.",
       body: "Yeni müşteri bulmak pahalı. Geleni geri getirmek, akıllı.",
       cards: [
-        { icon: "★", title: "Sadakat, eğlenceli olduğunda işler", desc: "Klasik puan kart sıkıcı. Slot makinesi anlık dopamin — müşteri arkadaşına da gösterir, organik trafik." },
-        { icon: "▣", title: "Sıfır kurulum, sıfır donanım", desc: "POS değiştirmeyin, tablet eklemeyin. Müşteri kendi telefonundan girer. Siz dashboard'dan kuponları görürsünüz." },
-        { icon: "↑", title: "Her şeyi siz kontrol edersiniz", desc: "Kazanma oranı, ikram havuzu, geçerlilik süresi — hepsi sizin elinizde. Riskli görseniz kapatırsınız." },
-        { icon: "⏱", title: "Sessiz saatlerde otomatik kampanya", desc: "Salı 22:00'de kazanma şansı 2x — müşterilere bildirim gider. Ölü saatler dolar, planlı." },
-        { icon: "◈", title: "Gerçek müşteri verisi", desc: "Kim ne içiyor, hangi gün geliyor, kaç defa döndü. Kararları artık tahminle değil, veriyle alın." },
-        { icon: "◉", title: "Kendi markanızla, kendi sayfanızda", desc: "jackpot.bar/komun gibi link verin. Müşteri direkt sizin slotunuza gelir, başka bara değil." },
+        { icon: "★", title: "Sadakat, oyuna dönüşünce işler", desc: "Puan kartı unutulur. Çark çevirmek anlık bir heyecan — müşteri kazandığını arkadaşına gösterir, kampanyanız kendiliğinden yayılır." },
+        { icon: "▣", title: "Sıfır kurulum, QR menünüzle yan yana", desc: "POS değiştirmeyin, tablet eklemeyin. Müşteri kendi telefonundan, yalnızca size ait bir linkten girer." },
+        { icon: "↑", title: "Kampanyayı siz kurarsınız", desc: "Kazanma oranı, ödül havuzu, geçerlilik süresi — hepsi sizin elinizde. Saniyede açar, riskli görürseniz kapatırsınız." },
+        { icon: "⏱", title: "Fiş olmadan hediye çark gönderin", desc: "Hediye Çark ile kayıtlı müşterilerinize spin gönderin ya da günlük dağıtın. Ölü saatleri planlı şekilde doldurun." },
+        { icon: "◈", title: "Müşteriye özel kampanya menüsü", desc: "Her segmente özel indirimli menüler yayınlayın. Müşteri gelmeden o günün fırsatını telefonundan görür, gelme kararını verir." },
+        { icon: "◉", title: "Gerçek müşteri verisi", desc: "Kim ne sıklıkla geliyor, hangi kampanya tuttu, kim uzaklaştı — hepsi panelde. Kararları tahminle değil, veriyle alın." },
       ],
     },
     stats: [

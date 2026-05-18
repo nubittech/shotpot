@@ -71,16 +71,16 @@ export const en: Translation = {
       ],
     },
     benefits: {
-      eyebrow: "For bar owners",
+      eyebrow: "For venue owners",
       title: "Not ads — repeat visits.",
       body: "Finding new customers is expensive. Bringing people back is smarter.",
       cards: [
-        { icon: "★", title: "Loyalty works when it feels fun", desc: "Classic point cards are boring. A slot machine gives instant dopamine, something customers show friends." },
-        { icon: "▣", title: "No hardware, no setup pain", desc: "No POS change, no tablets. Customers use their own phones. You track coupons from the dashboard." },
-        { icon: "↑", title: "You control everything", desc: "Win rate, reward pool, validity period — all in your hands. Change it anytime." },
-        { icon: "⏱", title: "Automated campaigns for quiet hours", desc: "Tuesday 10pm can have 2x win chance. Dead hours become planned demand." },
-        { icon: "◈", title: "Real customer data", desc: "Who drinks what, when they visit, how often they come back. Decide with data, not guesses." },
-        { icon: "◉", title: "Your brand, your page", desc: "Share a link like jackpot.bar/komun. Customers land on your slot, not another venue." },
+        { icon: "★", title: "Loyalty works when it's a game", desc: "Punch cards get forgotten. Spinning the wheel is a real thrill — customers show friends what they won, and your campaign spreads on its own." },
+        { icon: "▣", title: "Zero setup, fits your QR menu", desc: "No POS change, no tablets. Customers enter from their own phone, through a link that's only yours." },
+        { icon: "↑", title: "You build the campaign", desc: "Win rate, reward pool, validity — all yours. Launch one in seconds, close it the moment it feels risky." },
+        { icon: "⏱", title: "Send a gift wheel — no receipt needed", desc: "With the Gift Wheel, push a free spin to your registered customers, or schedule daily drops. Fill quiet hours on purpose." },
+        { icon: "◈", title: "Menus tailored to each customer", desc: "Publish discounted menus per segment. Customers see the day's offer on their phone before they visit — and decide to come." },
+        { icon: "◉", title: "Real customer data", desc: "Who returns, how often, which campaign landed, who drifted away — all on your dashboard. Decide with data, not guesses." },
       ],
     },
     stats: [
