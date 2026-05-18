@@ -87,6 +87,17 @@ export const tr = {
       { num: "180k+", label: "Toplam spin", sub: "Son 12 ay" },
       { num: "%92", label: "Kupon kullanım oranı", sub: "7 gün içinde" },
     ],
+    panel: {
+      eyebrow: "İşletme paneli",
+      title: "Mekanınızın beyni — tek ekranda.",
+      body: "Kampanyayı kurar, sonucu izlersiniz. Kim geldi, hangi kampanya tuttu, hangi müşteri uzaklaşıyor — kararları tahminle değil panelden alırsınız.",
+      features: [
+        "Canlı analitik — fiş, ciro, spin ve kupon dönüşü",
+        "Müşteri segmentleri ve otomatik VIP seviyeleri",
+        "Hediye Çark ile özel menüleri tek tıkla yayınlayın",
+        "Kazanma oranı ve ödül havuzu tamamen sizin kontrolünüzde",
+      ],
+    },
     faq: {
       title: "Sık sorulanlar",
       items: [
@@ -107,7 +118,7 @@ export const tr = {
     footer: {
       description: "Bar ve mekanlar için sadakat çarkı.",
       product: "Ürün",
-      stats: "Rakamlar",
+      stats: "Panel",
       owners: "Bar sahipleri",
       contact: "İletişim",
       dashboardLogin: "Dashboard girişi",

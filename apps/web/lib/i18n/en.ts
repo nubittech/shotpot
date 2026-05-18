@@ -89,6 +89,17 @@ export const en: Translation = {
       { num: "180k+", label: "Total spins", sub: "Last 12 months" },
       { num: "%92", label: "Coupon redemption", sub: "Within 7 days" },
     ],
+    panel: {
+      eyebrow: "The owner dashboard",
+      title: "Your venue's brain — on one screen.",
+      body: "Set the campaign, then watch it work. Who came in, which campaign landed, which customer is drifting away — you decide from the dashboard, not from guesses.",
+      features: [
+        "Live analytics — receipts, revenue, spins and coupon return",
+        "Customer segments and automatic VIP tiers",
+        "Publish the Gift Wheel and special menus in one click",
+        "Win rate and reward pool fully under your control",
+      ],
+    },
     faq: {
       title: "Frequently asked questions",
       items: [
@@ -109,7 +120,7 @@ export const en: Translation = {
     footer: {
       description: "A loyalty wheel for bars and venues.",
       product: "Product",
-      stats: "Stats",
+      stats: "Panel",
       owners: "Bar owners",
       contact: "Contact",
       dashboardLogin: "Dashboard login",

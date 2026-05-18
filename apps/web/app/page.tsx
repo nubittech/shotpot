@@ -238,16 +238,25 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ═══════ STATS ═══════ */}
-      <section id="stats" style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`, padding: "80px 0", background: "linear-gradient(180deg, transparent, rgba(232,200,118,0.03), transparent)" }}>
-        <div className="container stats-grid" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 32, textAlign: "center" }}>
-          {landing.stats.map((s) => (
-            <div key={s.label}>
-              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(36px,5vw,62px)", color: C.b300, lineHeight: 1, textShadow: "0 0 24px rgba(232,200,118,0.3)" }}>{s.num}</div>
-              <div style={{ marginTop: 8, fontFamily: "'Bebas Neue', sans-serif", letterSpacing: "0.15em", fontSize: 13, color: C.i400, textTransform: "uppercase" }}>{s.label}</div>
-              <div style={{ marginTop: 4, fontSize: 13, color: C.i300 }}>{s.sub}</div>
-            </div>
-          ))}
+      {/* ═══════ PANEL ═══════ */}
+      <section id="panel" style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}`, padding: "100px 0", background: "linear-gradient(180deg, transparent, rgba(232,200,118,0.03), transparent)" }}>
+        <div className="container hero-grid" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "1fr 1.12fr", gap: 56, alignItems: "center" }}>
+          {/* Left — copy */}
+          <div>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.panel.eyebrow}</div>
+            <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(28px,3.6vw,46px)", color: C.i100, letterSpacing: "-0.01em", lineHeight: 1.08 }}>{landing.panel.title}</h2>
+            <p style={{ marginTop: 20, fontSize: "clamp(15px,1.2vw,17px)", lineHeight: 1.6, color: C.i300, maxWidth: 480 }}>{landing.panel.body}</p>
+            <ul style={{ listStyle: "none", margin: "26px 0 0", padding: 0, display: "grid", gap: 12 }}>
+              {landing.panel.features.map((f) => (
+                <li key={f} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14.5, color: C.i200, lineHeight: 1.5 }}>
+                  <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: 6, background: "rgba(232,200,118,0.12)", border: `1px solid ${C.lineS}`, color: C.b300, fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center", marginTop: 1 }}>✓</span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Right — dashboard mockup */}
+          <DashboardPreview />
         </div>
       </section>
 
@@ -328,7 +337,7 @@ export default async function HomePage() {
             <div>
               <h5 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 13, color: C.b300, letterSpacing: "0.18em", margin: "0 0 16px" }}>{landing.footer.product}</h5>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                {[["#how",landing.nav.how],["#benefits",landing.nav.benefits],["#stats",landing.footer.stats],["#faq",landing.nav.faq]].map(([h,l])=>(
+                {[["#how",landing.nav.how],["#benefits",landing.nav.benefits],["#panel",landing.footer.stats],["#faq",landing.nav.faq]].map(([h,l])=>(
                   <a key={h} href={h} className="foot-link">{l}</a>
                 ))}
               </div>
@@ -361,5 +370,94 @@ export default async function HomePage() {
         </div>
       </footer>
     </>
+  );
+}
+
+/* ─── Dashboard preview mockup (landing visual) ─── */
+function DashboardPreview() {
+  const kpis = [
+    { v: "11",     l: "Toplam fiş",     c: C.b300 },
+    { v: "₺820",   l: "30g ciro",       c: "#a78bfa" },
+    { v: "%45",    l: "Kazanma oranı",  c: C.green },
+    { v: "8",      l: "Aktif kupon",    c: C.e300 },
+  ];
+  const bars = [30, 52, 41, 68, 47, 90, 60];
+  const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+  const rows = [
+    { n: "Mert B.",  tier: "🥇", spend: "₺1.240", w: "82%" },
+    { n: "Elif K.",  tier: "🥈", spend: "₺680",   w: "54%" },
+    { n: "Can A.",   tier: "🥉", spend: "₺310",   w: "28%" },
+  ];
+
+  return (
+    <div className="slot-stage" style={{
+      borderRadius: 16, overflow: "hidden",
+      background: "linear-gradient(180deg, #15100a, #0c0907)",
+      border: `1px solid ${C.lineS}`,
+      boxShadow: `0 40px 80px -30px rgba(0,0,0,0.8), 0 0 0 1px rgba(232,200,118,0.06)`,
+    }}>
+      {/* Window chrome */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "11px 14px", borderBottom: `1px solid ${C.line}`, background: "rgba(255,255,255,0.02)" }}>
+        {["#e8533a", "#e8c876", "#7be38a"].map((c) => (
+          <div key={c} style={{ width: 9, height: 9, borderRadius: "50%", background: c, opacity: 0.7 }} />
+        ))}
+        <div style={{ flex: 1, textAlign: "center", fontSize: 11, color: C.i400, fontFamily: "monospace" }}>
+          panel.shotpot.app
+        </div>
+      </div>
+
+      <div style={{ padding: 18 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: C.i100 }}>
+            Komün Bar <span style={{ color: C.i400, fontWeight: 400 }}>— Analitik</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: C.green, fontWeight: 700, letterSpacing: "0.08em" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, boxShadow: `0 0 8px ${C.green}` }} /> CANLI
+          </div>
+        </div>
+
+        {/* KPI cards */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 12 }}>
+          {kpis.map((k) => (
+            <div key={k.l} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 8px", textAlign: "center" }}>
+              <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 19, color: k.c }}>{k.v}</div>
+              <div style={{ marginTop: 3, fontSize: 8.5, color: C.i400, textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600 }}>{k.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Mini bar chart */}
+        <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 14px 8px", marginBottom: 12 }}>
+          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Son 7 gün — fiş</div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 7, height: 64 }}>
+            {bars.map((h, i) => (
+              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
+                <div style={{
+                  width: "100%", height: `${h}%`, borderRadius: "4px 4px 0 0",
+                  background: i === 5 ? `linear-gradient(180deg, ${C.b300}, ${C.b500})` : "rgba(232,200,118,0.18)",
+                }} />
+                <div style={{ fontSize: 8, color: C.i500 }}>{days[i]}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top customers */}
+        <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 14px" }}>
+          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>En iyi müşteriler</div>
+          {rows.map((r, i) => (
+            <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: i === 0 ? "none" : `1px solid ${C.line}` }}>
+              <span style={{ fontSize: 13 }}>{r.tier}</span>
+              <span style={{ flex: 1, fontSize: 12, color: C.i200, fontWeight: 600 }}>{r.n}</span>
+              <span style={{ width: 56, height: 5, borderRadius: 3, background: "rgba(255,255,255,0.06)", position: "relative", overflow: "hidden" }}>
+                <span style={{ position: "absolute", inset: 0, width: r.w, background: `linear-gradient(90deg, ${C.b500}, ${C.b300})`, borderRadius: 3 }} />
+              </span>
+              <span style={{ fontSize: 12, color: C.b300, fontWeight: 700, width: 52, textAlign: "right" }}>{r.spend}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
