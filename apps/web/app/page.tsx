@@ -256,7 +256,7 @@ export default async function HomePage() {
             </ul>
           </div>
           {/* Right — dashboard mockup */}
-          <DashboardPreview />
+          <DashboardPreview locale={locale} />
         </div>
       </section>
 
@@ -374,20 +374,43 @@ export default async function HomePage() {
 }
 
 /* ─── Dashboard preview mockup (landing visual) ─── */
-function DashboardPreview() {
-  const kpis = [
-    { v: "11",     l: "Toplam fiş",     c: C.b300 },
-    { v: "₺820",   l: "30g ciro",       c: "#a78bfa" },
-    { v: "%45",    l: "Kazanma oranı",  c: C.green },
-    { v: "8",      l: "Aktif kupon",    c: C.e300 },
-  ];
+function DashboardPreview({ locale }: { locale: "tr" | "en" }) {
+  const tr = locale === "tr";
+  const venueName = tr ? "Pasaj Bar" : "The Copper Tap";
+  const t = {
+    analytics: tr ? "Analitik" : "Analytics",
+    live: tr ? "CANLI" : "LIVE",
+    chart: tr ? "Son 7 gün — fiş" : "Last 7 days — receipts",
+    topCustomers: tr ? "En iyi müşteriler" : "Top customers",
+  };
+  const kpis = tr
+    ? [
+        { v: "11",   l: "Toplam fiş",    c: C.b300 },
+        { v: "₺820", l: "30g ciro",      c: "#a78bfa" },
+        { v: "%45",  l: "Kazanma oranı", c: C.green },
+        { v: "8",    l: "Aktif kupon",   c: C.e300 },
+      ]
+    : [
+        { v: "11",    l: "Receipts",      c: C.b300 },
+        { v: "$820",  l: "30d revenue",   c: "#a78bfa" },
+        { v: "%45",   l: "Win rate",      c: C.green },
+        { v: "8",     l: "Active coupons",c: C.e300 },
+      ];
   const bars = [30, 52, 41, 68, 47, 90, 60];
-  const days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-  const rows = [
-    { n: "Mert B.",  tier: "🥇", spend: "₺1.240", w: "82%" },
-    { n: "Elif K.",  tier: "🥈", spend: "₺680",   w: "54%" },
-    { n: "Can A.",   tier: "🥉", spend: "₺310",   w: "28%" },
-  ];
+  const days = tr
+    ? ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+    : ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const rows = tr
+    ? [
+        { n: "Mert B.", tier: "🥇", spend: "₺1.240", w: "82%" },
+        { n: "Elif K.", tier: "🥈", spend: "₺680",   w: "54%" },
+        { n: "Can A.",  tier: "🥉", spend: "₺310",   w: "28%" },
+      ]
+    : [
+        { n: "James W.", tier: "🥇", spend: "$1,240", w: "82%" },
+        { n: "Sarah M.", tier: "🥈", spend: "$680",   w: "54%" },
+        { n: "David L.", tier: "🥉", spend: "$310",   w: "28%" },
+      ];
 
   return (
     <div className="slot-stage" style={{
@@ -410,10 +433,10 @@ function DashboardPreview() {
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
           <div style={{ fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: 16, color: C.i100 }}>
-            Komün Bar <span style={{ color: C.i400, fontWeight: 400 }}>— Analitik</span>
+            {venueName} <span style={{ color: C.i400, fontWeight: 400 }}>— {t.analytics}</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 10, color: C.green, fontWeight: 700, letterSpacing: "0.08em" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, boxShadow: `0 0 8px ${C.green}` }} /> CANLI
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: C.green, boxShadow: `0 0 8px ${C.green}` }} /> {t.live}
           </div>
         </div>
 
@@ -429,7 +452,7 @@ function DashboardPreview() {
 
         {/* Mini bar chart */}
         <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 14px 8px", marginBottom: 12 }}>
-          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>Son 7 gün — fiş</div>
+          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 10 }}>{t.chart}</div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 7, height: 64 }}>
             {bars.map((h, i) => (
               <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
@@ -445,7 +468,7 @@ function DashboardPreview() {
 
         {/* Top customers */}
         <div style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${C.line}`, borderRadius: 10, padding: "10px 14px" }}>
-          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>En iyi müşteriler</div>
+          <div style={{ fontSize: 10, color: C.i400, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 4 }}>{t.topCustomers}</div>
           {rows.map((r, i) => (
             <div key={r.n} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderTop: i === 0 ? "none" : `1px solid ${C.line}` }}>
               <span style={{ fontSize: 13 }}>{r.tier}</span>
