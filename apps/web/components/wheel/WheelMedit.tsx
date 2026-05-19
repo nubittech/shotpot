@@ -265,6 +265,7 @@ function MeditWheel({
 
 interface WheelPlayProps {
   venueName?: string;
+  locale?: "tr" | "en";
   canSpin?: boolean;
   spinning?: boolean;
   tokens?: number;
@@ -370,6 +371,7 @@ function MeditDrawer({
 
 export default function WheelMedit({
   venueName,
+  locale = "tr",
   canSpin = true,
   spinning: externalSpinning = false,
   tokens = 1,
@@ -509,7 +511,11 @@ export default function WheelMedit({
             opacity: (externalSpinning || (!canSpin && !!onSpin) || phase === 'spinning' || phase === 'won') ? 0.55 : 1,
             transition: 'transform 0.15s ease',
           }}>
-          {externalSpinning ? 'Taranıyor…' : phase === 'spinning' ? 'Çevriliyor…' : 'Çevir! ☀'}
+          {externalSpinning
+            ? (locale === "en" ? 'Scanning…' : 'Taranıyor…')
+            : phase === 'spinning'
+            ? (locale === "en" ? 'Spinning…' : 'Çevriliyor…')
+            : (locale === "en" ? 'Spin! ☀' : 'Çevir! ☀')}
         </button>
         <div style={{
           fontSize: 12, color: '#1a6b8a', fontWeight: 600,

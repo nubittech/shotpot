@@ -285,6 +285,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
         <SpinWheel
           variant={giftVariant}
           venueName={venue.name}
+          locale={interfaceLanguage}
           canSpin={giftPending > 0 && !spinning}
           spinning={spinning}
           tokens={giftPending}
@@ -312,6 +313,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
           <SpinWheel
             variant={wheelVariant}
             venueName={venue.name}
+            locale={interfaceLanguage}
             canSpin={tokens > 0 && !spinning}
             spinning={spinning}
             tokens={tokens}

@@ -270,6 +270,7 @@ function IrishWheel({
 
 interface WheelPlayProps {
   venueName?: string;
+  locale?: "tr" | "en";
   canSpin?: boolean;
   spinning?: boolean;
   tokens?: number;
@@ -370,6 +371,7 @@ function IrishDrawer({
 
 export default function WheelIrish({
   venueName,
+  locale = "tr",
   canSpin = true,
   spinning: externalSpinning = false,
   tokens = 1,
@@ -514,7 +516,11 @@ export default function WheelIrish({
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
             opacity: (externalSpinning || (!canSpin && !!onSpin) || phase === 'spinning' || phase === 'won') ? 0.55 : 1,
           }}>
-          {externalSpinning ? 'TARANIYÖR…' : phase === 'spinning' ? 'ÇEVRİLİYOR…' : 'ÇEVİR ☘'}
+          {externalSpinning
+            ? (locale === "en" ? 'SCANNING…' : 'TARANIYÖR…')
+            : phase === 'spinning'
+            ? (locale === "en" ? 'SPINNING…' : 'ÇEVRİLİYOR…')
+            : (locale === "en" ? 'SPIN ☘' : 'ÇEVİR ☘')}
         </button>
         <div style={{
           fontFamily: "'Cinzel', serif", fontSize: 11,

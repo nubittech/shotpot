@@ -14,6 +14,7 @@ export type WheelResult = {
 export type SpinWheelProps = {
   variant?: WheelVariant;
   venueName?: string;
+  locale?: "tr" | "en";
   /** External: whether the user can trigger a spin */
   canSpin: boolean;
   /** External: API call is in-flight */
@@ -36,6 +37,7 @@ const WheelMedit = dynamic(() => import('./WheelMedit'), { ssr: false });
 export default function SpinWheel({
   variant = 'boho',
   venueName,
+  locale = 'tr',
   canSpin,
   spinning,
   tokens,
@@ -50,6 +52,7 @@ export default function SpinWheel({
 
   const sharedProps = {
     venueName,
+    locale,
     canSpin,
     spinning,
     tokens,

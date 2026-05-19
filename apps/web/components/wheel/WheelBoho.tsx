@@ -269,6 +269,7 @@ function BohoWheel({
 
 interface WheelPlayProps {
   venueName?: string;
+  locale?: "tr" | "en";
   canSpin?: boolean;
   spinning?: boolean;
   tokens?: number;
@@ -378,6 +379,7 @@ function BohoDrawer({
 
 export default function WheelBoho({
   venueName,
+  locale = "tr",
   canSpin = true,
   spinning: externalSpinning = false,
   tokens = 1,
@@ -535,7 +537,11 @@ export default function WheelBoho({
             transform: 'translateY(0)',
             transition: 'transform 0.1s ease, box-shadow 0.1s ease',
           }}>
-          {externalSpinning ? 'Taranıyor…' : phase === 'spinning' ? 'dönüyor…' : 'Çevir! ✦'}
+          {externalSpinning
+            ? (locale === "en" ? 'Scanning…' : 'Taranıyor…')
+            : phase === 'spinning'
+            ? (locale === "en" ? 'Spinning…' : 'dönüyor…')
+            : (locale === "en" ? 'Spin! ✦' : 'Çevir! ✦')}
         </button>
         <div style={{
           fontFamily: "'Caveat', cursive",
