@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getClientCopy } from "../../lib/i18n/client";
 import { LanguageToggle } from "../LanguageToggle";
+import { SnapJackLogo } from "../SnapJackLogo";
 
 /* ─── Design tokens ─── */
 const T = {
@@ -108,15 +109,8 @@ export function AuthShell({
         }} />
 
         {/* Brand */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", position: "relative", zIndex: 2 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 9,
-            background: "linear-gradient(160deg, #e8c876, #5a3414)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontFamily: "'Playfair Display', serif", fontWeight: 900,
-            color: "#1a0f06", fontSize: 16,
-          }}>J</div>
-          <span style={{ fontWeight: 700, fontSize: 16, color: T.ink100 }}>{copy.meta.brand}</span>
+        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", position: "relative", zIndex: 2 }}>
+          <SnapJackLogo size={34} withWordmark />
         </Link>
 
         {/* Center content */}

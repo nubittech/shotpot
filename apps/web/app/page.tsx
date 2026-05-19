@@ -4,7 +4,7 @@ import { getServerCopy, getServerLocale } from "../lib/i18n/server";
 import { LanguageToggle } from "../components/LanguageToggle";
 import { LandingPricing } from "./LandingPricing";
 import { HeroShowcase } from "../components/landing/HeroShowcase";
-import { ShotpotLogo } from "../components/ShotpotLogo";
+import { SnapJackLogo } from "../components/SnapJackLogo";
 
 /* ─── Design tokens ─── */
 const C = {
@@ -130,11 +130,8 @@ export default async function HomePage() {
       }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 64 }}>
           {/* Brand */}
-          <Link href="/" style={{ display: "flex", alignItems: "center", gap: 11 }}>
-            <ShotpotLogo size={34} />
-            <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 900, fontSize: 19, color: C.i100, letterSpacing: "-0.01em" }}>
-              Shot<span style={{ color: C.b300 }}>pot</span>
-            </span>
+          <Link href="/" style={{ display: "flex", alignItems: "center" }}>
+            <SnapJackLogo size={36} withWordmark />
           </Link>
 
           {/* Nav links */}
@@ -326,11 +323,8 @@ export default async function HomePage() {
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
           <div className="foot-grid" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 48, marginBottom: 40 }}>
             <div>
-              <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <ShotpotLogo size={30} />
-                <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontWeight: 900, fontSize: 17, color: C.i100 }}>
-                  Shot<span style={{ color: C.b300 }}>pot</span>
-                </span>
+              <Link href="/" style={{ display: "flex", alignItems: "center" }}>
+                <SnapJackLogo size={32} withWordmark />
               </Link>
               <p style={{ marginTop: 16, maxWidth: 300, fontSize: 14, color: C.i400, lineHeight: 1.6 }}>{landing.footer.description}</p>
             </div>

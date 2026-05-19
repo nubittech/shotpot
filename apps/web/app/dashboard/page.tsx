@@ -6,6 +6,7 @@ import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteVenueButton } from "./DeleteVenueButton";
 import { LanguageToggle } from "../../components/LanguageToggle";
+import { SnapJackLogo } from "../../components/SnapJackLogo";
 import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
 
 /* ── Design tokens (from Jackpot styles.css) ── */
@@ -235,15 +236,8 @@ export default async function DashboardPage() {
         position: "sticky", top: 0, height: "100vh", overflowY: "auto",
       }}>
         {/* Brand */}
-        <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 8px 24px" }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: "linear-gradient(160deg, #e8c876, #5a3414)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 900, color: "#1a0f06",
-            fontFamily: "'Playfair Display', serif",
-          }}>J</div>
-          <span style={{ fontWeight: 700, fontSize: 14, color: T.ink100 }}>{copyText.meta.brand}</span>
+        <div className="dashboard-brand" style={{ display: "flex", alignItems: "center", padding: "4px 8px 24px" }}>
+          <SnapJackLogo size={30} withWordmark />
         </div>
 
         <details className="dashboard-mobile-menu">

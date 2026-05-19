@@ -60,7 +60,7 @@ export default async function CampaignsPage({ params }: Params) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
-        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>Receipt Reward</Link>
+        <Link href="/dashboard" style={{ color: "#ffd84e", fontWeight: 800, fontSize: 14, textDecoration: "none" }}>SnapJack</Link>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>

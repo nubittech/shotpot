@@ -543,7 +543,7 @@ function StudioInner() {
     <div style={{ minHeight: "100vh", background: "#0b0b0d", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       {/* Header */}
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "18px 32px", display: "flex", alignItems: "center", gap: 16 }}>
-        <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: "-0.01em", color: "#ffd84e" }}>Receipt Reward</div>
+        <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: "-0.01em", color: "#ffd84e" }}>SnapJack</div>
         <div style={{ width: 1, height: 18, background: "rgba(255,255,255,0.1)" }} />
         <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", fontWeight: 500 }}>
           {editSlug ? `${studioCopy.editing} · ${editSlug}` : studioCopy.setupPanel}

@@ -4,10 +4,10 @@ export const en: Translation = {
   meta: {
     lang: "en",
     locale: "en-US",
-    appName: "Shotpot",
-    brand: "Jackpot",
-    title: "Shotpot — Jackpot for Bars",
-    description: "Scan receipts, spin the jackpot, win coupons. A loyalty game for bars and restaurants.",
+    appName: "SnapJack",
+    brand: "SnapJack",
+    title: "SnapJack — Campaign game for bars",
+    description: "Scan a receipt, spin the wheel, win coupons. A gamified loyalty system for bars and cafés.",
   },
   common: {
     home: "Home",

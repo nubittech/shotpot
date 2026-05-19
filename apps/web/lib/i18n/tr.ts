@@ -2,10 +2,10 @@ export const tr = {
   meta: {
     lang: "tr",
     locale: "tr-TR",
-    appName: "Shotpot",
-    brand: "Jackpot",
-    title: "Shotpot — Jackpot for Bars",
-    description: "Fişini tara, jackpot çevir, kupon kazan. Bar & restoranlar için sadakat oyunu.",
+    appName: "SnapJack",
+    brand: "SnapJack",
+    title: "SnapJack — Barlar için kampanya oyunu",
+    description: "Fişini tara, çarkı çevir, kupon kazan. Bar & kafeler için oyunlaştırılmış sadakat sistemi.",
   },
   common: {
     home: "Ana sayfa",
