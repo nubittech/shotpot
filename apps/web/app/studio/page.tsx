@@ -984,6 +984,8 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
           sub="Her ödüllü segment için kazanç mesajı ve kupon kodu belirle. Kaybet segmentleri otomatik yönetilir."
         />
 
+        <CampaignInfoBox copy={copy} />
+
         {/* Prize + Jackpot segments */}
         <div>
           <SectionLabel>Ödüllü Segmentler</SectionLabel>
@@ -1075,6 +1077,8 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
         title={copy.symbolsTitle}
         sub={copy.symbolsHelp.replace("{max}", String(MAX_SYMBOLS))}
       />
+
+      <CampaignInfoBox copy={copy} />
 
       {/* Symbol pool */}
       <div>
@@ -1467,6 +1471,39 @@ function StepHeader({ title, sub }: { title: string; sub: string }) {
     <div style={{ marginBottom: 4 }}>
       <h2 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: "-0.02em", color: "#f4efe6" }}>{title}</h2>
       <p style={{ margin: "8px 0 0", fontSize: 13.5, color: "rgba(244,239,230,0.5)", lineHeight: 1.55 }}>{sub}</p>
+    </div>
+  );
+}
+
+/* Info box — explains Pro campaign analytics + example reward texts */
+function CampaignInfoBox({ copy }: { copy: StudioCopy }) {
+  return (
+    <div style={{
+      background: "rgba(255,216,78,0.05)",
+      border: "1px solid rgba(255,216,78,0.18)",
+      borderRadius: 14, padding: "16px 18px",
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <span style={{ fontSize: 15 }}>📊</span>
+        <span style={{ fontSize: 13, fontWeight: 800, color: "#ffd84e" }}>{copy.campaignInfoTitle}</span>
+      </div>
+      <p style={{ margin: 0, fontSize: 12.5, lineHeight: 1.55, color: "rgba(244,239,230,0.6)" }}>
+        {copy.campaignInfoBody}
+      </p>
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(244,239,230,0.4)", marginBottom: 7 }}>
+          {copy.campaignExamplesLabel}
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+          {copy.campaignExamples.map((ex) => (
+            <span key={ex} style={{
+              fontSize: 12, fontWeight: 600, color: "rgba(244,239,230,0.8)",
+              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 999, padding: "5px 12px",
+            }}>{ex}</span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
