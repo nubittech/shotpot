@@ -61,8 +61,8 @@ export const en: Translation = {
     },
     how: {
       eyebrow: "How it works",
-      title: "A second round in four steps",
-      body: "The customer already paid. Now give them one more reason to return.",
+      title: "Bring your customers back",
+      body: "Encourage your customers to visit again with personalized offers and rewards — and grow loyalty naturally.",
       steps: [
         { n: "1", title: "Scan the receipt", desc: "After paying, the customer scans their receipt with their phone camera in seconds and joins the campaign." },
         { n: "2", title: "Spin the wheel, win a reward", desc: "The customer spins instantly and wins a discount, a free item or a special offer." },

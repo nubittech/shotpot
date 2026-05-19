@@ -59,8 +59,8 @@ export const tr = {
     },
     how: {
       eyebrow: "Nasıl çalışır",
-      title: "Dört adımda ikinci tur",
-      body: "Müşteri zaten ödedi. Şimdi geri gelmesi için bir sebep daha verelim.",
+      title: "Müşteriyi tekrar geri getirin",
+      body: "Kişisel teklifler ve ödüllerle müşterilerinizi yeniden ziyaret etmeye teşvik edin, sadakati doğal şekilde artırın.",
       steps: [
         { n: "1", title: "Fişini okut", desc: "Müşteri ödeme sonrası fişini telefon kamerasıyla saniyeler içinde okutur ve kampanyaya katılır." },
         { n: "2", title: "Çarkı çevir, ödülü kazan", desc: "Müşteri anında çark çevirir; indirim, ücretsiz ürün veya özel teklifler kazanır." },
