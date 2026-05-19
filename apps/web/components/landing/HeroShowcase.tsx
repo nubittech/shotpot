@@ -452,8 +452,8 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                 opacity: wheelPhase === "won" ? 1 : 0, transition: "opacity .3s",
               }}>
                 {wonSeg != null && (locale === "tr"
-                  ? `🎉 ${WHEEL_SEGMENTS[wonSeg].label} kazandın!`
-                  : `🎉 You won ${WHEEL_SEGMENTS[wonSeg].label}!`)}
+                  ? `${WHEEL_SEGMENTS[wonSeg].label} kazandın!`
+                  : `You won ${WHEEL_SEGMENTS[wonSeg].label}!`)}
               </div>
 
               {/* Spin button */}
