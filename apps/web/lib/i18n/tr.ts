@@ -62,10 +62,10 @@ export const tr = {
       title: "Dört adımda ikinci tur",
       body: "Müşteri zaten ödedi. Şimdi geri gelmesi için bir sebep daha verelim.",
       steps: [
-        { n: "1", title: "Fişini tarat", desc: "Müşteri masada ödediği fişi telefon kamerasıyla okutur. OCR doğrular." },
-        { n: "2", title: "Çarkı çevir", desc: "Bir spin hakkı kazanır. Kolu çeker, slot makinesi döner — anlık eğlence." },
-        { n: "3", title: "İkram düşer", desc: "Bedava içecek, indirim, mezenin yanında ekstra. Hep sizin barınızdan." },
-        { n: "4", title: "Geri gelir", desc: "Kupon QR olarak telefonda. Garson okutur, biter. Veriyi siz görürsünüz." },
+        { n: "1", title: "Fişini okut", desc: "Müşteri ödeme sonrası fişini telefon kamerasıyla saniyeler içinde okutur ve kampanyaya katılır." },
+        { n: "2", title: "Çarkı çevir, ödülü kazan", desc: "Müşteri anında çark çevirir; indirim, ücretsiz ürün veya özel teklifler kazanır." },
+        { n: "3", title: "Ödülünü hemen kullan", desc: "Kazanılan kampanya aynı anda aktif olur. Müşteri ödülünü anında kullanabilir veya bir sonraki siparişine saklayabilir." },
+        { n: "4", title: "Müşteriyi tekrar geri getir", desc: "Sistem müşteriye özel teklifler göndermeye devam eder. Böylece tekrar ziyaret, çapraz satış ve sadakat doğal şekilde artar." },
       ],
     },
     benefits: {

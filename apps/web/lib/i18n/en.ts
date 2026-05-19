@@ -64,10 +64,10 @@ export const en: Translation = {
       title: "A second round in four steps",
       body: "The customer already paid. Now give them one more reason to return.",
       steps: [
-        { n: "1", title: "Scan the receipt", desc: "The customer scans their paid receipt with their phone camera. OCR verifies it." },
-        { n: "2", title: "Spin the wheel", desc: "They earn a spin. Pull the lever, watch the slot machine roll — instant fun." },
-        { n: "3", title: "Win a reward", desc: "A free drink, discount, or extra treat. Always redeemable at your venue." },
-        { n: "4", title: "Come back", desc: "The coupon lives on the phone as a QR. Staff scans it, done. You see the data." },
+        { n: "1", title: "Scan the receipt", desc: "After paying, the customer scans their receipt with their phone camera in seconds and joins the campaign." },
+        { n: "2", title: "Spin the wheel, win a reward", desc: "The customer spins instantly and wins a discount, a free item or a special offer." },
+        { n: "3", title: "Use the reward right away", desc: "The campaign goes live instantly. The customer can use the reward now or save it for their next order." },
+        { n: "4", title: "Bring the customer back", desc: "The system keeps sending personalized offers — so repeat visits, cross-sell and loyalty grow naturally." },
       ],
     },
     benefits: {
