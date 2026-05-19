@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, type CSSProperties } from "react";
+import { useState, useRef, useMemo, type CSSProperties } from "react";
 import Link from "next/link";
 
 /* ─── Bar (Jackpot) tokens ─── */
@@ -80,17 +80,58 @@ const CAFE_COPY = {
 
 const HERO_CSS = `
 @keyframes hero-wheel-spin { to { transform: rotate(360deg); } }
-@keyframes hero-petal { 0%{transform:translateY(0) rotate(0);opacity:.85} 100%{transform:translateY(34px) rotate(160deg);opacity:0} }
+@keyframes sj-confetti { 0%{transform:translateY(-14vh) rotate(0deg);opacity:1} 100%{transform:translateY(96vh) rotate(720deg);opacity:.9} }
 .hero-showcase-track { transition: transform .55s cubic-bezier(.4,0,.2,1); }
 .hero-dot { transition: all .2s; cursor: pointer; }
 .hero-arrow { transition: opacity .15s, transform .15s; }
 .hero-arrow:hover { transform: scale(1.08); }
 `;
 
+const CONFETTI_COLORS = ["#c17f5a", "#7a9e7e", "#d4a0a0", "#8a9a5b", "#e2b24f", "#f5efe0", "#d83a30"];
+const PRIZE_SEGS = [0, 2, 3, 4, 6, 7]; // WHEEL_SEGMENTS prize indices (non-"Olmadı")
+
 export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCopy }) {
   const [mode, setMode] = useState(0); // 0 = bar, 1 = café
   const drag = useRef<{ x: number; active: boolean }>({ x: 0, active: false });
   const cafe = CAFE_COPY[locale];
+
+  // ── Café wheel: click-to-spin → lands on a prize → confetti ──
+  const [wheelRot, setWheelRot] = useState(0);
+  const [wheelPhase, setWheelPhase] = useState<"idle" | "spinning" | "won">("idle");
+  const [wonSeg, setWonSeg] = useState<number | null>(null);
+  const [confetti, setConfetti] = useState(false);
+
+  const confettiPieces = useMemo(
+    () =>
+      Array.from({ length: 80 }, (_, i) => ({
+        id: i,
+        left: Math.random() * 100,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        delay: Math.random() * 0.6,
+        dur: 2.4 + Math.random() * 1.8,
+        size: 7 + Math.random() * 8,
+        round: Math.random() > 0.6,
+      })),
+    []
+  );
+
+  function spinWheel() {
+    if (wheelPhase === "spinning") return;
+    setConfetti(false);
+    setWheelPhase("spinning");
+    const seg = PRIZE_SEGS[Math.floor(Math.random() * PRIZE_SEGS.length)];
+    const targetMod = (360 - seg * 45) % 360;
+    setWheelRot((prev) => {
+      let next = Math.ceil(prev / 360) * 360 + 5 * 360 + targetMod;
+      while (next <= prev + 360) next += 360;
+      return next;
+    });
+    window.setTimeout(() => {
+      setWonSeg(seg);
+      setWheelPhase("won");
+      setConfetti(true);
+    }, 4700);
+  }
 
   function onDown(e: React.PointerEvent) {
     drag.current = { x: e.clientX, active: true };
@@ -274,7 +315,21 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
         <div style={{
           width: "50%", flexShrink: 0, padding: "80px 0 116px",
           background: "radial-gradient(70% 55% at 50% 0%, #faf3e4 0%, #f1e7d2 60%, #ebe0c8 100%)",
+          position: "relative", overflow: "hidden",
         }}>
+          {/* Confetti */}
+          {confetti && (
+            <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 30, overflow: "hidden" }}>
+              {confettiPieces.map((p) => (
+                <div key={p.id} style={{
+                  position: "absolute", top: 0, left: `${p.left}%`,
+                  width: p.size, height: p.round ? p.size : p.size * 1.4,
+                  background: p.color, borderRadius: p.round ? "50%" : 2,
+                  animation: `sj-confetti ${p.dur}s ${p.delay}s linear forwards`,
+                }} />
+              ))}
+            </div>
+          )}
           <div
             className="container hero-grid"
             style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px", display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 60, alignItems: "center" }}
@@ -332,13 +387,13 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
               </div>
 
               {/* Wheel */}
-              <div style={{ position: "relative", width: "min(82%, 360px)", aspectRatio: "1" }}>
+              <div style={{ position: "relative", width: "min(96%, 440px)", aspectRatio: "1" }}>
                 {/* Pointer */}
                 <div style={{
-                  position: "absolute", top: -6, left: "50%", transform: "translateX(-50%)",
+                  position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)",
                   width: 0, height: 0,
-                  borderLeft: "13px solid transparent", borderRight: "13px solid transparent",
-                  borderTop: "26px solid #6b4423", zIndex: 6,
+                  borderLeft: "16px solid transparent", borderRight: "16px solid transparent",
+                  borderTop: "32px solid #6b4423", zIndex: 6,
                   filter: "drop-shadow(0 3px 3px rgba(58,36,16,0.35))",
                 }} />
                 {/* Wood rim */}
@@ -351,7 +406,8 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                 <div style={{
                   position: "absolute", inset: "6.5%", borderRadius: "50%",
                   background: `conic-gradient(from -22.5deg, ${WHEEL_SEGMENTS.map((s, i) => `${s.color} ${i * 45}deg ${(i + 1) * 45}deg`).join(", ")})`,
-                  animation: "hero-wheel-spin 26s linear infinite",
+                  transform: `rotate(${wheelRot}deg)`,
+                  transition: wheelPhase === "spinning" ? "transform 4.6s cubic-bezier(.16,.7,.18,1)" : "none",
                   boxShadow: "inset 0 0 0 3px rgba(245,239,224,0.55)",
                 }}>
                   {WHEEL_SEGMENTS.map((s, i) => (
@@ -389,13 +445,35 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
                 }}>🌿</div>
               </div>
 
-              {/* Spin button */}
+              {/* Win message */}
               <div style={{
-                marginTop: 4, padding: "11px 30px", borderRadius: 999,
-                background: "#c17f5a", color: "#f5efe0",
-                fontFamily: "'Caveat', cursive", fontSize: 22, fontWeight: 700,
-                border: "2px solid #8b5e3c", boxShadow: "3px 3px 0 #8b5e3c",
-              }}>Çevir! ✦</div>
+                minHeight: 26, marginTop: 4, fontFamily: "'Caveat', cursive",
+                fontSize: 24, fontWeight: 700, color: "#7a9e7e",
+                opacity: wheelPhase === "won" ? 1 : 0, transition: "opacity .3s",
+              }}>
+                {wonSeg != null && (locale === "tr"
+                  ? `🎉 ${WHEEL_SEGMENTS[wonSeg].label} kazandın!`
+                  : `🎉 You won ${WHEEL_SEGMENTS[wonSeg].label}!`)}
+              </div>
+
+              {/* Spin button */}
+              <button
+                onClick={spinWheel}
+                disabled={wheelPhase === "spinning"}
+                style={{
+                  marginTop: 2, padding: "13px 38px", borderRadius: 999,
+                  background: "#c17f5a", color: "#f5efe0",
+                  fontFamily: "'Caveat', cursive", fontSize: 25, fontWeight: 700,
+                  border: "2px solid #8b5e3c", boxShadow: "3px 3px 0 #8b5e3c",
+                  cursor: wheelPhase === "spinning" ? "default" : "pointer",
+                  opacity: wheelPhase === "spinning" ? 0.6 : 1,
+                }}>
+                {wheelPhase === "spinning"
+                  ? (locale === "tr" ? "dönüyor…" : "spinning…")
+                  : wheelPhase === "won"
+                  ? (locale === "tr" ? "Tekrar çevir ✦" : "Spin again ✦")
+                  : (locale === "tr" ? "Çevir! ✦" : "Spin! ✦")}
+              </button>
             </div>
           </div>
         </div>
