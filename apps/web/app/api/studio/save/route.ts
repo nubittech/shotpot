@@ -107,18 +107,10 @@ export async function POST(req: NextRequest) {
 
     if (cfgErr) return NextResponse.json({ error: cfgErr.message }, { status: 500 });
 
-    // 3) Replace campaigns: delete then insert.
-    //    Snapshot existing rows first so we can restore them if the insert
-    //    fails — otherwise a failed insert would leave the venue with zero
-    //    campaigns (symbol rewards silently wiped).
-    const { data: prevCampaigns } = await sb
-      .from("campaigns")
-      .select("venue_id, symbol_id, reward_label, coupon_prefix, share")
-      .eq("venue_id", venueId);
-
-    const { error: delErr } = await sb.from("campaigns").delete().eq("venue_id", venueId);
-    if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
-
+    // 3) Upsert campaigns by (venue_id, symbol_id).
+    //    Rows are NEVER deleted — campaign ids stay stable so historical
+    //    spins/coupons keep their attribution (critical for analytics).
+    //    Symbols no longer selected are soft-deactivated (active = false).
     if (body.campaigns?.length) {
       const rows = body.campaigns.map((c) => ({
         venue_id: venueId,
@@ -126,15 +118,24 @@ export async function POST(req: NextRequest) {
         reward_label: c.rewardLabel,
         coupon_prefix: c.couponPrefix,
         share: c.share,
+        active: true,
       }));
-      const { error: insErr } = await sb.from("campaigns").insert(rows);
-      if (insErr) {
-        // Restore the snapshot so we don't lose the venue's symbols
-        if (prevCampaigns?.length) {
-          await sb.from("campaigns").insert(prevCampaigns);
-        }
-        return NextResponse.json({ error: insErr.message }, { status: 500 });
-      }
+      const { error: upErr } = await sb
+        .from("campaigns")
+        .upsert(rows, { onConflict: "venue_id,symbol_id" });
+      if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
+
+      // Deactivate campaigns whose symbol is no longer in the selection
+      const keep = rows.map((r) => `"${r.symbol_id}"`).join(",");
+      const { error: deErr } = await sb
+        .from("campaigns")
+        .update({ active: false })
+        .eq("venue_id", venueId)
+        .not("symbol_id", "in", `(${keep})`);
+      if (deErr) return NextResponse.json({ error: deErr.message }, { status: 500 });
+    } else {
+      // No campaigns selected → deactivate all for this venue
+      await sb.from("campaigns").update({ active: false }).eq("venue_id", venueId);
     }
 
     return NextResponse.json({ ok: true, venueId, slug });

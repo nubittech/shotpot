@@ -126,7 +126,7 @@ export async function POST(req: NextRequest) {
 
     const [{ data: cfg }, { data: camps }] = await Promise.all([
       sb.from("symbol_configs").select("*").eq("venue_id", venue.id).maybeSingle(),
-      sb.from("campaigns").select("*").eq("venue_id", venue.id),
+      sb.from("campaigns").select("*").eq("venue_id", venue.id).eq("active", true),
     ]);
     if (!cfg) return NextResponse.json({ error: "config missing" }, { status: 500 });
 

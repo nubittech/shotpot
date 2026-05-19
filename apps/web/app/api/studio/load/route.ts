@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
     const [{ data: cfg }, { data: camps }] = await Promise.all([
       sb.from("symbol_configs").select("*").eq("venue_id", v.id).maybeSingle(),
-      sb.from("campaigns").select("*").eq("venue_id", v.id),
+      sb.from("campaigns").select("*").eq("venue_id", v.id).eq("active", true),
     ]);
 
     return NextResponse.json({

@@ -76,6 +76,70 @@ export default async function AnalyticsPage({ params }: Params) {
 
   const currSymbol = v.currency === "USD" ? "$" : v.currency === "EUR" ? "€" : "₺";
 
+  /* ── Per-reward (campaign) performance ── */
+  const [
+    { data: campaignRows },
+    { data: spinRows },
+    { data: couponRows },
+  ] = await Promise.all([
+    svc.from("campaigns").select("id, reward_label").eq("venue_id", v.id).eq("active", true),
+    svc.from("spins").select("id, campaign_id, is_jackpot").eq("venue_id", v.id),
+    svc.from("coupons").select("spin_id, created_at, redeemed_at").eq("venue_id", v.id),
+  ]);
+
+  type RewardStat = {
+    id: string; label: string;
+    won: number; issued: number; redeemed: number;
+    instant: number; sameDay: number; later: number; unused: number;
+  };
+  const camps = (campaignRows ?? []) as { id: string; reward_label: string }[];
+  const spinsAll = (spinRows ?? []) as { id: string; campaign_id: string | null; is_jackpot: boolean }[];
+  const couponsAll = (couponRows ?? []) as { spin_id: string | null; created_at: string; redeemed_at: string | null }[];
+
+  const spinCampaign = new Map<string, string | null>();
+  const jackpotSpinIds = new Set<string>();
+  for (const s of spinsAll) {
+    spinCampaign.set(s.id, s.campaign_id);
+    if (s.is_jackpot) jackpotSpinIds.add(s.id);
+  }
+
+  const blankStat = (id: string, label: string): RewardStat =>
+    ({ id, label, won: 0, issued: 0, redeemed: 0, instant: 0, sameDay: 0, later: 0, unused: 0 });
+  const rewardStats: Record<string, RewardStat> = {};
+  for (const c of camps) rewardStats[c.id] = blankStat(c.id, c.reward_label);
+  rewardStats.__jackpot = blankStat("__jackpot", "Jackpot");
+
+  for (const s of spinsAll) {
+    if (s.is_jackpot) rewardStats.__jackpot.won++;
+    else if (s.campaign_id && rewardStats[s.campaign_id]) rewardStats[s.campaign_id].won++;
+  }
+
+  for (const cp of couponsAll) {
+    let key: string | null = null;
+    if (cp.spin_id && jackpotSpinIds.has(cp.spin_id)) key = "__jackpot";
+    else if (cp.spin_id) {
+      const camp = spinCampaign.get(cp.spin_id);
+      if (camp && rewardStats[camp]) key = camp;
+    }
+    if (!key) continue;
+    const st = rewardStats[key];
+    st.issued++;
+    if (cp.redeemed_at) {
+      st.redeemed++;
+      const hrs = (new Date(cp.redeemed_at).getTime() - new Date(cp.created_at).getTime()) / 3600000;
+      const sameCal = new Date(cp.created_at).toDateString() === new Date(cp.redeemed_at).toDateString();
+      if (hrs < 2) st.instant++;
+      else if (sameCal) st.sameDay++;
+      else st.later++;
+    } else {
+      st.unused++;
+    }
+  }
+
+  const rewardList = Object.values(rewardStats)
+    .filter((r) => r.won > 0 || r.issued > 0)
+    .sort((a, b) => b.issued - a.issued);
+
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -139,6 +203,61 @@ export default async function AnalyticsPage({ params }: Params) {
           <KPI label={analytics.redeemed} value={redeemedCoupons ?? 0} color="#4ade80" sub={analytics.redemption} />
           <KPI label={analytics.pending} value={(totalCoupons ?? 0) - (redeemedCoupons ?? 0)} color="#fbbf24" sub={analytics.activeCoupon} />
         </div>
+
+        {/* ── SECTION: Ödül Performansı ── */}
+        <SectionTitle>{analytics.rewardPerf.title}</SectionTitle>
+        <p style={{ margin: "-6px 0 14px", fontSize: 12.5, color: "rgba(244,239,230,0.45)", lineHeight: 1.5 }}>
+          {analytics.rewardPerf.help}
+        </p>
+        {rewardList.length === 0 ? (
+          <div style={{ ...sectionCard, textAlign: "center", color: "rgba(244,239,230,0.4)", fontSize: 13 }}>
+            {analytics.rewardPerf.empty}
+          </div>
+        ) : (
+          <div style={{ display: "grid", gap: 10, marginBottom: 24 }}>
+            {rewardList.map((r) => {
+              const rate = r.issued ? Math.round((r.redeemed / r.issued) * 100) : 0;
+              const pct = (n: number) => (r.issued ? `${(n / r.issued) * 100}%` : "0%");
+              const segs = [
+                { n: r.instant, c: "#fb923c", label: analytics.rewardPerf.instant },
+                { n: r.sameDay, c: "#fbbf24", label: analytics.rewardPerf.sameDay },
+                { n: r.later,   c: "#4ade80", label: analytics.rewardPerf.laterDays },
+                { n: r.unused,  c: "rgba(255,255,255,0.12)", label: analytics.rewardPerf.unused },
+              ];
+              return (
+                <div key={r.id} style={sectionCard}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#f4efe6" }}>
+                      {r.id === "__jackpot" ? "🎰 " : ""}{r.label || "—"}
+                    </div>
+                    <div style={{ fontSize: 18, fontWeight: 900, color: rate >= 60 ? "#4ade80" : rate >= 30 ? "#fbbf24" : "#f87171" }}>
+                      %{rate} <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(244,239,230,0.4)" }}>{analytics.rewardPerf.rate}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 14, fontSize: 11.5, color: "rgba(244,239,230,0.55)", marginBottom: 10 }}>
+                    <span>{analytics.rewardPerf.won}: <b style={{ color: "#f4efe6" }}>{r.won}</b></span>
+                    <span>{analytics.rewardPerf.issued}: <b style={{ color: "#f4efe6" }}>{r.issued}</b></span>
+                    <span>{analytics.rewardPerf.redeemed}: <b style={{ color: "#4ade80" }}>{r.redeemed}</b></span>
+                  </div>
+                  {/* Stacked time-to-redeem bar */}
+                  <div style={{ display: "flex", height: 10, borderRadius: 5, overflow: "hidden", background: "rgba(255,255,255,0.05)" }}>
+                    {segs.map((s, i) => s.n > 0 && (
+                      <div key={i} style={{ width: pct(s.n), background: s.c }} title={`${s.label}: ${s.n}`} />
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 8 }}>
+                    {segs.map((s, i) => (
+                      <span key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 10.5, color: "rgba(244,239,230,0.5)" }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 2, background: s.c, display: "inline-block" }} />
+                        {s.label} <b style={{ color: "rgba(244,239,230,0.75)" }}>{s.n}</b>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── SECTION: Pro Müşteri (only Pro) ── */}
         {v.tier === "pro" && (
