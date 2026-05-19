@@ -69,9 +69,9 @@ export const tr = {
       ],
     },
     benefits: {
-      eyebrow: "İşletme sahipleri için",
-      title: "Reklam değil — tekrar.",
-      body: "Yeni müşteri bulmak pahalı. Geleni geri getirmek, akıllı.",
+      eyebrow: "İşletmeniz için",
+      title: "QR menünüzü güçlü bir satış kanalına çevirin",
+      body: "Kurulum gerektirmeden çalışan akıllı kampanyalarla sessiz saatleri doldurun, çapraz satış yapın ve gerçek müşteri verileriyle büyüyün.",
       cards: [
         { icon: "★", title: "Kampanya yönetimini eğlenceli hale getirin", desc: "Müşterilerinize kişisel kampanyalar sunarak çapraz ve ek satış yapabilir, işletmenize olan sadakati artırabilirsiniz." },
         { icon: "▣", title: "Mevcut sisteminize saniyeler içinde eklenir", desc: "Yeni cihaz, POS değişimi veya teknik kurulum gerekmez. QR menünüze eklemeniz yeterli." },

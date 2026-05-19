@@ -204,7 +204,7 @@ export default async function HomePage() {
       <section id="benefits" style={{ padding: "100px 0", background: "linear-gradient(180deg, transparent, rgba(232,200,118,0.02), transparent)" }}>
         <div className="container" style={{ maxWidth: 1240, margin: "0 auto", padding: "0 32px" }}>
           <div style={{ textAlign: "center", marginBottom: 64 }}>
-            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 13, letterSpacing: "0.24em", color: C.b300, textTransform: "uppercase" }}>{landing.benefits.eyebrow}</div>
+            <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: "clamp(30px,5vw,52px)", letterSpacing: "0.16em", color: C.b300, textTransform: "uppercase", lineHeight: 1.05 }}>{landing.benefits.eyebrow}</div>
             <h2 style={{ margin: "14px 0 0", fontFamily: "'Playfair Display', serif", fontWeight: 900, fontSize: "clamp(30px,4vw,52px)", color: C.i100, letterSpacing: "-0.01em" }}>{landing.benefits.title}</h2>
             <p style={{ margin: "18px auto 0", maxWidth: 560, fontSize: 17, color: C.i300, lineHeight: 1.6 }}>
               {landing.benefits.body}

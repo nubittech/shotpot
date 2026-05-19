@@ -71,9 +71,9 @@ export const en: Translation = {
       ],
     },
     benefits: {
-      eyebrow: "For venue owners",
-      title: "Not ads — repeat visits.",
-      body: "Finding new customers is expensive. Bringing people back is smarter.",
+      eyebrow: "For your business",
+      title: "Turn your QR menu into a powerful sales channel",
+      body: "Fill quiet hours with smart, zero-setup campaigns, cross-sell, and grow with real customer data.",
       cards: [
         { icon: "★", title: "Make campaign management fun", desc: "Offer personalized campaigns to your customers to cross-sell and upsell — and build stronger loyalty to your venue." },
         { icon: "▣", title: "Live on your system in seconds", desc: "No new device, no POS change, no technical setup. Just add it to your QR menu." },
