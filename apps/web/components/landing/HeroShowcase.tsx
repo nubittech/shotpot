@@ -80,7 +80,7 @@ const CAFE_COPY = {
 
 const HERO_CSS = `
 @keyframes hero-wheel-spin { to { transform: rotate(360deg); } }
-@keyframes sj-confetti { 0%{transform:translateY(-14vh) rotate(0deg);opacity:1} 100%{transform:translateY(96vh) rotate(720deg);opacity:.9} }
+@keyframes sj-confetti { 0%{transform:translateY(-14vh) rotate(0deg);opacity:1} 80%{opacity:1} 100%{transform:translateY(96vh) rotate(720deg);opacity:0} }
 .hero-showcase-track { transition: transform .55s cubic-bezier(.4,0,.2,1); }
 .hero-dot { transition: all .2s; cursor: pointer; }
 .hero-arrow { transition: opacity .15s, transform .15s; }
@@ -130,6 +130,8 @@ export function HeroShowcase({ locale, bar }: { locale: "tr" | "en"; bar: BarCop
       setWonSeg(seg);
       setWheelPhase("won");
       setConfetti(true);
+      // clear confetti once the longest piece has fallen + faded
+      window.setTimeout(() => setConfetti(false), 5200);
     }, 4700);
   }
 
