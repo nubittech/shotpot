@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { SYMBOL_REGISTRY, type SymId } from "../../components/slot/Symbols";
 import type { SlotVariant } from "../../components/SlotMachine";
 import { getClientCopy } from "../../lib/i18n/client";
-import { getWheelSegmentDefs, defaultWheelSegmentCfg, type WheelSegmentDef } from "../../components/wheel/segments";
+import { getWheelSegmentDefs, defaultWheelSegmentCfg, segLabel, segDefaultPrize, type WheelSegmentDef } from "../../components/wheel/segments";
 
 declare global {
   interface Window {
@@ -210,6 +210,7 @@ export default function StudioPage() {
 function StudioInner() {
   const copyText = getClientCopy();
   const studioCopy = copyText.studio;
+  const studioLocale: "tr" | "en" = copyText.meta.lang === "en" ? "en" : "tr";
   const searchParams = useSearchParams();
   const editSlug = searchParams.get("slug");
 
@@ -566,11 +567,11 @@ function StudioInner() {
         })()}
 
         <div style={{ marginTop: 40 }}>
-          {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} copy={studioCopy} />}
+          {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} copy={studioCopy} locale={studioLocale} />}
           {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} copy={studioCopy} />}
-          {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} copy={studioCopy} />}
-          {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} copy={studioCopy} />}
-          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} copy={studioCopy} />}
+          {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} copy={studioCopy} locale={studioLocale} />}
+          {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} copy={studioCopy} locale={studioLocale} />}
+          {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} copy={studioCopy} locale={studioLocale} />}
         </div>
       </div>
     </div>
@@ -646,7 +647,7 @@ const WHEEL_VARIANTS: { id: WheelVariant; bg: string; accent: string; preview: s
   },
 ];
 
-function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; copy: StudioCopy }) {
+function StepVariant({ st, update, onNext, copy, locale }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; copy: StudioCopy; locale: "tr" | "en" }) {
   return (
     <div style={{ display: "grid", gap: 28 }}>
       <StepHeader title={copy.gameEngineTitle} sub={copy.gameEngineHelp} />
@@ -663,7 +664,7 @@ function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Part
             return (
               <button
                 key={g.id}
-                onClick={() => update({ gameType: g.id as GameType, ...(g.id === 'wheel' ? { wheelSegmentCfg: defaultWheelSegmentCfg(st.wheelVariant) } : {}) })}
+                onClick={() => update({ gameType: g.id as GameType, ...(g.id === 'wheel' ? { wheelSegmentCfg: defaultWheelSegmentCfg(st.wheelVariant, locale) } : {}) })}
                 type="button"
                 style={{
                   flex: 1, padding: "14px 16px", borderRadius: 14, textAlign: "left", cursor: "pointer",
@@ -726,7 +727,7 @@ function StepVariant({ st, update, onNext, copy }: { st: State; update: (p: Part
               return (
                 <button
                   key={v.id}
-                  onClick={() => update({ wheelVariant: v.id, wheelSegmentCfg: defaultWheelSegmentCfg(v.id) })}
+                  onClick={() => update({ wheelVariant: v.id, wheelSegmentCfg: defaultWheelSegmentCfg(v.id, locale) })}
                   style={{
                     background: "none", border: `2px solid ${active ? v.accent : "rgba(255,255,255,0.08)"}`,
                     borderRadius: 16, padding: 0, cursor: "pointer", textAlign: "left",
@@ -957,7 +958,7 @@ function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p:
 }
 
 /* ─── Step 2: Symbols & Rewards ──────────────────────────────── */
-function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy }) {
+function StepSymbols({ st, update, onNext, onBack, copy, locale }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy; locale: "tr" | "en" }) {
   // For wheel mode: show segment reward editor
   if (st.gameType === "wheel") {
     const defs = getWheelSegmentDefs(st.wheelVariant);
@@ -980,15 +981,15 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
     return (
       <div style={{ display: "grid", gap: 32 }}>
         <StepHeader
-          title="Çark Ödülleri"
-          sub="Her ödüllü segment için kazanç mesajı ve kupon kodu belirle. Kaybet segmentleri otomatik yönetilir."
+          title={copy.wheelRewardsTitle}
+          sub={copy.wheelRewardsHelp}
         />
 
         <CampaignInfoBox copy={copy} />
 
         {/* Prize + Jackpot segments */}
         <div>
-          <SectionLabel>Ödüllü Segmentler</SectionLabel>
+          <SectionLabel>{copy.wheelPrizeSegments}</SectionLabel>
           <div style={{ display: "grid", gap: 10 }}>
             {prizeDefs.map((seg: WheelSegmentDef) => (
               <div key={seg.id} style={{
@@ -1004,18 +1005,18 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
                     justifyContent: "center", fontSize: 18,
                     boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                   }}>{seg.icon}</div>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: seg.type === 'jackpot' ? "#ffd84e" : "rgba(244,239,230,0.4)", textTransform: "uppercase" }}>{seg.label}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: seg.type === 'jackpot' ? "#ffd84e" : "rgba(244,239,230,0.4)", textTransform: "uppercase" }}>{segLabel(seg, locale)}</span>
                 </div>
                 <input
                   value={st.wheelSegmentCfg[seg.id]?.reward ?? ''}
                   onChange={(e) => setWheelCfg(seg.id, { reward: e.target.value })}
-                  placeholder="Kazanç mesajı"
+                  placeholder={copy.rewardPlaceholder}
                   style={inputStyle}
                 />
                 <input
                   value={st.wheelSegmentCfg[seg.id]?.coupon ?? ''}
                   onChange={(e) => setWheelCfg(seg.id, { coupon: e.target.value.toUpperCase() })}
-                  placeholder="Kupon kodu"
+                  placeholder={copy.couponPlaceholder}
                   style={{ ...inputStyle, fontFamily: "monospace", letterSpacing: "0.05em" }}
                 />
               </div>
@@ -1025,7 +1026,7 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
 
         {/* Lose segments — read-only */}
         <div>
-          <SectionLabel>Kaybet Segmentleri ({loseDefs.length} adet — otomatik)</SectionLabel>
+          <SectionLabel>{copy.wheelLoseSegments.replace("{count}", String(loseDefs.length))}</SectionLabel>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             {loseDefs.map((seg: WheelSegmentDef) => (
               <div key={seg.id} style={{
@@ -1034,16 +1035,16 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
                 border: "1px solid rgba(255,255,255,0.06)", opacity: 0.6,
               }}>
                 <div style={{ width: 20, height: 20, borderRadius: "50%", background: seg.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>{seg.icon}</div>
-                <span style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", fontWeight: 600 }}>{seg.label}</span>
+                <span style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", fontWeight: 600 }}>{segLabel(seg, locale)}</span>
               </div>
             ))}
           </div>
           <p style={{ margin: "8px 0 0", fontSize: 11, color: "rgba(244,239,230,0.3)", lineHeight: 1.5 }}>
-            Kaybet segmentleri kupon üretmez. Kazanma oranı bir sonraki adımda ayarlanır.
+            {copy.wheelLoseHelp}
           </p>
         </div>
 
-        <NavRow onBack={onBack} onNext={onNextWheel} nextLabel="Devam Et" nextDisabled={!canNextWheel} />
+        <NavRow onBack={onBack} onNext={onNextWheel} nextLabel={copy.continue} backLabel={copy.back} nextDisabled={!canNextWheel} />
       </div>
     );
 
@@ -1155,7 +1156,7 @@ function StepSymbols({ st, update, onNext, onBack, copy }: { st: State; update: 
 
 /* ─── Step 3: Rates ──────────────────────────────────────────── */
 function StepRates({
-  st, update, probabilities, onNext, onBack, copy,
+  st, update, probabilities, onNext, onBack, copy, locale,
 }: {
   st: State;
   update: (p: Partial<State>) => void;
@@ -1163,6 +1164,7 @@ function StepRates({
   onNext: () => void;
   onBack: () => void;
   copy: StudioCopy;
+  locale: "tr" | "en";
 }) {
   const isWheel = st.gameType === "wheel";
 
@@ -1190,7 +1192,7 @@ function StepRates({
         .filter((seg) => seg.type === "prize")
         .map((seg) => ({
           id: seg.id,
-          label: seg.label,
+          label: segLabel(seg, locale),
           icon: (
             <div style={{
               width: 24, height: 24, borderRadius: "50%", background: seg.color,
@@ -1294,7 +1296,7 @@ function StepRates({
 
 /* ─── Step 4: Preview & Save ─────────────────────────────────── */
 function StepPreview({
-  st, probabilities, saving, saved, saveError, onSave, onBack, copy,
+  st, probabilities, saving, saved, saveError, onSave, onBack, copy, locale,
 }: {
   st: State;
   probabilities: ReturnType<typeof computeProbs>;
@@ -1304,6 +1306,7 @@ function StepPreview({
   onSave: () => void;
   onBack: () => void;
   copy: StudioCopy;
+  locale: "tr" | "en";
 }) {
   const variantInfo = VARIANTS.find((v) => v.id === st.variant)!;
   const selectedPlanLabel = `${planLabel(st.plan, copy)} · ${billingLabel(st.billingCycle, copy)}`;
@@ -1338,7 +1341,7 @@ function StepPreview({
   const prizeRows: RewardRowView[] = isWheel
     ? wheelDefs.filter((seg) => seg.type === "prize").map((seg) => ({
         id: seg.id,
-        label: seg.label,
+        label: segLabel(seg, locale),
         icon: <div style={{ width: 32, height: 32, borderRadius: "50%", background: seg.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17 }}>{seg.icon}</div>,
         reward: st.wheelSegmentCfg[seg.id]?.reward ?? "",
         coupon: st.wheelSegmentCfg[seg.id]?.coupon ?? "",
@@ -1350,10 +1353,13 @@ function StepPreview({
         reward: st.symCfg[id]?.reward ?? "",
         coupon: st.symCfg[id]?.coupon ?? "",
       }));
-  const ratesLabelFor = (id: string) =>
-    isWheel
-      ? (wheelDefs.find((d) => d.id === id)?.label ?? id)
-      : id.charAt(0).toUpperCase() + id.slice(1);
+  const ratesLabelFor = (id: string) => {
+    if (isWheel) {
+      const seg = wheelDefs.find((d) => d.id === id);
+      return seg ? segLabel(seg, locale) : id;
+    }
+    return id.charAt(0).toUpperCase() + id.slice(1);
+  };
 
   return (
     <div style={{ display: "grid", gap: 32 }}>
