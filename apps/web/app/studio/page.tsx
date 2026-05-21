@@ -479,8 +479,51 @@ function StudioInner() {
         setSaveError(err.error ?? studioCopy.saveErrorRetry);
         return;
       } else {
-        const savedVenue = await sbRes.json().catch(() => null) as { venueId?: string; slug?: string } | null;
+        const savedVenue = await sbRes.json().catch(() => null) as {
+          venueId?: string;
+          slug?: string;
+          wasActive?: boolean;
+          planChanged?: boolean;
+        } | null;
         checkoutSlug = savedVenue?.slug ?? st.slug;
+
+        // ── Already-paying venue: don't open a new checkout. ──
+        //    · Plan unchanged → just go to dashboard.
+        //    · Plan changed   → update the existing Paddle subscription
+        //                       (proration applied immediately).
+        if (savedVenue?.wasActive && checkoutSlug) {
+          if (savedVenue.planChanged) {
+            const upRes = await fetch("/api/paddle/update-subscription", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ slug: checkoutSlug, plan: st.plan, billingCycle: st.billingCycle }),
+            });
+            if (!upRes.ok) {
+              // Fallback: open Paddle checkout if the update couldn't be applied
+              const errBody = await upRes.json().catch(() => ({}));
+              if (errBody?.code !== "no_subscription") {
+                setSaveError(errBody?.error ?? studioCopy.saveErrorRetry);
+                return;
+              }
+              if (savedVenue?.venueId) {
+                await openPaddleCheckoutFromStudio({
+                  venueId: savedVenue.venueId,
+                  slug: checkoutSlug,
+                  plan: st.plan,
+                  billingCycle: st.billingCycle,
+                  interfaceLanguage: st.interfaceLanguage,
+                });
+                update({ saved: true });
+                return;
+              }
+            }
+          }
+          // Update applied (or nothing to update) → straight to dashboard
+          window.location.href = `/dashboard`;
+          return;
+        }
+
+        // ── Brand-new / unpaid venue: open a fresh checkout. ──
         if (savedVenue?.venueId && checkoutSlug) {
           await openPaddleCheckoutFromStudio({
             venueId: savedVenue.venueId,

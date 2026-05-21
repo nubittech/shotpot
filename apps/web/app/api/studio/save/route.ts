@@ -54,17 +54,22 @@ export async function POST(req: NextRequest) {
     // Ownership check: if slug already exists, must belong to this user
     const { data: existing } = await sb
       .from("venues")
-      .select("id, owner_user_id, active")
+      .select("id, owner_user_id, active, plan, billing_cycle")
       .eq("slug", slug)
       .maybeSingle();
     const existingRow = existing as {
       id: string;
       owner_user_id: string | null;
       active: boolean | null;
+      plan: string | null;
+      billing_cycle: string | null;
     } | null;
     if (existingRow && existingRow.owner_user_id && existingRow.owner_user_id !== user.id) {
       return NextResponse.json({ error: "slug taken" }, { status: 409 });
     }
+    const wasActive = !!existingRow?.active;
+    const prevPlan = existingRow?.plan ?? null;
+    const prevBillingCycle = existingRow?.billing_cycle ?? null;
 
     // 1) Upsert venue (by slug) with current user as owner
     const { data: venueRow, error: venueErr } = await sb
@@ -138,7 +143,15 @@ export async function POST(req: NextRequest) {
       await sb.from("campaigns").update({ active: false }).eq("venue_id", venueId);
     }
 
-    return NextResponse.json({ ok: true, venueId, slug });
+    return NextResponse.json({
+      ok: true,
+      venueId,
+      slug,
+      wasActive,
+      prevPlan,
+      prevBillingCycle,
+      planChanged: wasActive && (prevPlan !== (body.plan ?? "kampanya") || prevBillingCycle !== (body.billingCycle ?? "monthly")),
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "unknown error";
     return NextResponse.json({ error: msg }, { status: 500 });
