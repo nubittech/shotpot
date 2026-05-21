@@ -11,10 +11,11 @@ import {
 /**
  * POST /api/paddle/update-subscription
  *
- * For an already-paying venue, change the Paddle subscription's price to the
- * new plan/billing cycle. No new checkout, no proration / mid-cycle diff:
- * the plan switches immediately and the next regular billing cycle simply
- * charges the new full amount.
+ * For an already-paying venue, schedule a Paddle subscription plan change
+ * for the next billing cycle. No new checkout, no proration / mid-cycle diff:
+ * the current paid period finishes on the old plan, and at the next renewal
+ * Paddle charges the new plan's full amount — that's when the new tier and
+ * its features take effect.
  *
  * Body: { slug, plan, billingCycle }
  */
@@ -82,9 +83,10 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.PADDLE_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "PADDLE_API_KEY missing" }, { status: 500 });
 
-    // PATCH Paddle subscription — switch plan only, no proration / mid-cycle bill.
-    // `do_not_bill` makes Paddle change the items without issuing any invoice
-    // now; the next regular billing cycle charges the new full amount.
+    // PATCH Paddle subscription — defer the plan change to the next billing
+    // period. `full_next_billing_period` tells Paddle to keep the current
+    // plan running until the next renewal, then switch items AND charge the
+    // new plan's full amount as that period's invoice.
     const r = await fetch(`${PADDLE_API_BASE}/subscriptions/${v.stripe_subscription_id}`, {
       method: "PATCH",
       headers: {
@@ -93,7 +95,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         items: [{ price_id: priceId, quantity: 1 }],
-        proration_billing_mode: "do_not_bill",
+        proration_billing_mode: "full_next_billing_period",
       }),
     });
     const data: unknown = await r.json().catch(() => ({}));
@@ -104,13 +106,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg, paddle: data }, { status: 500 });
     }
 
-    // Optimistically reflect plan locally; the Paddle webhook will reconcile.
-    await svc
-      .from("venues")
-      .update({ plan: body.plan, billing_cycle: body.billingCycle })
-      .eq("id", v.id);
+    // Don't touch venue.plan/tier here — the change only takes effect at the
+    // next renewal. Paddle will fire `subscription.updated` at that moment
+    // and our webhook will flip plan/tier then. This keeps the customer on
+    // their paid plan until they actually pay for the new one.
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, scheduled: true });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : String(e);
     return NextResponse.json({ error: msg }, { status: 500 });
