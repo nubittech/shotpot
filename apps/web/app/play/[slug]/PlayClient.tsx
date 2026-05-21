@@ -158,6 +158,105 @@ const THEMES: Record<SlotVariantDB, Theme> = {
   },
 };
 
+/* ─── Wheel themes ── customer-side palette that matches the wheel variant
+       picked in the studio. Keeps the existing dark surface so the layout
+       stays consistent, but swaps every accent + font for the wheel's vibe. */
+const WHEEL_THEMES: Record<WheelVariantDB, Theme> = {
+
+  /* ── Bohem Kafé — warm cream/terracotta on dark walnut ── */
+  boho: {
+    bg:              "radial-gradient(140% 100% at 50% 0%, #2a1a10 0%, #1a0f0a 60%, #0e0805 100%)",
+    cardBg:          "rgba(193,127,90,0.07)",
+    ctaCardBg:       "linear-gradient(135deg, #c17f5a 0%, #d4a0a0 100%)",
+    ctaCardBgIdle:   "rgba(193,127,90,0.05)",
+    navBg:           "rgba(14,8,5,0.95)",
+    text:            "#f5efe0",
+    muted:           "rgba(212,184,150,0.55)",
+    ctaText:         "#3a2410",
+    ctaMuted:        "rgba(58,36,16,0.6)",
+    accent:          "#d4a585",
+    accent2:         "#9bc09c",
+    border:          "rgba(212,184,150,0.15)",
+    ctaBorder:       "#8b5e3c",
+    glow:            "rgba(212,165,133,0.28)",
+    jackpotGlow:     "rgba(212,165,133,0.5)",
+    jackpotHi:       "#d4a0a0",
+    jackpotLo:       "#c17f5a",
+    jackpotRim:      "#5a3a20",
+    btnBg:           "#c17f5a",
+    btnText:         "#f5efe0",
+    fontDisplay:     "'Caveat', cursive",
+    fontLabel:       "'Caveat', cursive",
+    nameTransform:   "capitalize",
+    nameSize:        "clamp(42px, 11vw, 60px)",
+    labelText:       "bugün",
+    receiptTint:     "linear-gradient(180deg,rgba(193,127,90,0.07),rgba(122,158,126,0.04))",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #d4a0a0 0%, #c17f5a 100%)",
+  },
+
+  /* ── Irish Pub — dark forest + carved brass ── */
+  irish: {
+    bg:              "radial-gradient(140% 100% at 50% 0%, #0d1a0e 0%, #06100a 60%, #030806 100%)",
+    cardBg:          "rgba(200,146,42,0.06)",
+    ctaCardBg:       "linear-gradient(135deg, #1a4d2e 0%, #c8922a 100%)",
+    ctaCardBgIdle:   "rgba(200,146,42,0.05)",
+    navBg:           "rgba(3,8,6,0.95)",
+    text:            "#f0e8d0",
+    muted:           "rgba(200,146,42,0.55)",
+    ctaText:         "#f0e8d0",
+    ctaMuted:        "rgba(240,232,208,0.7)",
+    accent:          "#c8922a",
+    accent2:         "#5fb380",
+    border:          "rgba(200,146,42,0.2)",
+    ctaBorder:       "#0a0a0a",
+    glow:            "rgba(200,146,42,0.32)",
+    jackpotGlow:     "rgba(200,146,42,0.55)",
+    jackpotHi:       "#d6a847",
+    jackpotLo:       "#8b5e1a",
+    jackpotRim:      "#3a2810",
+    btnBg:           "#c8922a",
+    btnText:         "#0d1a0e",
+    fontDisplay:     "'Cinzel', 'Trajan Pro', Georgia, serif",
+    fontLabel:       "'Cinzel', Georgia, serif",
+    nameTransform:   "uppercase",
+    nameSize:        "clamp(32px, 9vw, 50px)",
+    labelText:       "TONIGHT AT",
+    receiptTint:     "linear-gradient(180deg,rgba(200,146,42,0.08),rgba(26,77,46,0.04))",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #d6a847 0%, #8b5e1a 100%)",
+  },
+
+  /* ── Mediterranean — deep sea blue + sunset gold ── */
+  medit: {
+    bg:              "radial-gradient(140% 100% at 50% 0%, #0d1d2e 0%, #061222 60%, #030810 100%)",
+    cardBg:          "rgba(77,184,212,0.06)",
+    ctaCardBg:       "linear-gradient(135deg, #1a6b8a 0%, #e8c87a 100%)",
+    ctaCardBgIdle:   "rgba(77,184,212,0.05)",
+    navBg:           "rgba(3,8,16,0.95)",
+    text:            "#e8eff5",
+    muted:           "rgba(77,184,212,0.55)",
+    ctaText:         "#0d2b4a",
+    ctaMuted:        "rgba(13,43,74,0.7)",
+    accent:          "#4db8d4",
+    accent2:         "#e8c87a",
+    border:          "rgba(77,184,212,0.2)",
+    ctaBorder:       "#0d2b4a",
+    glow:            "rgba(77,184,212,0.32)",
+    jackpotGlow:     "rgba(232,200,122,0.5)",
+    jackpotHi:       "#e8c87a",
+    jackpotLo:       "#c85a2a",
+    jackpotRim:      "#0d2b4a",
+    btnBg:           "#4db8d4",
+    btnText:         "#0d2b4a",
+    fontDisplay:     "'Nunito', sans-serif",
+    fontLabel:       "'Nunito', sans-serif",
+    nameTransform:   "uppercase",
+    nameSize:        "clamp(32px, 9vw, 50px)",
+    labelText:       "KIYIDA",
+    receiptTint:     "linear-gradient(180deg,rgba(77,184,212,0.08),rgba(232,200,122,0.04))",
+    jackpotBg:       "radial-gradient(circle at 35% 30%, #e8c87a 0%, #c85a2a 100%)",
+  },
+};
+
 function getOrCreateGuestToken() {
   if (typeof window === "undefined") return "";
   let t = localStorage.getItem("rr_guest_token");
@@ -172,7 +271,12 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const playCopy = copyText.play;
   const router  = useRouter();
   const variant = (config.variant ?? "v1") as SlotVariantDB;
-  const theme   = THEMES[variant] ?? THEMES.v1;
+  const venueGameType   = ((venue as unknown as { game_type?: string }).game_type) ?? "slot";
+  const venueWheelVariant = ((venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant) ?? "boho";
+  // Customer-side theme follows the chosen game/wheel/slot design.
+  const theme   = venueGameType === "wheel"
+    ? (WHEEL_THEMES[venueWheelVariant] ?? WHEEL_THEMES.boho)
+    : (THEMES[variant] ?? THEMES.v1);
   const isPro   = (venue as unknown as { tier?: string }).tier === "pro";
 
   const [stage, setStage]               = useState<Stage>("home");
