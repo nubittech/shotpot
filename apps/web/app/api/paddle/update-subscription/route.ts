@@ -12,9 +12,9 @@ import {
  * POST /api/paddle/update-subscription
  *
  * For an already-paying venue, change the Paddle subscription's price to the
- * new plan/billing cycle (proration applied immediately). No new checkout —
- * the customer's existing payment method is used and the next invoice is
- * prorated by Paddle.
+ * new plan/billing cycle. No new checkout, no proration / mid-cycle diff:
+ * the plan switches immediately and the next regular billing cycle simply
+ * charges the new full amount.
  *
  * Body: { slug, plan, billingCycle }
  */
@@ -82,7 +82,9 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.PADDLE_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "PADDLE_API_KEY missing" }, { status: 500 });
 
-    // PATCH Paddle subscription — proration billed immediately
+    // PATCH Paddle subscription — switch plan only, no proration / mid-cycle bill.
+    // `do_not_bill` makes Paddle change the items without issuing any invoice
+    // now; the next regular billing cycle charges the new full amount.
     const r = await fetch(`${PADDLE_API_BASE}/subscriptions/${v.stripe_subscription_id}`, {
       method: "PATCH",
       headers: {
@@ -91,7 +93,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         items: [{ price_id: priceId, quantity: 1 }],
-        proration_billing_mode: "prorated_immediately",
+        proration_billing_mode: "do_not_bill",
       }),
     });
     const data: unknown = await r.json().catch(() => ({}));
