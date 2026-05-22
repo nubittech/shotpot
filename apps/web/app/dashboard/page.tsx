@@ -41,6 +41,11 @@ export default async function DashboardPage() {
 
   const venues = (venuesRaw ?? []) as Venue[];
   const initials = (user.email ?? "?").slice(0, 1).toUpperCase();
+  // Admin gate — only show the admin link if this user's email is allow-listed.
+  const { data: adminRow } = user.email
+    ? await svc.from("admins").select("email").eq("email", user.email.toLowerCase()).maybeSingle()
+    : { data: null };
+  const isAdmin = !!adminRow;
   const primaryVenue = venues[0];
   const primaryProVenue = venues.find((venue) => venue.tier === "pro");
   const analyticsHref = primaryProVenue ? `/dashboard/analytics/${primaryProVenue.slug}` : "/dashboard";
@@ -292,6 +297,13 @@ export default async function DashboardPage() {
                 <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             }/>
+            {isAdmin && (
+              <SideLink href="/admin" label="Admin Panel" icon={
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M9 2l6 3v4c0 4-3 7-6 8-3-1-6-4-6-8V5l6-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                </svg>
+              }/>
+            )}
             <div className="dashboard-mobile-menu-footer">
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 4px 10px" }}>
                 <div style={{
@@ -360,6 +372,13 @@ export default async function DashboardPage() {
             <path d="M9 6v3.5l2 1.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         }/>
+        {isAdmin && (
+          <SideLink href="/admin" label="Admin Panel" icon={
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 2l6 3v4c0 4-3 7-6 8-3-1-6-4-6-8V5l6-3z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            </svg>
+          }/>
+        )}
         </div>
 
         {/* Account footer */}
