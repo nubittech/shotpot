@@ -267,6 +267,8 @@ export const tr = {
       boho: { label: "Bohem", desc: "Açık krem zemin, el yazısı, doğal ahşap" },
       irish: { label: "Irish", desc: "Koyu orman yeşili, Kelt motifleri, viski amber" },
       medit: { label: "Sunset", desc: "Beyaz seramik, Yunan çini motifi, yaz enerjisi" },
+      paris: { label: "Café Lumière", desc: "Bordo & pirinç, klasik Paris bistrosu havası" },
+      chalk: { label: "Tatlı Atölye", desc: "Allık pembe & pastel, pastane vitrini havası" },
     },
     businessInfo: "İşletme Bilgileri",
     businessInfoHelp: "Bu bilgiler slot makinenizde ve müşteri arayüzünde görünür.",

@@ -46,9 +46,35 @@ export const MEDIT_SEGMENT_DEFS: WheelSegmentDef[] = [
   { id: 'jackpot',  label: 'Jackpot', labelEn: 'Jackpot',  color: '#0d2b4a', textColor: '#e8c87a', type: 'jackpot', defaultPrize: 'Sahil masası — bütün gece', defaultPrizeEn: 'Beachside table — all night', defaultCoupon: 'JACK', icon: '☀' },
 ];
 
-export function getWheelSegmentDefs(variant: 'boho' | 'irish' | 'medit'): WheelSegmentDef[] {
+export const PARIS_SEGMENT_DEFS: WheelSegmentDef[] = [
+  { id: 'espresso',  label: 'Espresso',  labelEn: 'Espresso',  color: '#7a1f2b', textColor: '#e4c172', type: 'prize',   defaultPrize: 'Espresso ikram',           defaultPrizeEn: 'Espresso on us',           defaultCoupon: 'EXPR',   icon: '☕' },
+  { id: 'lose1',     label: 'Dommage',   labelEn: 'No win',    color: '#fbf5e6', textColor: '#7a1f2b', type: 'lose',    defaultPrize: null,                        defaultPrizeEn: null,                        defaultCoupon: 'LOSE',   icon: '✕' },
+  { id: 'macaron',   label: 'Macaron',   labelEn: 'Macaron',   color: '#7a1f2b', textColor: '#e4c172', type: 'prize',   defaultPrize: 'İkili macaron',             defaultPrizeEn: 'Macaron duo',               defaultCoupon: 'MACR',   icon: '🍬' },
+  { id: 'tart',      label: 'Tarte',     labelEn: 'Tarte',     color: '#fbf5e6', textColor: '#7a1f2b', type: 'prize',   defaultPrize: 'Tarte au citron',           defaultPrizeEn: 'Lemon tart',                defaultCoupon: 'TART',   icon: '🍋' },
+  { id: 'croissant', label: 'Croissant', labelEn: 'Croissant', color: '#7a1f2b', textColor: '#e4c172', type: 'prize',   defaultPrize: 'Tereyağlı kruvasan',        defaultPrizeEn: 'Butter croissant',          defaultCoupon: 'CROI',   icon: '🥐' },
+  { id: 'lose2',     label: 'Dommage',   labelEn: 'No win',    color: '#fbf5e6', textColor: '#7a1f2b', type: 'lose',    defaultPrize: null,                        defaultPrizeEn: null,                        defaultCoupon: 'LOSE',   icon: '✕' },
+  { id: 'wine',      label: 'Vin',       labelEn: 'Wine',      color: '#7a1f2b', textColor: '#e4c172', type: 'prize',   defaultPrize: 'Kadeh kırmızı şarap',       defaultPrizeEn: 'Glass of red wine',         defaultCoupon: 'VIN',    icon: '🍷' },
+  { id: 'jackpot',   label: 'Grand Prix',labelEn: 'Grand Prix',color: '#2c1a14', textColor: '#e4c172', type: 'jackpot', defaultPrize: 'İki kişilik bistro menüsü', defaultPrizeEn: 'Bistro menu for two',       defaultCoupon: 'JACK',   icon: '👑' },
+];
+
+export const CHALK_SEGMENT_DEFS: WheelSegmentDef[] = [
+  { id: 'cake',     label: 'Pasta',     labelEn: 'Cake',      color: '#f4b9c5', textColor: '#5a3a2a', type: 'prize',   defaultPrize: 'Günün dilim pastası',      defaultPrizeEn: "Today's slice of cake",     defaultCoupon: 'CAKE',   icon: '🍰' },
+  { id: 'lose1',    label: 'Olmadı',    labelEn: 'No win',    color: '#fff7e9', textColor: '#b07b56', type: 'lose',    defaultPrize: null,                        defaultPrizeEn: null,                        defaultCoupon: 'LOSE',   icon: '✕' },
+  { id: 'macaron',  label: 'Macaron',   labelEn: 'Macaron',   color: '#c9e5d5', textColor: '#5a3a2a', type: 'prize',   defaultPrize: 'İkili macaron',             defaultPrizeEn: 'Macaron duo',               defaultCoupon: 'MACR',   icon: '🍬' },
+  { id: 'cookie',   label: 'Kurabiye',  labelEn: 'Cookie',    color: '#f7d68a', textColor: '#5a3a2a', type: 'prize',   defaultPrize: 'Tereyağlı kurabiye',        defaultPrizeEn: 'Butter cookie',             defaultCoupon: 'COOK',   icon: '🍪' },
+  { id: 'tart',     label: 'Tart',      labelEn: 'Tart',      color: '#f4b9c5', textColor: '#5a3a2a', type: 'prize',   defaultPrize: 'Meyveli tart',              defaultPrizeEn: 'Fruit tart',                defaultCoupon: 'TART',   icon: '🍓' },
+  { id: 'lose2',    label: 'Olmadı',    labelEn: 'No win',    color: '#fff7e9', textColor: '#b07b56', type: 'lose',    defaultPrize: null,                        defaultPrizeEn: null,                        defaultCoupon: 'LOSE',   icon: '✕' },
+  { id: 'choc',     label: 'Çikolata',  labelEn: 'Chocolate', color: '#b07b56', textColor: '#fff7e9', type: 'prize',   defaultPrize: 'El yapımı çikolata',        defaultPrizeEn: 'Handmade chocolate',        defaultCoupon: 'CHOC',   icon: '🍫' },
+  { id: 'jackpot',  label: 'Sürpriz',   labelEn: 'Surprise',  color: '#b03a5b', textColor: '#f0c878', type: 'jackpot', defaultPrize: 'Pastacının özel kutusu',    defaultPrizeEn: "Pastry chef's special box", defaultCoupon: 'JACK',   icon: '🎁' },
+];
+
+export type WheelVariantKey = 'boho' | 'irish' | 'medit' | 'paris' | 'chalk';
+
+export function getWheelSegmentDefs(variant: WheelVariantKey): WheelSegmentDef[] {
   if (variant === 'irish') return IRISH_SEGMENT_DEFS;
   if (variant === 'medit') return MEDIT_SEGMENT_DEFS;
+  if (variant === 'paris') return PARIS_SEGMENT_DEFS;
+  if (variant === 'chalk') return CHALK_SEGMENT_DEFS;
   return BOHO_SEGMENT_DEFS;
 }
 
@@ -63,7 +89,7 @@ export function segDefaultPrize(seg: WheelSegmentDef, locale: "tr" | "en"): stri
 }
 
 export function defaultWheelSegmentCfg(
-  variant: 'boho' | 'irish' | 'medit',
+  variant: WheelVariantKey,
   locale: "tr" | "en" = "tr",
 ): Record<string, { reward: string; coupon: string; share: number }> {
   const cfg: Record<string, { reward: string; coupon: string; share: number }> = {};

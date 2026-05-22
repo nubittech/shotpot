@@ -10,7 +10,7 @@ export type InterfaceLanguage = "tr" | "en";
 export type VenueTier = "standard" | "pro";
 export type LoyaltyTier = "bronze" | "silver" | "gold";
 export type GameType = "slot" | "wheel";
-export type WheelVariantDB = "boho" | "irish" | "medit";
+export type WheelVariantDB = "boho" | "irish" | "medit" | "paris" | "chalk";
 
 export interface Venue {
   id: string;

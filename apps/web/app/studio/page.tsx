@@ -77,7 +77,7 @@ const TIMEZONES: Array<{ tz: string; label: string }> = [
 ];
 
 type GameType = "slot" | "wheel";
-type WheelVariant = "boho" | "irish" | "medit";
+type WheelVariant = "boho" | "irish" | "medit" | "paris" | "chalk";
 
 type State = {
   step: number;
@@ -687,6 +687,18 @@ const WHEEL_VARIANTS: { id: WheelVariant; bg: string; accent: string; preview: s
     bg: "linear-gradient(135deg, #f0f4f8 0%, #dde6ea 100%)",
     accent: "#1a6b8a",
     preview: "☀",
+  },
+  {
+    id: "paris",
+    bg: "linear-gradient(135deg, #f5ebd6 0%, #ede0c4 100%)",
+    accent: "#7a1f2b",
+    preview: "🥐",
+  },
+  {
+    id: "chalk",
+    bg: "linear-gradient(135deg, #fbeef0 0%, #f4b9c5 100%)",
+    accent: "#b03a5b",
+    preview: "🍰",
   },
 ];
 

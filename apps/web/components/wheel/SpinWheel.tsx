@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 
-export type WheelVariant = 'boho' | 'irish' | 'medit';
+export type WheelVariant = 'boho' | 'irish' | 'medit' | 'paris' | 'chalk';
 
 export type WheelResult = {
   win: boolean;
@@ -33,6 +33,8 @@ export type SpinWheelProps = {
 const WheelBoho = dynamic(() => import('./WheelBoho'), { ssr: false });
 const WheelIrish = dynamic(() => import('./WheelIrish'), { ssr: false });
 const WheelMedit = dynamic(() => import('./WheelMedit'), { ssr: false });
+const WheelParis = dynamic(() => import('./WheelParis'), { ssr: false });
+const WheelChalk = dynamic(() => import('./WheelChalk'), { ssr: false });
 
 export default function SpinWheel({
   variant = 'boho',
@@ -66,5 +68,7 @@ export default function SpinWheel({
 
   if (variant === 'irish') return <WheelIrish {...sharedProps} />;
   if (variant === 'medit') return <WheelMedit {...sharedProps} />;
+  if (variant === 'paris') return <WheelParis {...sharedProps} />;
+  if (variant === 'chalk') return <WheelChalk {...sharedProps} />;
   return <WheelBoho {...sharedProps} />;
 }
