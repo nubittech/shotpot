@@ -92,8 +92,6 @@ export function AuthShell({
           linear-gradient(160deg, #1a0f08 0%, #08050a 100%)`,
         borderRight: `1px solid ${T.lineStrong}`,
         padding: "56px",
-        display: "flex", flexDirection: "column",
-        justifyContent: "space-between",
         position: "relative", overflow: "hidden",
       }}>
         {/* dot pattern overlay */}
@@ -108,25 +106,33 @@ export function AuthShell({
           opacity: 0.5,
         }} />
 
-        {/* Brand */}
-        <Link href="/" style={{ display: "flex", alignItems: "center", textDecoration: "none", position: "relative", zIndex: 2 }}>
+        {/* Brand — pinned top-left, independent of flex distribution */}
+        <Link href="/" style={{
+          display: "flex", alignItems: "center", textDecoration: "none",
+          position: "absolute", top: 40, left: 56, zIndex: 3,
+        }}>
           <SnapJackLogo size={34} withWordmark />
         </Link>
 
-        {/* Center content */}
-        <div className="auth-visual-center" style={{ position: "relative", zIndex: 2 }}>
-          {/* Mini slot machine */}
+        {/* Center content — actually vertically centered now */}
+        <div className="auth-visual-center" style={{
+          position: "relative", zIndex: 2,
+          minHeight: "100%",
+          display: "flex", flexDirection: "column", justifyContent: "center",
+          gap: 36,
+        }}>
+          {/* Slot machine — bigger and centered */}
           <div style={{
-            marginTop: 80, display: "flex", gap: 8,
+            display: "flex", gap: 12,
             background: "linear-gradient(180deg, #08050a, #1a0f06)",
-            padding: 14, borderRadius: 12, border: `1px solid ${T.lineStrong}`,
-            boxShadow: "inset 0 4px 16px rgba(0,0,0,0.6)",
+            padding: 20, borderRadius: 16, border: `1px solid ${T.lineStrong}`,
+            boxShadow: "inset 0 4px 16px rgba(0,0,0,0.6), 0 20px 50px -20px rgba(0,0,0,0.8)",
             width: "fit-content",
           }}>
             {[0, 1, 2].map((i) => (
               <div key={i} style={{
-                width: 56, height: 72, background: "linear-gradient(180deg, #1a0f06, #08050a)",
-                borderRadius: 6, overflow: "hidden", position: "relative",
+                width: 88, height: 112, background: "linear-gradient(180deg, #1a0f06, #08050a)",
+                borderRadius: 8, overflow: "hidden", position: "relative",
                 boxShadow: "inset 0 2px 6px rgba(0,0,0,0.5)",
               }}>
                 <div style={{
@@ -135,18 +141,18 @@ export function AuthShell({
                 }}>
                   {["7", "♥", "BAR", "★", "7", "♥", "BAR", "★"].map((sym, j) => (
                     <div key={j} style={{
-                      height: 72, display: "flex", alignItems: "center", justifyContent: "center",
+                      height: 112, display: "flex", alignItems: "center", justifyContent: "center",
                       fontFamily: "'Playfair Display', serif", fontWeight: 900,
-                      fontSize: sym === "BAR" ? 14 : 32,
+                      fontSize: sym === "BAR" ? 22 : 52,
                       color: sym === "7" ? T.brass300 : sym === "♥" ? "#e8533a" : sym === "★" ? "#f7d83a" : T.ink300,
                     }}>{sym}</div>
                   ))}
                 </div>
                 <div style={{
                   position: "absolute", left: 0, right: 0, top: "50%",
-                  height: 28, transform: "translateY(-50%)",
-                  borderTop: `1px solid rgba(232,200,118,0.2)`,
-                  borderBottom: `1px solid rgba(232,200,118,0.2)`,
+                  height: 40, transform: "translateY(-50%)",
+                  borderTop: `1px solid rgba(232,200,118,0.25)`,
+                  borderBottom: `1px solid rgba(232,200,118,0.25)`,
                   pointerEvents: "none",
                 }} />
               </div>
@@ -154,8 +160,8 @@ export function AuthShell({
           </div>
 
           <p style={{
-            marginTop: 40, fontFamily: "'Playfair Display', serif",
-            fontWeight: 700, fontSize: "clamp(22px, 2.8vw, 36px)",
+            margin: 0, fontFamily: "'Playfair Display', serif",
+            fontWeight: 700, fontSize: "clamp(24px, 2.8vw, 38px)",
             lineHeight: 1.15, color: T.ink100, letterSpacing: "-0.01em",
             maxWidth: 480,
           }}>
@@ -163,7 +169,6 @@ export function AuthShell({
             <span style={{ color: T.brass300, fontStyle: "italic" }}>{copy.auth.visual.quoteLine2}</span><br/>
             {copy.auth.visual.quoteLine3}
           </p>
-
         </div>
 
         <style>{`
