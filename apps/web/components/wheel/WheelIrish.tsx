@@ -11,14 +11,14 @@ import {
 } from './wheel-core';
 
 export const IRISH_SEGMENTS: WheelSegment[] = [
-  { id: 'beer1',   label: 'BİRA',    icon: 'beer',    color: '#1a4d2e', type: 'prize',   prize: 'Bedava pint' },
-  { id: 'lose1',   label: 'OLMADI',  icon: 'x',       color: '#2d1a0a', type: 'lose',    prize: null },
-  { id: 'whiskey', label: 'VİSKİ',   icon: 'whiskey', color: '#8b5e1a', type: 'prize',   prize: '15 yıl single malt' },
-  { id: 'music',   label: 'MÜZİK',   icon: 'note',    color: '#0d1a3d', type: 'prize',   prize: 'Canlı seans bileti' },
-  { id: 'luck',    label: 'ŞANS',    icon: 'clover',  color: '#6b1414', type: 'prize',   prize: '%30 indirim' },
-  { id: 'lose2',   label: 'OLMADI',  icon: 'x',       color: '#2d1a0a', type: 'lose',    prize: null },
-  { id: 'beer2',   label: 'BİRA',    icon: 'beer',    color: '#1a4d2e', type: 'prize',   prize: 'Bedava pint' },
-  { id: 'jackpot', label: 'JACKPOT', icon: 'shamrock', color: '#c8922a', type: 'jackpot', prize: 'Açık masa — bütün gece' },
+  { id: 'beer1',   label: 'BİRA',    labelEn: 'BEER',    icon: 'beer',    color: '#1a4d2e', type: 'prize',   prize: 'Bedava pint' },
+  { id: 'lose1',   label: 'OLMADI',  labelEn: 'NO LUCK', icon: 'x',       color: '#2d1a0a', type: 'lose',    prize: null },
+  { id: 'whiskey', label: 'VİSKİ',   labelEn: 'WHISKEY', icon: 'whiskey', color: '#8b5e1a', type: 'prize',   prize: '15 yıl single malt' },
+  { id: 'music',   label: 'MÜZİK',   labelEn: 'MUSIC',   icon: 'note',    color: '#0d1a3d', type: 'prize',   prize: 'Canlı seans bileti' },
+  { id: 'luck',    label: 'ŞANS',    labelEn: 'LUCK',    icon: 'clover',  color: '#6b1414', type: 'prize',   prize: '%30 indirim' },
+  { id: 'lose2',   label: 'OLMADI',  labelEn: 'NO LUCK', icon: 'x',       color: '#2d1a0a', type: 'lose',    prize: null },
+  { id: 'beer2',   label: 'BİRA',    labelEn: 'BEER',    icon: 'beer',    color: '#1a4d2e', type: 'prize',   prize: 'Bedava pint' },
+  { id: 'jackpot', label: 'JACKPOT', labelEn: 'JACKPOT', icon: 'shamrock', color: '#c8922a', type: 'jackpot', prize: 'Açık masa — bütün gece' },
 ];
 
 // Tiny SVG glyphs sized to fit ~28×28 inside a segment.
@@ -122,10 +122,12 @@ function IrishWheel({
   rotation,
   winnerIdx,
   phase,
+  locale = 'tr',
 }: {
   rotation: number;
   winnerIdx: number | null;
   phase: string;
+  locale?: 'tr' | 'en';
 }) {
   const R = 138, PAD = 16;
   const cx = R + PAD, cy = R + PAD;
@@ -244,7 +246,7 @@ function IrishWheel({
                 fontWeight={seg.type === 'jackpot' ? 900 : 700}
                 letterSpacing="0.12em"
                 style={{ pointerEvents: 'none' }}>
-                {seg.label}
+                {locale === 'en' ? (seg.labelEn ?? seg.label) : seg.label}
               </text>
             </g>
           </g>
@@ -287,12 +289,30 @@ function IrishDrawer({
   result,
   onReset,
   onShowCoupon,
+  locale = 'tr',
 }: {
   seg: WheelSegment;
   result?: WheelPlayProps['result'];
   onReset: () => void;
   onShowCoupon?: () => void;
+  locale?: 'tr' | 'en';
 }) {
+  const isEn = locale === 'en';
+  const t = isEn ? {
+    saved: 'Added to wallet · Show your server',
+    open: 'OPEN COUPON',
+    close: 'Close',
+    headline: 'Sláinte! Next round.',
+    sub: 'Each receipt is a spin · try again tomorrow',
+    back: 'BACK TO MENU',
+  } : {
+    saved: 'Kupon cüzdanına eklendi · Garsona göster',
+    open: 'KUPONU AÇ',
+    close: 'Kapat',
+    headline: 'Sláinte! Sonraki turda.',
+    sub: 'Her fiş bir spin · yarın akşam tekrar',
+    back: 'MENÜYE DÖN',
+  };
   const isWin = seg.type !== 'lose';
   const isJackpot = seg.type === 'jackpot';
   const displayPrize = result?.rewardLabel ?? seg.prize ?? '';
@@ -324,7 +344,7 @@ function IrishDrawer({
             textShadow: '0 2px 4px rgba(0,0,0,0.6)',
           }}>{displayPrize}</div>
           <div style={{ fontSize: 12, color: 'rgba(240,232,208,0.7)', fontWeight: 500 }}>
-            Kupon cüzdanına eklendi · Garsona göster
+            {t.saved}
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             <button onClick={onShowCoupon} style={{
@@ -332,13 +352,13 @@ function IrishDrawer({
               background: '#c8922a', color: '#0d1a0e',
               border: 'none', fontFamily: "'Cinzel', serif", fontWeight: 700,
               fontSize: 13, letterSpacing: '0.18em', cursor: 'pointer',
-            }}>KUPONU AÇ</button>
+            }}>{t.open}</button>
             <button onClick={onReset} style={{
               padding: '12px 18px', borderRadius: 4,
               border: '2px solid #c8922a', background: 'transparent',
               color: '#c8922a', fontFamily: "'Cinzel', serif",
               fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            }}>Kapat</button>
+            }}>{t.close}</button>
           </div>
         </div>
       ) : (
@@ -353,16 +373,16 @@ function IrishDrawer({
           <div style={{
             fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 700,
             margin: '8px 0 4px', color: '#f0e8d0',
-          }}>Sláinte! Sonraki turda.</div>
+          }}>{t.headline}</div>
           <div style={{ fontSize: 12, color: 'rgba(240,232,208,0.65)', lineHeight: 1.55 }}>
-            Her fiş bir spin · yarın akşam tekrar
+            {t.sub}
           </div>
           <button onClick={onReset} style={{
             marginTop: 16, width: '100%', padding: '12px 0', borderRadius: 4,
             border: '2px solid #c8922a', background: 'transparent',
             color: '#c8922a', fontFamily: "'Cinzel', serif", fontSize: 13,
             fontWeight: 700, letterSpacing: '0.18em', cursor: 'pointer',
-          }}>MENÜYE DÖN</button>
+          }}>{t.back}</button>
         </div>
       )}
     </div>
@@ -474,7 +494,7 @@ export default function WheelIrish({
             </div>
           ))}
           <IrishPointer spinning={spinningInternal}/>
-          <IrishWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase}/>
+          <IrishWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase} locale={locale}/>
         </div>
       </div>
 
@@ -572,6 +592,7 @@ export default function WheelIrish({
           result={result}
           onReset={handleReset}
           onShowCoupon={onShowCoupon}
+          locale={locale}
         />
       )}
     </div>

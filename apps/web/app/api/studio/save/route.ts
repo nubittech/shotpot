@@ -30,11 +30,16 @@ type SavePayload = {
 
 function slugify(s: string) {
   return s.toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .normalize("NFD").replace(/\p{M}/gu, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
     .slice(0, 48);
 }
+
+// Symbol ids come from a known catalog (see components/wheel/segments.ts +
+// slot symbols). We restrict to a conservative charset to keep them safe to
+// interpolate into PostgREST filters and to fail-fast on tampered payloads.
+const SAFE_SYMBOL_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
 export async function POST(req: NextRequest) {
   try {
@@ -71,26 +76,51 @@ export async function POST(req: NextRequest) {
     const prevPlan = existingRow?.plan ?? null;
     const prevBillingCycle = existingRow?.billing_cycle ?? null;
 
-    // 1) Upsert venue (by slug) with current user as owner
-    const { data: venueRow, error: venueErr } = await sb
-      .from("venues")
-      .upsert({
-        slug,
-        name: body.name,
-        plan: body.plan ?? "kampanya",
-        billing_cycle: body.billingCycle ?? "monthly",
-        currency: body.currency ?? "TRY",
-        receipt_mode: body.receiptMode ?? "ocr",
-        interface_language: body.interfaceLanguage ?? "tr",
-        timezone: body.timezone ?? "Europe/Istanbul",
-        token_threshold: body.tokenThreshold,
-        game_type: body.gameType ?? "slot",
-        wheel_variant: body.wheelVariant ?? "boho",
-        owner_user_id: user.id,
-        active: existingRow?.active ?? false,
-      }, { onConflict: "slug" })
-      .select("id")
-      .single();
+    // 1) Insert (new) or update (own) — NEVER blind upsert by slug, because a
+    // concurrent owner-less row could be hijacked between the existence check
+    // and the upsert. Update is constrained to `owner_user_id = user.id` so a
+    // racing request from another user can't pass the gate.
+    const venuePayload = {
+      slug,
+      name: body.name,
+      plan: body.plan ?? "kampanya",
+      billing_cycle: body.billingCycle ?? "monthly",
+      currency: body.currency ?? "TRY",
+      receipt_mode: body.receiptMode ?? "ocr",
+      interface_language: body.interfaceLanguage ?? "tr",
+      timezone: body.timezone ?? "Europe/Istanbul",
+      token_threshold: body.tokenThreshold,
+      game_type: body.gameType ?? "slot",
+      wheel_variant: body.wheelVariant ?? "boho",
+    };
+
+    let venueRow: { id: string } | null = null;
+    let venueErr: { message: string } | null = null;
+    if (existingRow) {
+      // Owned by this user (or unowned legacy row claimed below). Update with
+      // ownership guard so concurrent requests from another user can't slip in.
+      const updatePayload: Record<string, unknown> = { ...venuePayload };
+      // Claim ownership only if currently null (legacy data).
+      if (existingRow.owner_user_id === null) updatePayload.owner_user_id = user.id;
+      const q = sb
+        .from("venues")
+        .update(updatePayload)
+        .eq("id", existingRow.id);
+      // Guard: only allow when the row is still owned by this user OR unowned.
+      const { data, error } = existingRow.owner_user_id === null
+        ? await q.is("owner_user_id", null).select("id").single()
+        : await q.eq("owner_user_id", user.id).select("id").single();
+      venueRow = data as { id: string } | null;
+      venueErr = error;
+    } else {
+      const { data, error } = await sb
+        .from("venues")
+        .insert({ ...venuePayload, owner_user_id: user.id, active: false })
+        .select("id")
+        .single();
+      venueRow = data as { id: string } | null;
+      venueErr = error;
+    }
 
     if (venueErr || !venueRow) {
       return NextResponse.json({ error: venueErr?.message ?? "venue upsert failed" }, { status: 500 });
@@ -117,6 +147,13 @@ export async function POST(req: NextRequest) {
     //    spins/coupons keep their attribution (critical for analytics).
     //    Symbols no longer selected are soft-deactivated (active = false).
     if (body.campaigns?.length) {
+      // Validate symbol ids before they ever reach a SQL filter. Anything
+      // outside the allow-listed charset is a tampered payload — reject.
+      for (const c of body.campaigns) {
+        if (!SAFE_SYMBOL_ID.test(c.symbolId)) {
+          return NextResponse.json({ error: "invalid symbol id" }, { status: 400 });
+        }
+      }
       const rows = body.campaigns.map((c) => ({
         venue_id: venueId,
         symbol_id: c.symbolId,
@@ -130,17 +167,33 @@ export async function POST(req: NextRequest) {
         .upsert(rows, { onConflict: "venue_id,symbol_id" });
       if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 });
 
-      // Deactivate campaigns whose symbol is no longer in the selection
-      const keep = rows.map((r) => `"${r.symbol_id}"`).join(",");
-      const { error: deErr } = await sb
+      // Deactivate campaigns whose symbol is no longer in the selection.
+      // Two-step (select active ids → update by id list) avoids interpolating
+      // user-controlled strings into the PostgREST `in` filter syntax.
+      const { data: stale, error: selErr } = await sb
         .from("campaigns")
-        .update({ active: false })
+        .select("id, symbol_id")
         .eq("venue_id", venueId)
-        .not("symbol_id", "in", `(${keep})`);
-      if (deErr) return NextResponse.json({ error: deErr.message }, { status: 500 });
+        .eq("active", true);
+      if (selErr) return NextResponse.json({ error: selErr.message }, { status: 500 });
+      const keepSet = new Set(rows.map((r) => r.symbol_id));
+      const staleIds = (stale ?? [])
+        .filter((r: { symbol_id: string }) => !keepSet.has(r.symbol_id))
+        .map((r: { id: string }) => r.id);
+      if (staleIds.length) {
+        const { error: deErr } = await sb
+          .from("campaigns")
+          .update({ active: false })
+          .in("id", staleIds);
+        if (deErr) return NextResponse.json({ error: deErr.message }, { status: 500 });
+      }
     } else {
       // No campaigns selected → deactivate all for this venue
-      await sb.from("campaigns").update({ active: false }).eq("venue_id", venueId);
+      const { error: deAllErr } = await sb
+        .from("campaigns")
+        .update({ active: false })
+        .eq("venue_id", venueId);
+      if (deAllErr) return NextResponse.json({ error: deAllErr.message }, { status: 500 });
     }
 
     return NextResponse.json({

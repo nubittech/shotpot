@@ -11,14 +11,14 @@ import {
 } from './wheel-core';
 
 export const BOHO_SEGMENTS: WheelSegment[] = [
-  { id: 'coffee',    label: 'Kahve',    icon: 'coffee',    color: '#c17f5a', text: '#3a2410', type: 'prize',   prize: 'İkram filtre kahve' },
-  { id: 'lose1',     label: 'olmadı',   icon: 'x',         color: '#d4b896', text: '#6b4423', type: 'lose',    prize: null },
-  { id: 'tea',       label: 'Çay',      icon: 'leaf',      color: '#7a9e7e', text: '#3a2410', type: 'prize',   prize: 'Demli ev çayı' },
-  { id: 'pastry',    label: 'Kruvasan', icon: 'croissant', color: '#d4a0a0', text: '#3a2410', type: 'prize',   prize: 'Taze kruvasan' },
-  { id: 'cake',      label: 'Pasta',    icon: 'cake',      color: '#a0704a', text: '#f5efe0', type: 'prize',   prize: 'Günün pastası' },
-  { id: 'lose2',     label: 'olmadı',   icon: 'x',         color: '#d4b896', text: '#6b4423', type: 'lose',    prize: null },
-  { id: 'breakfast', label: 'Kahvaltı', icon: 'plate',     color: '#8a9a5b', text: '#3a2410', type: 'prize',   prize: 'İkram kahvaltı tabağı' },
-  { id: 'jackpot',   label: 'Sürprìz', icon: 'star',      color: '#c17f5a', text: '#f5efe0', type: 'jackpot', prize: 'Şefin sürpriz menüsü' },
+  { id: 'coffee',    label: 'Kahve',    labelEn: 'Coffee',    icon: 'coffee',    color: '#c17f5a', text: '#3a2410', type: 'prize',   prize: 'İkram filtre kahve' },
+  { id: 'lose1',     label: 'olmadı',   labelEn: 'no luck',   icon: 'x',         color: '#d4b896', text: '#6b4423', type: 'lose',    prize: null },
+  { id: 'tea',       label: 'Çay',      labelEn: 'Tea',       icon: 'leaf',      color: '#7a9e7e', text: '#3a2410', type: 'prize',   prize: 'Demli ev çayı' },
+  { id: 'pastry',    label: 'Kruvasan', labelEn: 'Croissant', icon: 'croissant', color: '#d4a0a0', text: '#3a2410', type: 'prize',   prize: 'Taze kruvasan' },
+  { id: 'cake',      label: 'Pasta',    labelEn: 'Cake',      icon: 'cake',      color: '#a0704a', text: '#f5efe0', type: 'prize',   prize: 'Günün pastası' },
+  { id: 'lose2',     label: 'olmadı',   labelEn: 'no luck',   icon: 'x',         color: '#d4b896', text: '#6b4423', type: 'lose',    prize: null },
+  { id: 'breakfast', label: 'Kahvaltı', labelEn: 'Breakfast', icon: 'plate',     color: '#8a9a5b', text: '#3a2410', type: 'prize',   prize: 'İkram kahvaltı tabağı' },
+  { id: 'jackpot',   label: 'Sürprìz',  labelEn: 'Surprise',  icon: 'star',      color: '#c17f5a', text: '#f5efe0', type: 'jackpot', prize: 'Şefin sürpriz menüsü' },
 ];
 
 // Line-art SVG icons (no fills mostly — drawn like sketches)
@@ -149,10 +149,12 @@ function BohoWheel({
   rotation,
   winnerIdx,
   phase,
+  locale = 'tr',
 }: {
   rotation: number;
   winnerIdx: number | null;
   phase: string;
+  locale?: 'tr' | 'en';
 }) {
   const R = 136, PAD = 18;
   const cx = R + PAD, cy = R + PAD;
@@ -250,7 +252,7 @@ function BohoWheel({
                 fontSize={seg.type === 'jackpot' ? 19 : 18}
                 fontWeight="700"
                 style={{ pointerEvents: 'none' }}>
-                {seg.label}
+                {locale === 'en' ? (seg.labelEn ?? seg.label) : seg.label}
               </text>
             </g>
           </g>
@@ -466,7 +468,7 @@ export default function WheelBoho({
       }}>
         <div style={{ position: 'relative', width: 308, height: 308 }}>
           <TwinePointer spinning={spinningInternal}/>
-          <BohoWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase}/>
+          <BohoWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase} locale={locale}/>
 
           {/* Petal burst on win */}
           {won && (

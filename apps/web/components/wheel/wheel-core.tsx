@@ -8,6 +8,7 @@ export type SegmentType = 'prize' | 'lose' | 'jackpot';
 export interface WheelSegment {
   id: string;
   label: string;
+  labelEn?: string;
   color: string;
   type: SegmentType;
   prize: string | null;

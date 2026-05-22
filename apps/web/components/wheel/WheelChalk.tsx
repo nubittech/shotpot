@@ -25,14 +25,14 @@ const PAS = {
 };
 
 export const CHALK_SEGMENTS: WheelSegment[] = [
-  { id: 'cake',     label: 'Pasta',     icon: 'cake',     color: PAS.pink,      text: PAS.cocoaDk, type: 'prize',   prize: 'Günün dilim pastası' },
-  { id: 'lose1',    label: 'olmadı',    icon: 'sprinkle', color: PAS.cream,     text: PAS.cocoa,   type: 'lose',    prize: null },
-  { id: 'macaron',  label: 'Macaron',   icon: 'macaron',  color: PAS.mint,      text: PAS.cocoaDk, type: 'prize',   prize: 'İkili macaron' },
-  { id: 'cookie',   label: 'Kurabiye',  icon: 'cookie',   color: PAS.butter,    text: PAS.cocoaDk, type: 'prize',   prize: 'Tereyağlı kurabiye' },
-  { id: 'tart',     label: 'Tart',      icon: 'tart',     color: PAS.pink,      text: PAS.cocoaDk, type: 'prize',   prize: 'Meyveli tart' },
-  { id: 'lose2',    label: 'olmadı',    icon: 'sprinkle', color: PAS.cream,     text: PAS.cocoa,   type: 'lose',    prize: null },
-  { id: 'choc',     label: 'Çikolata',  icon: 'choc',     color: PAS.cocoa,     text: PAS.cream,   type: 'prize',   prize: 'El yapımı çikolata' },
-  { id: 'jackpot',  label: 'Sürpriz',   icon: 'whisk',    color: PAS.raspberry, text: PAS.goldLt,  type: 'jackpot', prize: 'Pastacının özel kutusu' },
+  { id: 'cake',     label: 'Pasta',     labelEn: 'Cake',      icon: 'cake',     color: PAS.pink,      text: PAS.cocoaDk, type: 'prize',   prize: 'Günün dilim pastası' },
+  { id: 'lose1',    label: 'olmadı',    labelEn: 'no luck',   icon: 'sprinkle', color: PAS.cream,     text: PAS.cocoa,   type: 'lose',    prize: null },
+  { id: 'macaron',  label: 'Macaron',   labelEn: 'Macaron',   icon: 'macaron',  color: PAS.mint,      text: PAS.cocoaDk, type: 'prize',   prize: 'İkili macaron' },
+  { id: 'cookie',   label: 'Kurabiye',  labelEn: 'Cookie',    icon: 'cookie',   color: PAS.butter,    text: PAS.cocoaDk, type: 'prize',   prize: 'Tereyağlı kurabiye' },
+  { id: 'tart',     label: 'Tart',      labelEn: 'Tart',      icon: 'tart',     color: PAS.pink,      text: PAS.cocoaDk, type: 'prize',   prize: 'Meyveli tart' },
+  { id: 'lose2',    label: 'olmadı',    labelEn: 'no luck',   icon: 'sprinkle', color: PAS.cream,     text: PAS.cocoa,   type: 'lose',    prize: null },
+  { id: 'choc',     label: 'Çikolata',  labelEn: 'Chocolate', icon: 'choc',     color: PAS.cocoa,     text: PAS.cream,   type: 'prize',   prize: 'El yapımı çikolata' },
+  { id: 'jackpot',  label: 'Sürpriz',   labelEn: 'Surprise',  icon: 'whisk',    color: PAS.raspberry, text: PAS.goldLt,  type: 'jackpot', prize: 'Pastacının özel kutusu' },
 ];
 
 function PasIcon({ name, color }: { name: string; color: string }) {
@@ -176,10 +176,12 @@ function PasWheel({
   rotation,
   winnerIdx,
   phase,
+  locale = 'tr',
 }: {
   rotation: number;
   winnerIdx: number | null;
   phase: string;
+  locale?: 'tr' | 'en';
 }) {
   const R = 136, PAD = 22;
   const cx = R + PAD, cy = R + PAD;
@@ -291,7 +293,7 @@ function PasWheel({
                 fontWeight="800"
                 letterSpacing="0.3"
                 style={{ pointerEvents: 'none' }}>
-                {seg.label}
+                {locale === 'en' ? (seg.labelEn ?? seg.label) : seg.label}
               </text>
             </g>
           </g>
@@ -553,7 +555,7 @@ export default function WheelChalk({
       }}>
         <div style={{ position: 'relative', width: 316, height: 316 }}>
           <PipingPointer spinning={spinningInternal}/>
-          <PasWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase}/>
+          <PasWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase} locale={locale}/>
 
           {won && (
             <div style={{

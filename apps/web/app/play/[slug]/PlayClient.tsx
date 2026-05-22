@@ -328,18 +328,20 @@ function getOrCreateGuestToken() {
 
 export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const { venue, config } = bundle;
-  const interfaceLanguage = ((venue as unknown as { interface_language?: string }).interface_language === "en" ? "en" : "tr") as Locale;
+  const interfaceLanguage: Locale = venue.interface_language === "en" ? "en" : "tr";
   const copyText = getCopy(interfaceLanguage);
   const playCopy = copyText.play;
   const router  = useRouter();
   const variant = (config.variant ?? "v1") as SlotVariantDB;
-  const venueGameType   = ((venue as unknown as { game_type?: string }).game_type) ?? "slot";
-  const venueWheelVariant = ((venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant) ?? "boho";
+  const venueGameType   = venue.game_type ?? "slot";
+  const venueWheelVariant: WheelVariantDB = venue.wheel_variant ?? "boho";
   // Customer-side theme follows the chosen game/wheel/slot design.
   const theme   = venueGameType === "wheel"
     ? (WHEEL_THEMES[venueWheelVariant] ?? WHEEL_THEMES.boho)
     : (THEMES[variant] ?? THEMES.v1);
-  const isPro   = (venue as unknown as { tier?: string }).tier === "pro";
+  const isPro   = venue.tier === "pro";
+  // Localized "you won" fallback when the server omits a rewardLabel.
+  const wonFallback = interfaceLanguage === "en" ? "You won!" : "Kazandın!";
 
   const [stage, setStage]               = useState<Stage>("home");
   const [tokens, setTokens]             = useState(0);
@@ -445,7 +447,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   // Gift wheel — always a wheel, regardless of the venue game type
   if (stage === "gift") {
-    const giftVariant = (venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant ?? "boho";
+    const giftVariant: WheelVariantDB = venue.wheel_variant ?? "boho";
     return (
       <div style={{ position: "fixed", inset: 0, background: "#000" }}>
         <SpinWheel
@@ -458,7 +460,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
           result={result ? {
             win: result.win,
             isJackpot: result.isJackpot,
-            rewardLabel: result.coupon?.rewardLabel ?? (result.win ? "Kazandın!" : ""),
+            rewardLabel: result.coupon?.rewardLabel ?? (result.win ? wonFallback : ""),
             couponCode: result.coupon?.code ?? "",
           } : null}
           onSpin={spinGift}
@@ -471,8 +473,8 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   }
 
   if (stage === "play") {
-    const gameType = (venue as unknown as { game_type?: string }).game_type ?? "slot";
-    const wheelVariant = (venue as unknown as { wheel_variant?: WheelVariantDB }).wheel_variant ?? "boho";
+    const gameType = venue.game_type ?? "slot";
+    const wheelVariant: WheelVariantDB = venue.wheel_variant ?? "boho";
     return (
       <div style={{ position: "fixed", inset: 0, background: "#000" }}>
         {gameType === "wheel" ? (
@@ -486,7 +488,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
             result={result ? {
               win: result.win,
               isJackpot: result.isJackpot,
-              rewardLabel: result.coupon?.rewardLabel ?? (result.win ? "Kazandın!" : ""),
+              rewardLabel: result.coupon?.rewardLabel ?? (result.win ? wonFallback : ""),
               couponCode: result.coupon?.code ?? "",
             } : null}
             onSpin={pullLever}

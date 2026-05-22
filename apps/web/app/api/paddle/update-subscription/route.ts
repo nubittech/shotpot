@@ -70,6 +70,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, code: "no_subscription" }, { status: 409 });
     }
 
+    // No-op: nothing to do if the plan & cycle didn't actually change. Saves
+    // a Paddle API call and avoids accidentally re-billing on a refresh.
+    if (v.plan === body.plan && v.billing_cycle === body.billingCycle) {
+      return NextResponse.json({ ok: true, scheduled: false, unchanged: true });
+    }
+
     // Map studio plan → Paddle price id
     const planKey: "kampanya" | "pro" = body.plan === "isletme" ? "pro" : "kampanya";
     const priceId =
@@ -87,11 +93,17 @@ export async function POST(req: NextRequest) {
     // period. `full_next_billing_period` tells Paddle to keep the current
     // plan running until the next renewal, then switch items AND charge the
     // new plan's full amount as that period's invoice.
+    // Idempotency: a double-click or retry must not schedule the plan change
+    // twice. Key is deterministic on (subscription, target price) — if Paddle
+    // sees the same key inside its retention window, it returns the original
+    // result instead of applying a second PATCH.
+    const idemKey = `sub-update:${v.stripe_subscription_id}:${priceId}`;
     const r = await fetch(`${PADDLE_API_BASE}/subscriptions/${v.stripe_subscription_id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "Paddle-Idempotency-Key": idemKey,
       },
       body: JSON.stringify({
         items: [{ price_id: priceId, quantity: 1 }],

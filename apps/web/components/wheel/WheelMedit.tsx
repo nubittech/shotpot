@@ -10,14 +10,14 @@ import {
 } from './wheel-core';
 
 export const MEDIT_SEGMENTS: WheelSegment[] = [
-  { id: 'wine',     label: 'ŞARAP',   motif: 'wave', color: '#1a6b8a', text: '#ffffff', type: 'prize',   prize: 'Kadeh ev şarabı' },
-  { id: 'lose1',    label: 'OLMADI',  motif: 'tile', color: '#ffffff', text: '#0d2b4a', type: 'lose',    prize: null,    isWhite: true },
-  { id: 'spritz',   label: 'SPRITZ',  motif: 'sun',  color: '#e8c87a', text: '#0d2b4a', type: 'prize',   prize: 'Aperol Spritz' },
-  { id: 'meze',     label: 'MEZE',    motif: 'star', color: '#c85a2a', text: '#ffffff', type: 'prize',   prize: 'İkram meze tabağı' },
-  { id: 'olive',    label: 'ZEYTİN',  motif: 'leaf', color: '#7ac8b4', text: '#0d2b4a', type: 'prize',   prize: 'Marine zeytin' },
-  { id: 'lose2',    label: 'OLMADI',  motif: 'tile', color: '#ffffff', text: '#0d2b4a', type: 'lose',    prize: null,    isWhite: true },
-  { id: 'cocktail', label: 'KOKTEYL', motif: 'wave', color: '#4db8d4', text: '#ffffff', type: 'prize',   prize: 'Ev kokteyli' },
-  { id: 'jackpot',  label: 'JACKPOT', motif: 'sun',  color: '#0d2b4a', text: '#e8c87a', type: 'jackpot', prize: 'Sahil masası — bütün gece' },
+  { id: 'wine',     label: 'ŞARAP',   labelEn: 'WINE',     motif: 'wave', color: '#1a6b8a', text: '#ffffff', type: 'prize',   prize: 'Kadeh ev şarabı' },
+  { id: 'lose1',    label: 'OLMADI',  labelEn: 'NO LUCK',  motif: 'tile', color: '#ffffff', text: '#0d2b4a', type: 'lose',    prize: null,    isWhite: true },
+  { id: 'spritz',   label: 'SPRITZ',  labelEn: 'SPRITZ',   motif: 'sun',  color: '#e8c87a', text: '#0d2b4a', type: 'prize',   prize: 'Aperol Spritz' },
+  { id: 'meze',     label: 'MEZE',    labelEn: 'MEZZE',    motif: 'star', color: '#c85a2a', text: '#ffffff', type: 'prize',   prize: 'İkram meze tabağı' },
+  { id: 'olive',    label: 'ZEYTİN',  labelEn: 'OLIVES',   motif: 'leaf', color: '#7ac8b4', text: '#0d2b4a', type: 'prize',   prize: 'Marine zeytin' },
+  { id: 'lose2',    label: 'OLMADI',  labelEn: 'NO LUCK',  motif: 'tile', color: '#ffffff', text: '#0d2b4a', type: 'lose',    prize: null,    isWhite: true },
+  { id: 'cocktail', label: 'KOKTEYL', labelEn: 'COCKTAIL', motif: 'wave', color: '#4db8d4', text: '#ffffff', type: 'prize',   prize: 'Ev kokteyli' },
+  { id: 'jackpot',  label: 'JACKPOT', labelEn: 'JACKPOT',  motif: 'sun',  color: '#0d2b4a', text: '#e8c87a', type: 'jackpot', prize: 'Sahil masası — bütün gece' },
 ];
 
 // Tile motifs — geometric ceramic-style SVGs, no emoji.
@@ -128,10 +128,12 @@ function MeditWheel({
   rotation,
   winnerIdx,
   phase,
+  locale = 'tr',
 }: {
   rotation: number;
   winnerIdx: number | null;
   phase: string;
+  locale?: 'tr' | 'en';
 }) {
   const R = 138, PAD = 18;
   const cx = R + PAD, cy = R + PAD;
@@ -231,7 +233,7 @@ function MeditWheel({
                 fontWeight="800"
                 letterSpacing="0.08em"
                 style={{ pointerEvents: 'none' }}>
-                {seg.label}
+                {locale === 'en' ? (seg.labelEn ?? seg.label) : seg.label}
               </text>
             </g>
           </g>
@@ -282,12 +284,36 @@ function MeditDrawer({
   result,
   onReset,
   onShowCoupon,
+  locale = 'tr',
 }: {
   seg: WheelSegment;
   result?: WheelPlayProps['result'];
   onReset: () => void;
   onShowCoupon?: () => void;
+  locale?: 'tr' | 'en';
 }) {
+  const isEn = locale === 'en';
+  const tr = {
+    win: 'KAZANDIN!',
+    saved: 'Kupon cüzdanına eklendi · Yazlık masa',
+    open: 'Kuponu aç',
+    close: 'Kapat',
+    notNow: 'BU SEFER DEĞİL',
+    headline: 'Yaz daha bitmedi.',
+    sub: 'Her fiş bir spin · yarın akşam tekrar',
+    back: 'Menüye dön',
+  };
+  const en = {
+    win: 'YOU WON!',
+    saved: 'Added to coupon wallet · Summer table',
+    open: 'Open coupon',
+    close: 'Close',
+    notNow: 'NOT THIS TIME',
+    headline: 'Summer is not over yet.',
+    sub: 'Each receipt is a spin · try again tomorrow',
+    back: 'Back to menu',
+  };
+  const t = isEn ? en : tr;
   const isWin = seg.type !== 'lose';
   const isJackpot = seg.type === 'jackpot';
   const displayPrize = result?.rewardLabel ?? seg.prize ?? '';
@@ -310,7 +336,7 @@ function MeditDrawer({
         }}>
           <div style={{ fontFamily: "'Nunito', sans-serif", fontSize: 11, fontWeight: 900,
                         letterSpacing: '0.22em', color: isJackpot ? '#e8c87a' : '#1a6b8a' }}>
-            {isJackpot ? '☀ JACKPOT ☀' : 'KAZANDIN!'}
+            {isJackpot ? '☀ JACKPOT ☀' : t.win}
           </div>
           <div style={{
             fontFamily: "'Nunito', sans-serif", fontSize: 24, fontWeight: 900,
@@ -320,7 +346,7 @@ function MeditDrawer({
             fontSize: 12, fontWeight: 600,
             color: isJackpot ? 'rgba(232,200,122,0.75)' : '#1a6b8a',
           }}>
-            Kupon cüzdanına eklendi · Yazlık masa
+            {t.saved}
           </div>
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             <button onClick={onShowCoupon} style={{
@@ -329,7 +355,7 @@ function MeditDrawer({
               color: isJackpot ? '#0d2b4a' : '#ffffff',
               border: 'none', fontFamily: "'Nunito', sans-serif", fontWeight: 800,
               fontSize: 13, cursor: 'pointer',
-            }}>Kuponu aç</button>
+            }}>{t.open}</button>
             <button onClick={onReset} style={{
               padding: '12px 18px', borderRadius: 999,
               border: `2px solid ${isJackpot ? '#e8c87a' : '#1a6b8a'}`,
@@ -337,7 +363,7 @@ function MeditDrawer({
               color: isJackpot ? '#e8c87a' : '#1a6b8a',
               fontFamily: "'Nunito', sans-serif", fontSize: 13, fontWeight: 800,
               cursor: 'pointer',
-            }}>Kapat</button>
+            }}>{t.close}</button>
           </div>
         </div>
       ) : (
@@ -348,21 +374,21 @@ function MeditDrawer({
           color: '#0d2b4a', textAlign: 'center',
         }}>
           <div style={{ fontSize: 11, fontWeight: 900, letterSpacing: '0.22em', color: '#c85a2a' }}>
-            BU SEFER DEĞİL
+            {t.notNow}
           </div>
           <div style={{
             fontFamily: "'Nunito', sans-serif", fontSize: 22, fontWeight: 800,
             margin: '8px 0 4px',
-          }}>Yaz daha bitmedi.</div>
+          }}>{t.headline}</div>
           <div style={{ fontSize: 12, color: '#1a6b8a', fontWeight: 600 }}>
-            Her fiş bir spin · yarın akşam tekrar
+            {t.sub}
           </div>
           <button onClick={onReset} style={{
             marginTop: 16, width: '100%', padding: '12px 0', borderRadius: 999,
             border: '2px solid #1a6b8a', background: 'transparent',
             color: '#1a6b8a', fontFamily: "'Nunito', sans-serif",
             fontSize: 13, fontWeight: 800, cursor: 'pointer',
-          }}>Menüye dön</button>
+          }}>{t.back}</button>
         </div>
       )}
     </div>
@@ -470,7 +496,7 @@ export default function WheelMedit({
             <Bougainvillea size={54} hue="magenta"/>
           </div>
           <MeditPointer spinning={spinningInternal}/>
-          <MeditWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase}/>
+          <MeditWheel rotation={rotation} winnerIdx={winnerIdx} phase={phase} locale={locale}/>
         </div>
       </div>
 
@@ -543,6 +569,7 @@ export default function WheelMedit({
           result={result}
           onReset={handleReset}
           onShowCoupon={onShowCoupon}
+          locale={locale}
         />
       )}
     </div>
