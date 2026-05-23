@@ -21,9 +21,13 @@ export async function GET(req: NextRequest) {
   const safe = q.replace(/[%,]/g, " ").slice(0, 60);
   const svc = getServiceClient();
 
+  // Join the venue so the UI can show *which* venue this customer belongs to.
+  // The customers table is venue-scoped (UNIQUE per venue_id) — the same
+  // email may legitimately appear in multiple rows, one per venue. Without
+  // the venue column the admin UI looks like a shared pool, which it isn't.
   const { data, error } = await svc
     .from("customers")
-    .select("id, venue_id, full_name, phone, email, loyalty_tier, total_visits, total_spend, last_visit_at, created_at")
+    .select("id, venue_id, full_name, phone, email, loyalty_tier, total_visits, total_spend, last_visit_at, created_at, venue:venues(slug, name)")
     .is("deleted_at", null)
     .or(`full_name.ilike.%${safe}%,phone.ilike.%${safe}%,email.ilike.%${safe}%`)
     .order("last_visit_at", { ascending: false, nullsFirst: false })

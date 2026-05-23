@@ -7,6 +7,8 @@ type Cust = {
   full_name: string | null; phone: string | null; email: string | null;
   loyalty_tier: string; total_visits: number; total_spend: number;
   last_visit_at: string | null; created_at: string;
+  // Joined venue info so the admin can see scope at a glance.
+  venue: { slug: string; name: string } | null;
 };
 
 export default function CustomerSearchPage() {
@@ -29,7 +31,10 @@ export default function CustomerSearchPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>Müşteri Arama</h1>
+      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Müşteri Arama</h1>
+      <p style={{ color: "#888", fontSize: 12, marginBottom: 14 }}>
+        Müşteriler venue başına ayrı tutulur — aynı email birden fazla işletmede ayrı satır olarak görünür.
+      </p>
       <form onSubmit={search} style={{ display: "flex", gap: 8, marginBottom: 18 }}>
         <input value={q} onChange={(e) => setQ(e.target.value)}
           placeholder="ad, telefon veya email"
@@ -52,6 +57,7 @@ export default function CustomerSearchPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead style={{ background: "#141414", color: "#888", textAlign: "left" }}>
               <tr>
+                <Th>İşletme</Th>
                 <Th>Ad</Th><Th>Telefon</Th><Th>Email</Th><Th>Tier</Th>
                 <Th>Ziyaret</Th><Th>Harcama</Th><Th>Son ziyaret</Th>
               </tr>
@@ -59,6 +65,14 @@ export default function CustomerSearchPage() {
             <tbody>
               {results.map((c) => (
                 <tr key={c.id} style={{ borderTop: "1px solid #1a1a1a" }}>
+                  <Td>
+                    {c.venue ? (
+                      <a href={`/admin/venues/${c.venue.slug}`} style={{ color: "#7bb3ff", textDecoration: "none" }}>
+                        <div style={{ fontWeight: 600, color: "#fff" }}>{c.venue.name}</div>
+                        <div style={{ fontSize: 11, color: "#7bb3ff" }}>{c.venue.slug}</div>
+                      </a>
+                    ) : <span style={{ color: "#666" }}>—</span>}
+                  </Td>
                   <Td>{c.full_name ?? "—"}</Td>
                   <Td>{c.phone ?? "—"}</Td>
                   <Td>{c.email ?? "—"}</Td>
