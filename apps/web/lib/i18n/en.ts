@@ -270,7 +270,7 @@ export const en: Translation = {
       irish: { label: "Irish", desc: "Dark forest green, Celtic motifs, whiskey amber" },
       medit: { label: "Sunset", desc: "White ceramic, Greek tile motifs, summer energy" },
       paris: { label: "Café Lumière", desc: "Bordeaux & brass — classic Parisian bistro vibe" },
-      chalk: { label: "Tatlı Atölye", desc: "Blush pink & pastels — pastry shop window vibe" },
+      chalk: { label: "Sweet Workshop", desc: "Blush pink & pastels — pastry shop window vibe" },
     },
     businessInfo: "Business Info",
     businessInfoHelp: "These details appear in your slot machine and customer interface.",
