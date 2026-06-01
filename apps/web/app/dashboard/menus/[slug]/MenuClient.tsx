@@ -34,6 +34,27 @@ function blankMenu(): MenuView {
   };
 }
 
+/**
+ * Real visibility status — NOT just the `active` flag. A menu can be active
+ * but invisible to customers because its date window is in the past/future.
+ * The customer API (/api/play/menus) filters on exactly these dates, so the
+ * dashboard must reflect the same truth or owners think a menu is live when
+ * it isn't.
+ */
+type MenuStatus = { label: string; color: string };
+function menuStatus(m: MenuView): MenuStatus {
+  if (!m.active) return { label: "○ Taslak", color: "rgba(244,239,230,0.4)" };
+  const today = new Date().toISOString().slice(0, 10);
+  if (m.validTo && m.validTo < today) {
+    return { label: "⛔ Süresi doldu", color: "#ff7e5a" };
+  }
+  if (m.validFrom && m.validFrom > today) {
+    const d = new Date(m.validFrom).toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+    return { label: `🕓 ${d}'de başlar`, color: "#ffd84e" };
+  }
+  return { label: "● Yayında", color: "#8ef2a1" };
+}
+
 export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus: MenuView[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<MenuView | null>(null);
@@ -158,6 +179,11 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
             <div>
               <Label>Bitiş (ops.)</Label>
               <input type="date" value={editing.validTo} onChange={(e) => patch({ validTo: e.target.value })} style={input} />
+              {editing.active && editing.validTo && editing.validTo < new Date().toISOString().slice(0, 10) && (
+                <div style={{ fontSize: 11, color: "#ff7e5a", marginTop: 6, lineHeight: 1.4 }}>
+                  ⚠ Bu tarih geçmişte — kaydedersen menü müşterilere görünmez. Boş bırak = süresiz.
+                </div>
+              )}
             </div>
           </div>
 
@@ -204,19 +230,28 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
               Henüz menü yok. İlk özel menünü oluştur.
             </div>
           ) : (
-            initialMenus.map((m) => (
+            initialMenus.map((m) => {
+              const status = menuStatus(m);
+              const expired = m.active && !!m.validTo && m.validTo < new Date().toISOString().slice(0, 10);
+              return (
               <div key={m.id} style={cardBox}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
                   <div>
                     <div style={{ fontSize: 15, fontWeight: 800 }}>
                       {m.title}{" "}
-                      <span style={{ fontSize: 11, fontWeight: 600, color: m.active ? "#8ef2a1" : "rgba(244,239,230,0.4)" }}>
-                        {m.active ? "● Yayında" : "○ Taslak"}
+                      <span style={{ fontSize: 11, fontWeight: 600, color: status.color }}>
+                        {status.label}
                       </span>
                     </div>
                     <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 3 }}>
                       {AUDIENCE_LABELS[m.audience]} · {m.items.length} ürün
+                      {m.validTo && <> · bitiş {new Date(m.validTo).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}</>}
                     </div>
+                    {expired && (
+                      <div style={{ fontSize: 11, color: "#ff7e5a", marginTop: 6, lineHeight: 1.4 }}>
+                        Bu menü müşterilere görünmüyor — bitiş tarihi geçti. Düzenleyip tarihi uzat.
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                     <button onClick={() => { setEditing(m); setMsg(null); }} style={ghostBtn}>Düzenle</button>
@@ -224,7 +259,8 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
                   </div>
                 </div>
               </div>
-            ))
+              );
+            })
           )}
         </>
       )}
