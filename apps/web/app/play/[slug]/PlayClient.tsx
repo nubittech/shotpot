@@ -707,6 +707,35 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
           </div>
         </button>
 
+        {/* ── How it works — first-timer / empty-state explainer ── */}
+        {tokens === 0 && !hasEarned && giftPending === 0 && recentCoupons.length === 0 && (
+          <div style={{
+            marginBottom: 26, padding: "18px 20px", borderRadius: 18,
+            background: theme.cardBg, border: `1px solid ${theme.border}`,
+          }}>
+            <div style={{
+              fontSize: 10, fontWeight: 800, letterSpacing: "0.2em",
+              color: theme.muted, textTransform: "uppercase", fontFamily: theme.fontLabel, marginBottom: 14,
+            }}>{copy.howItWorksTitle}</div>
+            {[
+              { n: "1", icon: "🧾", text: copy.howStep1 },
+              { n: "2", icon: "🎰", text: copy.howStep2 },
+              { n: "3", icon: "🎁", text: copy.howStep3 },
+            ].map((s, i) => (
+              <div key={s.n} style={{ display: "flex", alignItems: "center", gap: 12, marginTop: i === 0 ? 0 : 12 }}>
+                <div style={{
+                  width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
+                  background: `${theme.accent}22`, border: `1px solid ${theme.accent}55`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 800, color: theme.accent,
+                }}>{s.n}</div>
+                <div style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }}>{s.icon}</div>
+                <div style={{ flex: 1, fontSize: 13.5, color: theme.text, lineHeight: 1.4 }}>{s.text}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Featured campaign — hero card showing the actual deal ── */}
         {featuredMenu && (
           <button onClick={onMenu} style={{
