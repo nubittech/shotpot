@@ -387,6 +387,8 @@ export const en: Translation = {
     menuTitle: "Campaign Menu",
     menuHint: "{count} special menu(s) waiting for you.",
     menuScreenHelp: "Special campaign menus prepared just for you. Take a look before you visit.",
+    joinToPlayTitle: "Sign up, spin, win",
+    joinToPlayHint: "Join free — scan your receipt, spin the wheel, win rewards.",
     menuValidTo: "Valid until {date}",
     pullLever: "Pull the lever.",
     scanReceipt: "Scan Receipt →",

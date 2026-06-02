@@ -380,6 +380,15 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     } catch { /* silent */ }
   }
 
+  // Anonymous-safe: fetch PUBLIC campaign menus on mount for Pro venues even
+  // when not logged in, so the home screen shows "today's deal" as a signup
+  // hook. After login the auth effect refetches and gets segmented menus.
+  useEffect(() => {
+    if (!isPro) return;
+    refreshMenus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, venue.slug]);
+
   useEffect(() => {
     if (!isPro) return;
     createClient().auth.getUser().then(async ({ data: { user } }) => {
@@ -517,7 +526,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
     );
   }
 
-  if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} />;
+  if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} isAnonymous={isPro && !customerId} onJoin={() => setStage("auth")} />;
 
   return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menuCount={menus.length} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
 }
@@ -1091,9 +1100,10 @@ function CustomerAuthScreen({ venue, theme, copy, onBack, onSuccess }: {
 /* ═══════════════════════════════════════════════
    PERSONALIZED MENU SCREEN
 ═══════════════════════════════════════════════ */
-function MenuScreen({ theme, copy, menus, currency, onBack }: {
+function MenuScreen({ theme, copy, menus, currency, onBack, isAnonymous, onJoin }: {
   theme: Theme; copy: ReturnType<typeof getCopy>["play"];
   menus: PlayMenu[]; currency: string; onBack: () => void;
+  isAnonymous: boolean; onJoin: () => void;
 }) {
   const sym = currency === "USD" ? "$" : currency === "EUR" ? "€" : "₺";
   const fmt = (n: number | null) => (n == null ? "" : `${sym}${Number(n).toFixed(0)}`);
@@ -1110,6 +1120,23 @@ function MenuScreen({ theme, copy, menus, currency, onBack }: {
         <div style={{ fontSize: 13, color: theme.muted, marginBottom: 18, lineHeight: 1.5 }}>
           {copy.menuScreenHelp}
         </div>
+
+        {/* Anonymous conversion hook — see the deal, sign up to play & win. */}
+        {isAnonymous && (
+          <button onClick={onJoin} style={{
+            width: "100%", textAlign: "left", cursor: "pointer",
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 18,
+            padding: "16px 18px", borderRadius: 16,
+            background: theme.ctaCardBgIdle, border: `1.5px solid ${theme.accent}55`,
+          }}>
+            <div style={{ fontSize: 26, lineHeight: 1, flexShrink: 0 }}>🎰</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: theme.text }}>{copy.joinToPlayTitle}</div>
+              <div style={{ fontSize: 12, color: theme.muted, marginTop: 2, lineHeight: 1.4 }}>{copy.joinToPlayHint}</div>
+            </div>
+            <div style={{ fontSize: 18, color: theme.accent, flexShrink: 0 }}>→</div>
+          </button>
+        )}
 
         {menus.map((m) => (
           <div key={m.id} style={{

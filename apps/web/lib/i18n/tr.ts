@@ -385,6 +385,8 @@ export const tr = {
     menuTitle: "Kampanyalı Menü",
     menuHint: "{count} özel menü seni bekliyor.",
     menuScreenHelp: "İşletmenin sana özel hazırladığı kampanyalı menüler. Gelmeden önce göz at.",
+    joinToPlayTitle: "Üye ol, çevir, kazan",
+    joinToPlayHint: "Ücretsiz üye ol; fişini okut, çarkı çevir, ödül kazan.",
     menuValidTo: "{date} tarihine kadar geçerli",
     pullLever: "Pull the lever.",
     scanReceipt: "Fiş Tara →",
