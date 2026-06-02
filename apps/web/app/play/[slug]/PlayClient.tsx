@@ -17,7 +17,7 @@ type SpinResponse = {
   animationHint: "standard" | "win" | "jackpot";
 };
 type Stage = "home" | "auth" | "scan" | "play" | "coupon" | "gift" | "menu";
-type RecentCoupon = { id: string; rewardLabel: string; code: string };
+type RecentCoupon = { id: string; rewardLabel: string; code: string; expiresAt: string | null };
 type ScannedInfo  = { amount: number; currency: string; time: string } | null;
 type PlayMenuItem = { id: string; name: string; description: string | null; oldPrice: number | null; newPrice: number | null };
 type PlayMenu     = { id: string; title: string; description: string | null; validTo: string | null; items: PlayMenuItem[] };
@@ -355,6 +355,8 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [giftPending, setGiftPending]   = useState(0);
   const [couponBack, setCouponBack]     = useState<Stage>("play");
   const [menus, setMenus]               = useState<PlayMenu[]>([]);
+  // A coupon opened from the wallet (home screen), distinct from a just-won spin result.
+  const [viewCoupon, setViewCoupon]     = useState<{ id: string; code: string; rewardLabel: string } | null>(null);
 
   useEffect(() => { setGuestToken(getOrCreateGuestToken()); }, []);
 
@@ -388,8 +390,16 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       setCustomerId(customer.id);
       const r2 = await fetch(`/api/profile/coupons?customerId=${customer.id}`);
       if (r2.ok) {
-        const d2 = await r2.json() as { coupons: Array<{ id: string; reward_label: string; code: string }> };
-        setRecentCoupons((d2.coupons ?? []).slice(0, 3).map((c) => ({ id: c.id, rewardLabel: c.reward_label, code: c.code })));
+        const d2 = await r2.json() as { coupons: Array<{ id: string; reward_label: string; code: string; redeemed_at: string | null; expires_at: string | null }> };
+        // Only ACTIVE coupons belong on the home screen — usable, not yet
+        // redeemed, not expired. These are what the customer shows to staff.
+        const now = Date.now();
+        const active = (d2.coupons ?? []).filter((c) =>
+          !c.redeemed_at && (!c.expires_at || new Date(c.expires_at).getTime() > now)
+        );
+        setRecentCoupons(active.slice(0, 4).map((c) => ({
+          id: c.id, rewardLabel: c.reward_label, code: c.code, expiresAt: c.expires_at,
+        })));
       }
       await refreshGiftStatus();
       await refreshMenus();
@@ -443,7 +453,11 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   if (stage === "auth") return <CustomerAuthScreen venue={venue} theme={theme} copy={playCopy} onBack={() => setStage("home")} onSuccess={(cid) => { setCustomerId(cid); setStage("scan"); }} />;
   if (stage === "scan") return <ScanScreen venue={venue} theme={theme} copy={playCopy} locale={copyText.meta.locale} guestToken={guestToken} customerId={customerId} onComplete={handleScanComplete} onBack={() => setStage("home")} />;
-  if (stage === "coupon" && result?.coupon) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={result.coupon} onBack={() => { setResult(null); setStage(couponBack); }} onDone={() => { setResult(null); setStage("home"); }} />;
+  if (stage === "coupon") {
+    // Show either a freshly-won coupon (spin result) or one tapped from the wallet.
+    const shown = result?.coupon ?? viewCoupon;
+    if (shown) return <CouponScreen venue={venue} theme={theme} copy={playCopy} coupon={shown} onBack={() => { setResult(null); setViewCoupon(null); setStage(couponBack); }} onDone={() => { setResult(null); setViewCoupon(null); setStage("home"); }} />;
+  }
 
   // Gift wheel — always a wheel, regardless of the venue game type
   if (stage === "gift") {
@@ -505,16 +519,27 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} />;
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menuCount={menus.length} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menuCount={menus.length} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
 }
 
 /* ═══════════════════════════════════════════════
    HOME SCREEN
 ═══════════════════════════════════════════════ */
-function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menuCount, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile }: {
+/** Friendly "expires in N days / today / on <date>" label, or "" if no expiry. */
+function couponExpiryLabel(expiresAt: string | null, copy: ReturnType<typeof getCopy>["play"]): string {
+  if (!expiresAt) return "";
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (ms <= 0) return "";
+  const days = Math.ceil(ms / 86400_000);
+  if (days <= 1) return copy.expiresToday;
+  if (days <= 7) return copy.expiresInDays.replace("{n}", String(days));
+  return copy.expiresOn.replace("{date}", new Date(expiresAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }));
+}
+
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menuCount, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile, onViewCoupon }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
   tokens: number; giftPending: number; menuCount: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
-  onJackpot: () => void; onGift: () => void; onMenu: () => void; onProfile: () => void;
+  onJackpot: () => void; onGift: () => void; onMenu: () => void; onProfile: () => void; onViewCoupon: (c: RecentCoupon) => void;
 }) {
   const hasEarned = scannedInfo !== null;
   const currSym   = scannedInfo?.currency === "USD" ? "$" : scannedInfo?.currency === "EUR" ? "€" : "₺";
@@ -661,18 +686,35 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
           </button>
         )}
 
-        {/* ── Last week ── */}
+        {/* ── Your active coupons — tappable, show to staff to redeem ── */}
         {recentCoupons.length > 0 && (
           <div>
             <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.22em", color: theme.muted, textTransform: "uppercase", marginBottom: 12, fontFamily: theme.fontLabel }}>
-              {copy.lastWeek}
+              {copy.yourCoupons}
             </div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              {recentCoupons.map((c) => (
-                <div key={c.id} style={{ padding: "8px 16px", borderRadius: 999, background: theme.cardBg, border: `1px solid ${theme.border}`, fontSize: 13, fontWeight: 700, color: theme.text, letterSpacing: "0.02em" }}>
-                  {c.rewardLabel}
-                </div>
-              ))}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {recentCoupons.map((c) => {
+                const exp = couponExpiryLabel(c.expiresAt, copy);
+                return (
+                  <button key={c.id} onClick={() => onViewCoupon(c)} style={{
+                    width: "100%", textAlign: "left", cursor: "pointer",
+                    display: "flex", alignItems: "center", gap: 12,
+                    padding: "14px 16px", borderRadius: 14,
+                    background: theme.cardBg, border: `1px solid ${theme.border}`,
+                  }}>
+                    <div style={{ fontSize: 22, lineHeight: 1, flexShrink: 0 }}>🎟️</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: theme.text, letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {c.rewardLabel}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: theme.muted, marginTop: 2 }}>
+                        {copy.tapToShowStaff}{exp ? ` · ${exp}` : ""}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 18, color: theme.accent, flexShrink: 0 }}>→</div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
