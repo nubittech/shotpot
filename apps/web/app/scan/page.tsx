@@ -30,14 +30,18 @@ function ScanInner() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const venueQS = venueSlug ? `?venue=${encodeURIComponent(venueSlug)}` : "";
+
   async function lookup() {
     if (!code.trim()) return;
     setBusy(true); setErr(null); setInfo(null);
     try {
-      const res = await fetch(`/api/coupons/${encodeURIComponent(code.trim())}/redeem`);
+      const res = await fetch(`/api/coupons/${encodeURIComponent(code.trim())}/redeem${venueQS}`);
       const data = await res.json();
       if (!res.ok) {
-        setErr(data?.reason === "not_found" ? scanCopy.notFound : (data?.error ?? scanCopy.error));
+        setErr(data?.reason === "not_found" ? scanCopy.notFound
+          : data?.reason === "wrong_venue" ? scanCopy.notFound
+          : (data?.error ?? scanCopy.error));
         return;
       }
       setInfo(data);
@@ -50,11 +54,15 @@ function ScanInner() {
     if (!code.trim()) return;
     setBusy(true); setErr(null);
     try {
-      const res = await fetch(`/api/coupons/${encodeURIComponent(code.trim())}/redeem`, { method: "POST" });
+      const res = await fetch(`/api/coupons/${encodeURIComponent(code.trim())}/redeem`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venue: venueSlug ?? undefined }),
+      });
       const data = await res.json();
       if (!res.ok) {
         if (data?.reason === "already_redeemed") setErr(scanCopy.alreadyRedeemed);
-        else if (data?.reason === "not_found") setErr(scanCopy.notFound);
+        else if (data?.reason === "not_found" || data?.reason === "wrong_venue") setErr(scanCopy.notFound);
         else setErr(data?.error ?? scanCopy.error);
         return;
       }

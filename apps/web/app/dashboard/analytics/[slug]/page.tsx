@@ -76,23 +76,29 @@ export default async function AnalyticsPage({ params }: Params) {
 
   const currSymbol = v.currency === "USD" ? "$" : v.currency === "EUR" ? "€" : "₺";
 
-  /* ── Per-reward (campaign) performance ── */
+  /* ── Per-reward (campaign) performance ──
+   * IMPORTANT: fetch ALL campaigns, not just active ones. Campaigns are
+   * soft-deactivated (active=false) when removed from the studio selection,
+   * specifically so historical spins/coupons keep their attribution. If we
+   * filtered to active=true here, every win tied to a now-deactivated reward
+   * would fall into no bucket and the whole section would render empty —
+   * which is exactly the "winning spins > 0 but no rewards won" bug. */
   const [
     { data: campaignRows },
     { data: spinRows },
     { data: couponRows },
   ] = await Promise.all([
-    svc.from("campaigns").select("id, reward_label").eq("venue_id", v.id).eq("active", true),
+    svc.from("campaigns").select("id, reward_label, active").eq("venue_id", v.id),
     svc.from("spins").select("id, campaign_id, is_jackpot").eq("venue_id", v.id),
     svc.from("coupons").select("spin_id, created_at, redeemed_at").eq("venue_id", v.id),
   ]);
 
   type RewardStat = {
-    id: string; label: string;
+    id: string; label: string; archived: boolean;
     won: number; issued: number; redeemed: number;
     instant: number; sameDay: number; later: number; unused: number;
   };
-  const camps = (campaignRows ?? []) as { id: string; reward_label: string }[];
+  const camps = (campaignRows ?? []) as { id: string; reward_label: string; active: boolean }[];
   const spinsAll = (spinRows ?? []) as { id: string; campaign_id: string | null; is_jackpot: boolean }[];
   const couponsAll = (couponRows ?? []) as { spin_id: string | null; created_at: string; redeemed_at: string | null }[];
 
@@ -103,11 +109,15 @@ export default async function AnalyticsPage({ params }: Params) {
     if (s.is_jackpot) jackpotSpinIds.add(s.id);
   }
 
-  const blankStat = (id: string, label: string): RewardStat =>
-    ({ id, label, won: 0, issued: 0, redeemed: 0, instant: 0, sameDay: 0, later: 0, unused: 0 });
+  const blankStat = (id: string, label: string, archived = false): RewardStat =>
+    ({ id, label, archived, won: 0, issued: 0, redeemed: 0, instant: 0, sameDay: 0, later: 0, unused: 0 });
   const rewardStats: Record<string, RewardStat> = {};
-  for (const c of camps) rewardStats[c.id] = blankStat(c.id, c.reward_label);
+  for (const c of camps) rewardStats[c.id] = blankStat(c.id, c.reward_label, !c.active);
   rewardStats.__jackpot = blankStat("__jackpot", "Jackpot");
+  // Gift-wheel coupons are written with spin_id = null (see gift-spin route),
+  // so they have no spin to attribute to. Bucket them separately so the 8
+  // headline coupons fully reconcile with this section.
+  rewardStats.__gift = blankStat("__gift", "🎁 Hediye Çark");
 
   for (const s of spinsAll) {
     if (s.is_jackpot) rewardStats.__jackpot.won++;
@@ -120,6 +130,9 @@ export default async function AnalyticsPage({ params }: Params) {
     else if (cp.spin_id) {
       const camp = spinCampaign.get(cp.spin_id);
       if (camp && rewardStats[camp]) key = camp;
+    } else {
+      // No spin_id → gift-wheel coupon.
+      key = "__gift";
     }
     if (!key) continue;
     const st = rewardStats[key];
@@ -135,6 +148,10 @@ export default async function AnalyticsPage({ params }: Params) {
       st.unused++;
     }
   }
+
+  // Gift coupons are always a win, but gift spins don't live in the `spins`
+  // table, so `won` never incremented for them — mirror issued.
+  rewardStats.__gift.won = rewardStats.__gift.issued;
 
   const rewardList = Object.values(rewardStats)
     .filter((r) => r.won > 0 || r.issued > 0)
@@ -229,6 +246,11 @@ export default async function AnalyticsPage({ params }: Params) {
                   <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
                     <div style={{ fontSize: 14, fontWeight: 800, color: "#f4efe6" }}>
                       {r.id === "__jackpot" ? "🎰 " : ""}{r.label || "—"}
+                      {r.archived && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(244,239,230,0.4)", marginLeft: 8, padding: "2px 7px", borderRadius: 6, background: "rgba(255,255,255,0.06)" }}>
+                          arşiv
+                        </span>
+                      )}
                     </div>
                     <div style={{ fontSize: 18, fontWeight: 900, color: rate >= 60 ? "#4ade80" : rate >= 30 ? "#fbbf24" : "#f87171" }}>
                       %{rate} <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(244,239,230,0.4)" }}>{analytics.rewardPerf.rate}</span>
