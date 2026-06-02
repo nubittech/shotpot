@@ -8,6 +8,7 @@ import { getCopy, type Locale } from "../../../lib/i18n";
 import { createClient } from "../../../lib/supabase/browser";
 import type { PlayBundle } from "../../../lib/play";
 import type { SlotVariantDB, WheelVariantDB } from "../../../lib/supabase/types";
+import { tierThresholdsFromVenue } from "../../../lib/loyalty";
 
 const SpinWheel = dynamic(() => import("../../../components/wheel/SpinWheel"), { ssr: false });
 
@@ -357,6 +358,8 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [menus, setMenus]               = useState<PlayMenu[]>([]);
   // A coupon opened from the wallet (home screen), distinct from a just-won spin result.
   const [viewCoupon, setViewCoupon]     = useState<{ id: string; code: string; rewardLabel: string } | null>(null);
+  // Logged-in member's loyalty stats — powers the "progress to next tier" hook.
+  const [memberStats, setMemberStats]   = useState<{ tier: string; visits: number; spend: number } | null>(null);
 
   useEffect(() => { setGuestToken(getOrCreateGuestToken()); }, []);
 
@@ -395,8 +398,13 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       if (!user) return;
       const res = await fetch("/api/play/customer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ slug: venue.slug }) });
       if (!res.ok) return;
-      const { customer } = await res.json() as { customer: { id: string } };
+      const { customer } = await res.json() as { customer: { id: string; loyalty_tier?: string; total_visits?: number; total_spend?: number } };
       setCustomerId(customer.id);
+      setMemberStats({
+        tier: customer.loyalty_tier ?? "bronze",
+        visits: customer.total_visits ?? 0,
+        spend: Number(customer.total_spend ?? 0),
+      });
       const r2 = await fetch(`/api/profile/coupons?customerId=${customer.id}`);
       if (r2.ok) {
         const d2 = await r2.json() as { coupons: Array<{ id: string; reward_label: string; code: string; redeemed_at: string | null; expires_at: string | null }> };
@@ -528,7 +536,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} isAnonymous={isPro && !customerId} onJoin={() => setStage("auth")} />;
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menus={menus} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menus={menus} scannedInfo={scannedInfo} recentCoupons={recentCoupons} memberStats={memberStats} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
 }
 
 /* ═══════════════════════════════════════════════
@@ -545,9 +553,10 @@ function couponExpiryLabel(expiresAt: string | null, copy: ReturnType<typeof get
   return copy.expiresOn.replace("{date}", new Date(expiresAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }));
 }
 
-function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menus, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile, onViewCoupon }: {
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menus, scannedInfo, recentCoupons, memberStats, onJackpot, onGift, onMenu, onProfile, onViewCoupon }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
   tokens: number; giftPending: number; menus: PlayMenu[]; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
+  memberStats: { tier: string; visits: number; spend: number } | null;
   onJackpot: () => void; onGift: () => void; onMenu: () => void; onProfile: () => void; onViewCoupon: (c: RecentCoupon) => void;
 }) {
   const hasEarned = scannedInfo !== null;
@@ -558,6 +567,30 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
   const teaserItem = featuredMenu
     ? (featuredMenu.items.find((it) => it.oldPrice != null && it.newPrice != null) ?? featuredMenu.items[0] ?? null)
     : null;
+
+  // Loyalty progress — "N more visits to <next tier>" return hook.
+  const loyalty = (() => {
+    if (!memberStats) return null;
+    const t = tierThresholdsFromVenue(venue);
+    const tierEmoji: Record<string, string> = { bronze: "🥉", silver: "🥈", gold: "🥇" };
+    if (memberStats.tier === "gold") {
+      return { emoji: "🥇", atTop: true, label: copy.tierGoldReached, pct: 100, remainText: "" };
+    }
+    const next = memberStats.tier === "silver"
+      ? { name: copy.tierGold, visits: t.goldVisits, spend: t.goldSpend }
+      : { name: copy.tierSilver, visits: t.silverVisits, spend: t.silverSpend };
+    const visitsLeft = Math.max(0, next.visits - memberStats.visits);
+    const spendLeft = Math.max(0, next.spend - memberStats.spend);
+    // Progress by whichever path the customer is closest on.
+    const visitPct = next.visits > 0 ? memberStats.visits / next.visits : 0;
+    const spendPct = next.spend > 0 ? memberStats.spend / next.spend : 0;
+    const pct = Math.min(100, Math.round(Math.max(visitPct, spendPct) * 100));
+    // Show the nearer of the two paths in the remaining text.
+    const remainText = visitPct >= spendPct
+      ? copy.tierVisitsLeft.replace("{n}", String(visitsLeft)).replace("{tier}", next.name)
+      : copy.tierSpendLeft.replace("{amount}", `${venueCurSym}${spendLeft.toFixed(0)}`).replace("{tier}", next.name);
+    return { emoji: tierEmoji[memberStats.tier] ?? "🥉", atTop: false, label: remainText, pct, remainText };
+  })();
 
   return (
     <div style={{ position: "fixed", inset: 0, background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -760,6 +793,31 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* ── Loyalty progress — return hook for members ── */}
+        {loyalty && (
+          <div style={{
+            marginTop: 26, padding: "18px 20px", borderRadius: 18,
+            background: theme.cardBg, border: `1px solid ${theme.border}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: loyalty.atTop ? 0 : 12 }}>
+              <div style={{ fontSize: 28, lineHeight: 1, flexShrink: 0 }}>{loyalty.emoji}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: "0.2em", color: theme.muted, textTransform: "uppercase", fontFamily: theme.fontLabel }}>
+                  {copy.loyaltyEyebrow}
+                </div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: theme.text, marginTop: 3, lineHeight: 1.3 }}>
+                  {loyalty.label}
+                </div>
+              </div>
+            </div>
+            {!loyalty.atTop && (
+              <div style={{ height: 8, borderRadius: 999, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                <div style={{ width: `${loyalty.pct}%`, height: "100%", background: theme.accent, borderRadius: 999, transition: "width .4s ease" }} />
+              </div>
+            )}
           </div>
         )}
       </div>
