@@ -157,6 +157,18 @@ export default async function AnalyticsPage({ params }: Params) {
     .filter((r) => r.won > 0 || r.issued > 0)
     .sort((a, b) => b.issued - a.issued);
 
+  /* ── Rejected scans (last 30d) — fraud / UX signal ── */
+  const { data: rejectionRows } = await svc
+    .from("receipt_rejections")
+    .select("reason")
+    .eq("venue_id", v.id)
+    .gte("created_at", d30);
+  const rejections = (rejectionRows ?? []) as Array<{ reason: string }>;
+  const rejectionByReason: Record<string, number> = {};
+  for (const r of rejections) rejectionByReason[r.reason] = (rejectionByReason[r.reason] ?? 0) + 1;
+  const rejectionTotal = rejections.length;
+  const REJECT_LABELS: Record<string, string> = analytics.rejectionReasons;
+
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -285,6 +297,27 @@ export default async function AnalyticsPage({ params }: Params) {
               );
             })}
           </div>
+        )}
+
+        {/* ── SECTION: Rejected scans (fraud / UX signal) ── */}
+        {rejectionTotal > 0 && (
+          <>
+            <SectionTitle>{analytics.rejectionsTitle}</SectionTitle>
+            <div style={{ ...sectionCard, marginBottom: 24 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
+                <div style={{ fontSize: 28, fontWeight: 900, color: "#f87171", lineHeight: 1 }}>{rejectionTotal}</div>
+                <div style={{ fontSize: 12, color: "rgba(244,239,230,0.45)" }}>{analytics.rejectionsSub}</div>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {Object.entries(rejectionByReason).sort((a, b) => b[1] - a[1]).map(([reason, count]) => (
+                  <div key={reason} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 999, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 12 }}>
+                    <span style={{ color: "rgba(244,239,230,0.7)" }}>{REJECT_LABELS[reason] ?? reason}</span>
+                    <b style={{ color: "#f4efe6" }}>{count}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
         )}
 
         {/* ── SECTION: Pro Müşteri (only Pro) ── */}

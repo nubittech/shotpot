@@ -68,6 +68,24 @@ If this is NOT a receipt image, set confidence to 0.1 or lower.`,
   }
 }
 
+/* ─── Rejection logging (best-effort, isolated table) ─── */
+async function logRejection(
+  sb: ReturnType<typeof getServiceClient>,
+  venueId: string,
+  reason: string,
+  opts: { guestToken?: string | null; customerId?: string | null; amount?: number | null },
+): Promise<void> {
+  try {
+    await sb.from("receipt_rejections").insert({
+      venue_id: venueId,
+      customer_id: opts.customerId || null,
+      guest_token: opts.guestToken || null,
+      reason,
+      amount: opts.amount ?? null,
+    });
+  } catch { /* analytics only — never affect the scan response */ }
+}
+
 /* ─── Main handler ─── */
 export async function POST(req: NextRequest) {
   try {
@@ -108,6 +126,7 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (dupReceipt) {
+      await logRejection(sb, v.id, "DUPLICATE", { guestToken, customerId });
       return NextResponse.json(
         { error: "Bu fiş daha önce kullanıldı.", code: "DUPLICATE" },
         { status: 409 }
@@ -127,6 +146,7 @@ export async function POST(req: NextRequest) {
 
     // 4) Confidence gate — not a receipt
     if (extract.confidence < 0.3) {
+      await logRejection(sb, v.id, "LOW_CONFIDENCE", { guestToken, customerId, amount: extract.amount });
       return NextResponse.json(
         {
           error: `Fiş tanınamadı — fotoğraf çok bulanık veya fiş görünmüyor.\n${debugInfo}`,
@@ -139,6 +159,7 @@ export async function POST(req: NextRequest) {
 
     // 5) Amount required
     if (!extract.amount || extract.amount <= 0) {
+      await logRejection(sb, v.id, "NO_AMOUNT", { guestToken, customerId });
       return NextResponse.json(
         {
           error: `Fiş okundu ama toplam tutar bulunamadı.\n${debugInfo}`,
@@ -157,6 +178,7 @@ export async function POST(req: NextRequest) {
       const diffMins = Math.abs(differenceInMinutes(receiptTime, nowInVenueZone));
 
       if (diffMins > 60) {
+        await logRejection(sb, v.id, "EXPIRED_RECEIPT", { guestToken, customerId, amount: extract.amount });
         return NextResponse.json(
           {
             error: `Fiş ${diffMins} dakika önceye ait — sadece son 1 saat geçerli.\n${debugInfo}`,
@@ -183,6 +205,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (semanticDup) {
+        await logRejection(sb, v.id, "DUPLICATE", { guestToken, customerId, amount: extract.amount });
         return NextResponse.json(
           { error: `Bu fiş bugün zaten kullanıldı (${extract.amount} ${v.currency}, ${receiptDate}).\n${debugInfo}`, code: "DUPLICATE" },
           { status: 409 }
@@ -222,6 +245,7 @@ export async function POST(req: NextRequest) {
     if (insErr || !insertedReceipt) {
       // Handle unique constraint violation (race condition — two concurrent scans of same receipt)
       if (insErr?.code === "23505") {
+        await logRejection(sb, v.id, "DUPLICATE", { guestToken, customerId, amount: extract.amount });
         return NextResponse.json(
           { error: `Bu fiş zaten kullanıldı.\n${debugInfo}`, code: "DUPLICATE" },
           { status: 409 }
