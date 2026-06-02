@@ -47,6 +47,12 @@ export default function ProfilePage() {
   const [filter, setFilter] = useState<CouponStatus | "all">("all");
   const [tab, setTab] = useState<Tab>("coupons");
   const [userEmail, setUserEmail] = useState("");
+  // Profile editing (name + birthday) — fixes nameless members and collects
+  // birth_date reliably AFTER login (not via fragile sessionStorage round-trip).
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editBirth, setEditBirth] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -90,6 +96,35 @@ export default function ProfilePage() {
     router.push(`/play/${slug}`);
   }
 
+  function startEdit() {
+    if (!customer) return;
+    setEditName(customer.full_name ?? "");
+    setEditBirth(customer.birth_date ?? "");
+    setEditing(true);
+  }
+
+  async function saveProfile() {
+    setSavingProfile(true);
+    try {
+      const res = await fetch("/api/play/customer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slug,
+          full_name: editName.trim() || undefined,
+          birth_date: editBirth || null,
+        }),
+      });
+      if (res.ok) {
+        const { customer: updated } = await res.json() as { customer: CustomerPro };
+        setCustomer(updated);
+        setEditing(false);
+      }
+    } finally {
+      setSavingProfile(false);
+    }
+  }
+
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "#0a0a0c", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -125,8 +160,13 @@ export default function ProfilePage() {
               {(customer.full_name ?? userEmail).slice(0, 1).toUpperCase()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#f4efe6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {customer.full_name ?? "İsimsiz Üye"}
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#f4efe6", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {customer.full_name ?? "İsimsiz Üye"}
+                </div>
+                {!editing && (
+                  <button onClick={startEdit} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "rgba(244,239,230,0.5)", padding: 0, flexShrink: 0 }} aria-label="Düzenle">✏️</button>
+                )}
               </div>
               <div style={{ fontSize: 13, color: "rgba(244,239,230,0.5)", marginTop: 2 }}>{userEmail}</div>
             </div>
@@ -135,6 +175,31 @@ export default function ProfilePage() {
               {loyalty.emoji} {loyalty.label}
             </div>
           </div>
+
+          {/* Edit form — name + birthday */}
+          {editing && (
+            <div style={{ marginBottom: 16, padding: "14px 16px", borderRadius: 14, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Ad Soyad</label>
+                <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Adın"
+                  style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#f4efe6", fontSize: 14, outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Doğum Günü</label>
+                <input type="date" value={editBirth} onChange={(e) => setEditBirth(e.target.value)}
+                  style={{ width: "100%", boxSizing: "border-box", marginTop: 6, padding: "10px 12px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#f4efe6", fontSize: 14, outline: "none" }} />
+                <div style={{ fontSize: 11, color: "rgba(244,239,230,0.4)", marginTop: 6 }}>🎂 Doğum gününde sürpriz ödül için</div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={saveProfile} disabled={savingProfile} style={{ flex: 1, padding: "11px", borderRadius: 10, background: "#ffd84e", border: "none", color: "#111", fontSize: 13, fontWeight: 800, cursor: "pointer", opacity: savingProfile ? 0.6 : 1 }}>
+                  {savingProfile ? "Kaydediliyor…" : "Kaydet"}
+                </button>
+                <button onClick={() => setEditing(false)} disabled={savingProfile} style={{ padding: "11px 18px", borderRadius: 10, background: "transparent", border: "1px solid rgba(255,255,255,0.12)", color: "rgba(244,239,230,0.7)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  İptal
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Stats row */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>

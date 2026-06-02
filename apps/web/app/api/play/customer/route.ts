@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json() as {
       slug: string;
       full_name?: string;
+      birth_date?: string | null;
       consent_marketing?: boolean;
       consent_kvkk?: boolean;
     };
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
       // Update last_visit_at and optionally name/consent
       const updates: Record<string, unknown> = { last_visit_at: new Date().toISOString() };
       if (body.full_name) updates.full_name = body.full_name;
+      if (body.birth_date !== undefined) updates.birth_date = body.birth_date || null;
       if (body.consent_marketing !== undefined) updates.consent_marketing = body.consent_marketing;
       if (body.consent_kvkk !== undefined) updates.consent_kvkk = body.consent_kvkk;
 
