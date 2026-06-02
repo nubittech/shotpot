@@ -84,6 +84,16 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (error || !data) return NextResponse.json({ ok: false, error: error?.message }, { status: 500 });
 
+  // If this coupon was delivered via a marketing campaign, mark the delivery
+  // redeemed so campaign engagement analytics reflect it. Best-effort.
+  try {
+    await sb
+      .from("campaign_deliveries")
+      .update({ redeemed_at: new Date().toISOString() })
+      .eq("coupon_id", existing.id)
+      .is("redeemed_at", null);
+  } catch { /* analytics only — never block redemption */ }
+
   return NextResponse.json({
     ok: true,
     code: data.code,

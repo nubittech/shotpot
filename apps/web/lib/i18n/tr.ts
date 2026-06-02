@@ -298,6 +298,7 @@ export const tr = {
     timezone: "Zaman Dilimi",
     timezoneHelp: "Fiş tarih/saati bu zaman dilimine göre değerlendirilir. 1 saatten eski fişler reddedilir.",
     receiptMode: "Fiş Doğrulama Modu",
+    comingSoon: "Yakında",
     receiptModeHints: {
       ocr: "Müşteri fişi fotoğraflar, AI tutarı ve tarihi okur. Tüm POS'larda çalışır.",
       qr: "Sadece QR kodlu fişler kabul edilir. Maksimum güvenlik.",

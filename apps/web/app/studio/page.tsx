@@ -988,24 +988,30 @@ function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p:
         >
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {([
-              { id: "ocr",  label: copy.receiptModes.ocr.label,  sub: copy.receiptModes.ocr.sub },
-              { id: "qr",   label: copy.receiptModes.qr.label,   sub: copy.receiptModes.qr.sub },
-              { id: "both", label: copy.receiptModes.both.label, sub: copy.receiptModes.both.sub },
-            ] as Array<{ id: ReceiptMode; label: string; sub: string }>).map((m) => (
+              { id: "ocr",  label: copy.receiptModes.ocr.label,  sub: copy.receiptModes.ocr.sub,  soon: false },
+              // QR scanning isn't implemented yet — only OCR has a working
+              // backend/frontend path. Lock these so a venue can't pick a mode
+              // that silently breaks receipt scanning.
+              { id: "qr",   label: copy.receiptModes.qr.label,   sub: copy.receiptModes.qr.sub,   soon: true },
+              { id: "both", label: copy.receiptModes.both.label, sub: copy.receiptModes.both.sub, soon: true },
+            ] as Array<{ id: ReceiptMode; label: string; sub: string; soon: boolean }>).map((m) => (
               <button
                 key={m.id}
-                onClick={() => update({ receiptMode: m.id })}
+                onClick={() => { if (!m.soon) update({ receiptMode: m.id }); }}
                 type="button"
+                disabled={m.soon}
                 style={{
+                  position: "relative",
                   display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
-                  padding: "12px 8px", borderRadius: 10, cursor: "pointer",
+                  padding: "12px 8px", borderRadius: 10, cursor: m.soon ? "not-allowed" : "pointer",
                   background: st.receiptMode === m.id ? "rgba(255,216,78,0.12)" : "rgba(255,255,255,0.04)",
                   border: `1px solid ${st.receiptMode === m.id ? "#ffd84e" : "rgba(255,255,255,0.1)"}`,
                   color: st.receiptMode === m.id ? "#ffd84e" : "rgba(244,239,230,0.7)",
+                  opacity: m.soon ? 0.45 : 1,
                 }}
               >
                 <span style={{ fontSize: 13, fontWeight: 700 }}>{m.label}</span>
-                <span style={{ fontSize: 10, opacity: 0.7 }}>{m.sub}</span>
+                <span style={{ fontSize: 10, opacity: 0.7 }}>{m.soon ? copy.comingSoon : m.sub}</span>
               </button>
             ))}
           </div>

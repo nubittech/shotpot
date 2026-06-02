@@ -300,6 +300,7 @@ export const en: Translation = {
     timezone: "Timezone",
     timezoneHelp: "Receipt date/time is evaluated in this timezone. Receipts older than 1 hour are rejected.",
     receiptMode: "Receipt Verification Mode",
+    comingSoon: "Coming soon",
     receiptModeHints: {
       ocr: "Customers photograph the receipt and AI reads the amount and date. Works with every POS.",
       qr: "Only QR receipts are accepted. Maximum security.",

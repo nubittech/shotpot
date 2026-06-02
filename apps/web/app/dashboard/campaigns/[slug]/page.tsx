@@ -48,6 +48,24 @@ export default async function CampaignsPage({ params }: Params) {
   ]);
 
   const campaigns = (campaignsRaw ?? []) as MarketingCampaign[];
+
+  // Compute opened/redeemed from the delivery rows instead of trusting the
+  // denormalized counters on marketing_campaigns (which were never kept up to
+  // date). This is drift-proof: the truth lives in campaign_deliveries.
+  const engagement = new Map<string, { opened: number; redeemed: number }>();
+  if (campaigns.length > 0) {
+    const { data: deliveries } = await svc
+      .from("campaign_deliveries")
+      .select("campaign_id, opened_at, redeemed_at")
+      .in("campaign_id", campaigns.map((c) => c.id));
+    for (const d of (deliveries ?? []) as Array<{ campaign_id: string; opened_at: string | null; redeemed_at: string | null }>) {
+      const e = engagement.get(d.campaign_id) ?? { opened: 0, redeemed: 0 };
+      if (d.opened_at) e.opened++;
+      if (d.redeemed_at) e.redeemed++;
+      engagement.set(d.campaign_id, e);
+    }
+  }
+
   const audiences = {
     all: total ?? 0,
     active30: active30 ?? 0,
@@ -95,8 +113,8 @@ export default async function CampaignsPage({ params }: Params) {
                 <div style={{ fontSize: 12, color: "rgba(244,239,230,0.55)", lineHeight: 1.5, marginBottom: 8 }}>{c.body}</div>
                 <div style={{ display: "flex", gap: 14, fontSize: 11, color: "rgba(244,239,230,0.45)" }}>
                   <span>📤 {c.sent_count} gönderildi</span>
-                  <span>👁 {c.opened_count} okundu</span>
-                  <span>🎟 {c.redeemed_count} kullanıldı</span>
+                  <span>👁 {engagement.get(c.id)?.opened ?? 0} okundu</span>
+                  <span>🎟 {engagement.get(c.id)?.redeemed ?? 0} kullanıldı</span>
                   {c.reward_label && <span style={{ color: "#a78bfa" }}>🎁 {c.reward_label}</span>}
                 </div>
               </div>
