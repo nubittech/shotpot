@@ -528,7 +528,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} isAnonymous={isPro && !customerId} onJoin={() => setStage("auth")} />;
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menuCount={menus.length} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menus={menus} scannedInfo={scannedInfo} recentCoupons={recentCoupons} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
 }
 
 /* ═══════════════════════════════════════════════
@@ -545,13 +545,19 @@ function couponExpiryLabel(expiresAt: string | null, copy: ReturnType<typeof get
   return copy.expiresOn.replace("{date}", new Date(expiresAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" }));
 }
 
-function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menuCount, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile, onViewCoupon }: {
+function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending, menus, scannedInfo, recentCoupons, onJackpot, onGift, onMenu, onProfile, onViewCoupon }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"]; isPro: boolean; customerId: string | null;
-  tokens: number; giftPending: number; menuCount: number; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
+  tokens: number; giftPending: number; menus: PlayMenu[]; scannedInfo: ScannedInfo; recentCoupons: RecentCoupon[];
   onJackpot: () => void; onGift: () => void; onMenu: () => void; onProfile: () => void; onViewCoupon: (c: RecentCoupon) => void;
 }) {
   const hasEarned = scannedInfo !== null;
   const currSym   = scannedInfo?.currency === "USD" ? "$" : scannedInfo?.currency === "EUR" ? "€" : "₺";
+  const venueCurSym = venue.currency === "USD" ? "$" : venue.currency === "EUR" ? "€" : "₺";
+  // Featured campaign = newest menu; teaser shows its biggest discount item.
+  const featuredMenu = menus[0] ?? null;
+  const teaserItem = featuredMenu
+    ? (featuredMenu.items.find((it) => it.oldPrice != null && it.newPrice != null) ?? featuredMenu.items[0] ?? null)
+    : null;
 
   return (
     <div style={{ position: "fixed", inset: 0, background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -668,30 +674,59 @@ function HomeScreen({ venue, theme, copy, isPro, customerId, tokens, giftPending
           </div>
         </button>
 
-        {/* ── Personalized menu card ── */}
-        {menuCount > 0 && (
+        {/* ── Featured campaign — hero card showing the actual deal ── */}
+        {featuredMenu && (
           <button onClick={onMenu} style={{
             width: "100%", textAlign: "left", cursor: "pointer",
-            border: `1px solid ${theme.border}`,
-            background: theme.cardBg,
+            border: `1.5px solid ${theme.accent}55`,
+            background: theme.ctaCardBgIdle,
             borderRadius: 18, padding: "18px 20px", marginBottom: 26,
-            display: "flex", alignItems: "center", gap: 14,
           }}>
-            <div style={{ fontSize: 30, lineHeight: 1, flexShrink: 0 }}>📋</div>
-            <div style={{ flex: 1 }}>
-              <div style={{
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+              <span style={{ fontSize: 20, lineHeight: 1 }}>📋</span>
+              <span style={{
                 fontSize: 10, fontWeight: 800, letterSpacing: "0.2em",
-                color: theme.muted, textTransform: "uppercase", fontFamily: theme.fontLabel,
-              }}>{copy.menuEyebrow}</div>
-              <div style={{
-                fontSize: "clamp(18px, 5.5vw, 23px)", fontWeight: 900,
-                fontFamily: theme.fontDisplay, color: theme.text, lineHeight: 1.1, marginTop: 3,
-              }}>{copy.menuTitle}</div>
-              <div style={{ fontSize: 12.5, color: theme.muted, marginTop: 4, lineHeight: 1.45 }}>
-                {copy.menuHint.replace("{count}", String(menuCount))}
-              </div>
+                color: theme.accent, textTransform: "uppercase", fontFamily: theme.fontLabel,
+              }}>{copy.menuEyebrow}</span>
             </div>
-            <div style={{ fontSize: 22, color: theme.accent, flexShrink: 0 }}>→</div>
+            <div style={{
+              fontSize: "clamp(19px, 6vw, 25px)", fontWeight: 900,
+              fontFamily: theme.fontDisplay, color: theme.text, lineHeight: 1.1,
+            }}>{featuredMenu.title}</div>
+
+            {/* Teaser: the discounted item */}
+            {teaserItem && (
+              <div style={{
+                marginTop: 12, padding: "12px 14px", borderRadius: 12,
+                background: theme.cardBg, border: `1px solid ${theme.border}`,
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: theme.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  {teaserItem.name}
+                </div>
+                <div style={{ flexShrink: 0, textAlign: "right" }}>
+                  {teaserItem.oldPrice != null && (
+                    <span style={{ fontSize: 12, color: theme.muted, textDecoration: "line-through", marginRight: 6 }}>
+                      {venueCurSym}{Number(teaserItem.oldPrice).toFixed(0)}
+                    </span>
+                  )}
+                  {teaserItem.newPrice != null && (
+                    <span style={{ fontSize: 16, fontWeight: 900, color: theme.accent }}>
+                      {venueCurSym}{Number(teaserItem.newPrice).toFixed(0)}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <span style={{ fontSize: 12.5, color: theme.muted }}>
+                {featuredMenu.items.length > 1
+                  ? copy.menuMoreItems.replace("{count}", String(featuredMenu.items.length))
+                  : copy.menuViewAll}
+              </span>
+              <span style={{ fontSize: 18, color: theme.accent }}>→</span>
+            </div>
           </button>
         )}
 

@@ -391,6 +391,8 @@ export const en: Translation = {
     menuEyebrow: "Just for you",
     menuTitle: "Campaign Menu",
     menuHint: "{count} special menu(s) waiting for you.",
+    menuMoreItems: "See all · {count} items",
+    menuViewAll: "View campaign",
     menuScreenHelp: "Special campaign menus prepared just for you. Take a look before you visit.",
     joinToPlayTitle: "Sign up, spin, win",
     joinToPlayHint: "Join free — scan your receipt, spin the wheel, win rewards.",
