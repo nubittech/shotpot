@@ -524,6 +524,7 @@ export const en: Translation = {
       revenue30d: "30d Revenue",
       token30d: "30d Tokens",
       dailyReceipts7d: "Last 7 Days — Daily Receipt Count",
+      noDataWeek: "No receipts yet this week.",
       spinsCoupons: "🎰 Spins & Coupons",
       totalSpins: "Total Spins",
       winningSpins: "Winning Spins",

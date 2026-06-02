@@ -522,6 +522,7 @@ export const tr = {
       revenue30d: "30g Ciro",
       token30d: "30g Token",
       dailyReceipts7d: "Son 7 Gün — Günlük Fiş Sayısı",
+      noDataWeek: "Bu hafta henüz fiş yok.",
       spinsCoupons: "🎰 Spin & Kupon",
       totalSpins: "Toplam Spin",
       winningSpins: "Kazanan Spin",

@@ -192,6 +192,11 @@ export default async function AnalyticsPage({ params }: Params) {
         {/* ── Bar chart: daily 7 days ── */}
         <div style={{ ...sectionCard, marginBottom: 24 }}>
           <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 16, color: "rgba(244,239,230,0.7)" }}>{analytics.dailyReceipts7d}</div>
+          {daily7.every((d) => d.count === 0) ? (
+            <div style={{ height: 80, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(244,239,230,0.35)", fontSize: 13 }}>
+              {analytics.noDataWeek ?? "Bu hafta henüz fiş yok."}
+            </div>
+          ) : (
           <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 80 }}>
             {daily7.map(({ label, count }) => {
               const max = Math.max(...daily7.map((d) => d.count), 1);
@@ -205,6 +210,7 @@ export default async function AnalyticsPage({ params }: Params) {
               );
             })}
           </div>
+          )}
         </div>
 
         {/* ── SECTION: Spin & Kupon ── */}
