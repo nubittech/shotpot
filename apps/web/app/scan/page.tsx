@@ -62,6 +62,7 @@ function ScanInner() {
       const data = await res.json();
       if (!res.ok) {
         if (data?.reason === "already_redeemed") setErr(scanCopy.alreadyRedeemed);
+        else if (data?.reason === "expired") setErr(scanCopy.expired);
         else if (data?.reason === "not_found" || data?.reason === "wrong_venue") setErr(scanCopy.notFound);
         else setErr(data?.error ?? scanCopy.error);
         return;

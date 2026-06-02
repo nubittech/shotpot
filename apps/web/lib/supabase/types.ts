@@ -34,6 +34,8 @@ export interface Venue {
   tier_silver_spend: number;
   tier_gold_visits: number;
   tier_gold_spend: number;
+  // migration 014: won-coupon lifetime in days (0 = never expires)
+  coupon_validity_days: number;
   created_at: string;
   updated_at: string;
 }

@@ -42,12 +42,17 @@ export async function POST(req: NextRequest) {
 
     const { data: venue } = await svc
       .from("venues")
-      .select("id, name")
+      .select("id, name, coupon_validity_days")
       .eq("slug", slug)
       .eq("active", true)
       .maybeSingle();
-    const v = venue as { id: string; name: string } | null;
+    const v = venue as { id: string; name: string; coupon_validity_days?: number } | null;
     if (!v) return NextResponse.json({ error: "venue not found" }, { status: 404 });
+
+    const validityDays = Number(v.coupon_validity_days ?? 0);
+    const expiresAt = validityDays > 0
+      ? new Date(Date.now() + validityDays * 86400_000).toISOString()
+      : null;
 
     const { data: customer } = await svc
       .from("customers")
@@ -113,6 +118,7 @@ export async function POST(req: NextRequest) {
         reward_label: rewardLabel,
         code,
         spin_id: null,
+        expires_at: expiresAt,
       })
       .select("id, code, reward_label")
       .single();

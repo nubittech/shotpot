@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
       billing_cycle?: string;
       currency: string; receipt_mode: string; interface_language?: string; timezone: string;
       token_threshold: number; owner_user_id: string;
+      coupon_validity_days?: number;
     };
 
     if (v.owner_user_id && v.owner_user_id !== user.id) {
@@ -55,6 +56,7 @@ export async function GET(req: NextRequest) {
         interfaceLanguage: v.interface_language ?? "tr",
         timezone: v.timezone ?? "Europe/Istanbul",
         tokenThreshold: v.token_threshold,
+        couponValidityDays: v.coupon_validity_days ?? 30,
       },
       config: cfg
         ? {

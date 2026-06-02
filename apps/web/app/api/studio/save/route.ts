@@ -12,6 +12,7 @@ type SavePayload = {
   interfaceLanguage?: "tr" | "en";
   timezone?: string;
   tokenThreshold: number;
+  couponValidityDays?: number;
   gameType?: "slot" | "wheel";
   wheelVariant?: "boho" | "irish" | "medit";
   variant: "v1" | "v2" | "v3";
@@ -90,6 +91,7 @@ export async function POST(req: NextRequest) {
       interface_language: body.interfaceLanguage ?? "tr",
       timezone: body.timezone ?? "Europe/Istanbul",
       token_threshold: body.tokenThreshold,
+      coupon_validity_days: Math.max(0, Math.floor(body.couponValidityDays ?? 30)),
       game_type: body.gameType ?? "slot",
       wheel_variant: body.wheelVariant ?? "boho",
     };

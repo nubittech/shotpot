@@ -100,6 +100,7 @@ type State = {
   jackpotCoupon: string;
   winRate: number;
   jackpotShare: number;
+  couponValidityDays: number;
   saving: boolean;
   saved: boolean;
 };
@@ -235,6 +236,7 @@ function StudioInner() {
     jackpotCoupon: "JACKPOT",
     winRate: 30,
     jackpotShare: 10,
+    couponValidityDays: 30,
     saving: false,
     saved: false,
   });
@@ -319,6 +321,7 @@ function StudioInner() {
           interfaceLanguage: ((v as { interfaceLanguage?: string }).interfaceLanguage as InterfaceLanguage) ?? prev.interfaceLanguage,
           timezone:       (v as { timezone?: string }).timezone   ?? prev.timezone,
           tokenThreshold: (v as { tokenThreshold?: number }).tokenThreshold ?? prev.tokenThreshold,
+          couponValidityDays: (v as { couponValidityDays?: number }).couponValidityDays ?? prev.couponValidityDays,
           gameType:       loadedGameType,
           wheelVariant:   loadedWheelVariant,
           wheelSegmentCfg: newWheelCfg,
@@ -441,6 +444,7 @@ function StudioInner() {
         interfaceLanguage: st.interfaceLanguage,
         timezone: st.timezone,
         tokenThreshold: st.tokenThreshold,
+        couponValidityDays: st.couponValidityDays,
         gameType: st.gameType,
         wheelVariant: st.wheelVariant,
         variant: st.variant,
@@ -1302,6 +1306,33 @@ function StepRates({
               style={{ flex: 1, accentColor: "#ffd84e" }}
             />
             <div style={{ width: 52, textAlign: "right", fontWeight: 700, color: "#ffd84e", fontSize: 15 }}>%{st.jackpotShare}</div>
+          </div>
+        </Field>
+
+        {/* Coupon validity (lifetime of won coupons) */}
+        <Field
+          label={copy.couponValidity}
+          hint={st.couponValidityDays > 0
+            ? copy.couponValidityHint.replace("{days}", String(st.couponValidityDays))
+            : copy.couponValidityNever}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            {[7, 14, 30, 60, 90, 0].map((d) => (
+              <button
+                key={d}
+                type="button"
+                onClick={() => update({ couponValidityDays: d })}
+                style={{
+                  padding: "8px 14px", borderRadius: 10, cursor: "pointer",
+                  fontSize: 13, fontWeight: 700,
+                  border: `1.5px solid ${st.couponValidityDays === d ? "#ffd84e" : "rgba(255,255,255,0.12)"}`,
+                  background: st.couponValidityDays === d ? "rgba(255,216,78,0.12)" : "transparent",
+                  color: st.couponValidityDays === d ? "#ffd84e" : "rgba(244,239,230,0.7)",
+                }}
+              >
+                {d === 0 ? copy.couponValidityNeverShort : copy.couponValidityDayLabel.replace("{days}", String(d))}
+              </button>
+            ))}
           </div>
         </Field>
 

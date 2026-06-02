@@ -103,10 +103,16 @@ export async function POST(req: NextRequest) {
 
     const { data: venue } = await sb
       .from("venues")
-      .select("id, slug, active")
+      .select("id, slug, active, coupon_validity_days")
       .eq("slug", body.slug)
       .maybeSingle();
     if (!venue || !venue.active) return NextResponse.json({ error: "venue not found" }, { status: 404 });
+
+    // Coupon lifetime: venue-configured. 0/undefined → no expiry.
+    const validityDays = Number((venue as { coupon_validity_days?: number }).coupon_validity_days ?? 0);
+    const expiresAt = validityDays > 0
+      ? new Date(Date.now() + validityDays * 86400_000).toISOString()
+      : null;
 
     // Find an active receipt with tokens remaining
     const receipt = await findActiveReceipt(
@@ -174,6 +180,7 @@ export async function POST(req: NextRequest) {
         spin_id: spinRow.id,
         code: couponCode,
         reward_label: rewardLabel,
+        expires_at: expiresAt,
       }).select("id, code, reward_label").single();
       if (cp) {
         coupon = { id: cp.id, code: cp.code, rewardLabel: cp.reward_label };

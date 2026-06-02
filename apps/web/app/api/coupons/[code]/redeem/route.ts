@@ -20,7 +20,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   const { data, error } = await sb
     .from("coupons")
-    .select("id, code, reward_label, redeemed_at, venue_id")
+    .select("id, code, reward_label, redeemed_at, expires_at, venue_id")
     .eq("code", params.code)
     .maybeSingle();
 
@@ -35,11 +35,15 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
   }
 
+  const expired = !!data.expires_at && new Date(data.expires_at).getTime() < Date.now();
+
   return NextResponse.json({
-    valid: !data.redeemed_at,
+    valid: !data.redeemed_at && !expired,
+    expired,
     code: data.code,
     rewardLabel: data.reward_label,
     redeemedAt: data.redeemed_at,
+    expiresAt: data.expires_at,
     venueId: data.venue_id,
   });
 }
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!slug) slug = new URL(req.url).searchParams.get("venue");
 
   const { data: existing } = await sb
-    .from("coupons").select("id, redeemed_at, venue_id").eq("code", params.code).maybeSingle();
+    .from("coupons").select("id, redeemed_at, expires_at, venue_id").eq("code", params.code).maybeSingle();
   if (!existing) return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
 
   // Refuse cross-venue redemption — can't burn another venue's coupon.
@@ -68,6 +72,9 @@ export async function POST(req: NextRequest, { params }: Params) {
   }
 
   if (existing.redeemed_at) return NextResponse.json({ ok: false, reason: "already_redeemed" }, { status: 409 });
+  if (existing.expires_at && new Date(existing.expires_at).getTime() < Date.now()) {
+    return NextResponse.json({ ok: false, reason: "expired" }, { status: 409 });
+  }
 
   const { data, error } = await sb.from("coupons")
     .update({ redeemed_at: new Date().toISOString(), redeemed_by: slug ?? "staff" })
