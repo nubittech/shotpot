@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import { getServerCopy } from "../../../../lib/i18n/server";
+import { WinBackButton } from "./WinBackButton";
 
 type Params = { params: { slug: string } };
 
@@ -30,6 +31,7 @@ export default async function AnalyticsPage({ params }: Params) {
   // Time boundaries
   const now = new Date();
   const d30 = new Date(now.getTime() - 30 * 86400_000).toISOString();
+  const d60 = new Date(now.getTime() - 60 * 86400_000).toISOString();
   const d7  = new Date(now.getTime() -  7 * 86400_000).toISOString();
 
   // Parallel queries
@@ -45,6 +47,9 @@ export default async function AnalyticsPage({ params }: Params) {
     { count: customers30d },
     { data: topCustomers },
     { data: recentCoupons },
+    // Previous period (30-60d ago) for trend deltas
+    { count: receiptsPrev },
+    { data: receiptsPrevRaw },
   ] = await Promise.all([
     svc.from("receipts").select("*", { count: "exact", head: true }).eq("venue_id", v.id),
     svc.from("receipts").select("*", { count: "exact", head: true }).eq("venue_id", v.id).gte("created_at", d30),
@@ -59,12 +64,19 @@ export default async function AnalyticsPage({ params }: Params) {
       ? svc.from("customers").select("full_name, email, total_visits, total_spend, loyalty_tier, last_visit_at").eq("venue_id", v.id).is("deleted_at", null).order("total_spend", { ascending: false }).limit(5)
       : Promise.resolve({ data: [], error: null }),
     svc.from("coupons").select("code, reward_label, redeemed_at, created_at").eq("venue_id", v.id).not("redeemed_at", "is", null).order("redeemed_at", { ascending: false }).limit(5),
+    svc.from("receipts").select("*", { count: "exact", head: true }).eq("venue_id", v.id).gte("created_at", d60).lt("created_at", d30),
+    svc.from("receipts").select("amount").eq("venue_id", v.id).gte("created_at", d60).lt("created_at", d30),
   ]);
 
   // Compute totals from receipt rows
   const receiptsArr = (receiptsRaw ?? []) as { amount: number; tokens_awarded: number; created_at: string }[];
   const totalAmount30d = receiptsArr.reduce((s, r) => s + (r.amount ?? 0), 0);
   const totalTokens30d = receiptsArr.reduce((s, r) => s + (r.tokens_awarded ?? 0), 0);
+  // Previous-period totals + % deltas (null when no prior baseline → hide).
+  const revenuePrev = ((receiptsPrevRaw ?? []) as { amount: number }[]).reduce((s, r) => s + (r.amount ?? 0), 0);
+  const pct = (curr: number, prev: number): number | null => (prev > 0 ? Math.round(((curr - prev) / prev) * 1000) / 10 : null);
+  const deltaReceipts = pct(receipts30d ?? 0, receiptsPrev ?? 0);
+  const deltaRevenue = pct(totalAmount30d, revenuePrev);
 
   // Win rate
   const winRate = totalSpins ? ((wins ?? 0) / totalSpins * 100).toFixed(1) : "—";
@@ -169,6 +181,17 @@ export default async function AnalyticsPage({ params }: Params) {
   const rejectionTotal = rejections.length;
   const REJECT_LABELS: Record<string, string> = analytics.rejectionReasons;
 
+  /* ── At-risk & dormant customers (win-back targets) — Pro only ── */
+  let atRiskCount = 0, dormantCount = 0;
+  if (v.tier === "pro") {
+    const [{ count: ar }, { count: dm }] = await Promise.all([
+      svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).gte("last_visit_at", d60).lt("last_visit_at", d30),
+      svc.from("customers").select("*", { count: "exact", head: true }).eq("venue_id", v.id).is("deleted_at", null).lt("last_visit_at", d60),
+    ]);
+    atRiskCount = ar ?? 0;
+    dormantCount = dm ?? 0;
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0c", color: "#f4efe6", fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       <header style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", padding: "14px 24px", display: "flex", alignItems: "center", gap: 12 }}>
@@ -196,8 +219,8 @@ export default async function AnalyticsPage({ params }: Params) {
         <SectionTitle>{analytics.receiptsRevenue}</SectionTitle>
         <div style={kpiGrid}>
           <KPI label={analytics.totalReceipts} value={totalReceipts ?? 0} color="#ffd84e" />
-          <KPI label={analytics.last30Days} value={receipts30d ?? 0} color="#ffd84e" />
-          <KPI label={analytics.revenue30d} value={`${currSymbol}${totalAmount30d.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}`} color="#a78bfa" />
+          <KPI label={analytics.last30Days} value={receipts30d ?? 0} color="#ffd84e" delta={deltaReceipts} />
+          <KPI label={analytics.revenue30d} value={`${currSymbol}${totalAmount30d.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}`} color="#a78bfa" delta={deltaRevenue} />
           <KPI label={analytics.token30d} value={totalTokens30d} color="#60a5fa" />
         </div>
 
@@ -330,6 +353,28 @@ export default async function AnalyticsPage({ params }: Params) {
               <KPI label={analytics.sleepingRate} value={totalCustomers ? `%${(((totalCustomers - (customers30d ?? 0)) / totalCustomers) * 100).toFixed(0)}` : "—"} color="#f87171" sub={analytics.noVisit30d} />
             </div>
 
+            {/* Win-back — at-risk + dormant + one-click gift wheel */}
+            {(atRiskCount > 0 || dormantCount > 0) && (
+              <div style={{ ...sectionCard, marginBottom: 24, borderColor: "rgba(248,113,113,0.2)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: "#f87171", marginBottom: 4 }}>{analytics.winBack.title}</div>
+                    <div style={{ fontSize: 12.5, color: "rgba(244,239,230,0.55)", lineHeight: 1.5 }}>
+                      {analytics.winBack.desc
+                        .replace("{risk}", String(atRiskCount))
+                        .replace("{dormant}", String(dormantCount))}
+                    </div>
+                  </div>
+                  <WinBackButton
+                    slug={v.slug}
+                    label={analytics.winBack.action}
+                    busyLabel={analytics.winBack.busy}
+                    doneLabel={analytics.winBack.done}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Top customers */}
             {(topCustomers ?? []).length > 0 && (
               <div style={{ ...sectionCard, marginBottom: 24 }}>
@@ -413,11 +458,16 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   return <h2 style={{ margin: "24px 0 14px", fontSize: 14, fontWeight: 800, color: "rgba(244,239,230,0.65)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{children}</h2>;
 }
 
-function KPI({ label, value, color, sub }: { label: string; value: number | string; color: string; sub?: string }) {
+function KPI({ label, value, color, sub, delta }: { label: string; value: number | string; color: string; sub?: string; delta?: number | null }) {
   return (
     <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
       <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 11, color: "rgba(244,239,230,0.45)", marginTop: 6, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>{label}</div>
+      {delta != null && delta !== 0 && (
+        <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4, color: delta > 0 ? "#4ade80" : "#f87171" }}>
+          {delta > 0 ? "▲" : "▼"} %{Math.abs(delta)}
+        </div>
+      )}
       {sub && <div style={{ fontSize: 10, color: "rgba(244,239,230,0.25)", marginTop: 2 }}>{sub}</div>}
     </div>
   );

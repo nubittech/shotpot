@@ -581,6 +581,13 @@ export const en: Translation = {
       active30d: "Active 30d",
       sleepingRate: "Dormant Rate",
       noVisit30d: "no visit in 30d",
+      winBack: {
+        title: "⚠ Slipping customers",
+        desc: "{risk} at risk (30-60d), {dormant} dormant (60d+). Send a gift wheel to win them back.",
+        action: "Send gift wheel to dormant",
+        busy: "Sending…",
+        done: "✓ Sent to {n} customers",
+      },
       topCustomers: "🏆 Top Customers (by spend)",
       recentCoupons: "🎟️ Recently Redeemed Coupons",
       table: { name: "Name", level: "Level", visits: "Visits", spend: "Spend", lastVisit: "Last Visit" },

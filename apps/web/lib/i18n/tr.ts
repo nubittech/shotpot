@@ -579,6 +579,13 @@ export const tr = {
       active30d: "Son 30g Aktif",
       sleepingRate: "Uyku Oranı",
       noVisit30d: "30g ziyaretsiz",
+      winBack: {
+        title: "⚠ Kaçan müşteriler",
+        desc: "{risk} müşteri riskte (30-60g), {dormant} uyuyan (60g+). Hediye çark göndererek geri çağır.",
+        action: "Uyuyanlara hediye çark gönder",
+        busy: "Gönderiliyor…",
+        done: "✓ {n} müşteriye gönderildi",
+      },
       topCustomers: "🏆 En İyi Müşteriler (harcamaya göre)",
       recentCoupons: "🎟️ Son Kullanılan Kuponlar",
       table: { name: "Ad", level: "Seviye", visits: "Ziyaret", spend: "Harcama", lastVisit: "Son Ziyaret" },
