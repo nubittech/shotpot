@@ -33,6 +33,8 @@ export const en: Translation = {
     plan: "Plan",
     customers: "Customers",
     coupons: "Coupons",
+    gifts: "Gift",
+    menus: "Menu",
     analytics: "Analytics",
     email: "Email",
     password: "Password",
@@ -557,6 +559,7 @@ export const en: Translation = {
       token30d: "30d Tokens",
       dailyReceipts7d: "Last 7 Days — Daily Receipt Count",
       noDataWeek: "No receipts yet this week.",
+      giftWheel: "Gift Wheel",
       rejectionsTitle: "🚫 Rejected Scans (30d)",
       rejectionsSub: "failed receipt scan attempts",
       rejectionReasons: {

@@ -572,8 +572,8 @@ export default async function DashboardPage() {
                           {v.active && <ABtn href={`/scan?venue=${v.slug}`} label={dashboard.waiter} icon="user" />}
                           {v.active && v.tier === "pro" && (
                             <>
-                              <ABtn href={`/dashboard/gifts/${v.slug}`} label="Hediye" icon="gift" variant="purple" />
-                              <ABtn href={`/dashboard/menus/${v.slug}`} label="Menü" icon="menu" variant="purple" />
+                              <ABtn href={`/dashboard/gifts/${v.slug}`} label={common.gifts} icon="gift" variant="purple" />
+                              <ABtn href={`/dashboard/menus/${v.slug}`} label={common.menus} icon="menu" variant="purple" />
                             </>
                           )}
                           <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />

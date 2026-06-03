@@ -129,7 +129,7 @@ export default async function AnalyticsPage({ params }: Params) {
   // Gift-wheel coupons are written with spin_id = null (see gift-spin route),
   // so they have no spin to attribute to. Bucket them separately so the 8
   // headline coupons fully reconcile with this section.
-  rewardStats.__gift = blankStat("__gift", "🎁 Hediye Çark");
+  rewardStats.__gift = blankStat("__gift", `🎁 ${analytics.giftWheel}`);
 
   for (const s of spinsAll) {
     if (s.is_jackpot) rewardStats.__jackpot.won++;

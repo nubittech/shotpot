@@ -31,6 +31,8 @@ export const tr = {
     plan: "Plan",
     customers: "Müşteriler",
     coupons: "Kuponlar",
+    gifts: "Hediye",
+    menus: "Menü",
     analytics: "Analitik",
     email: "E-posta",
     password: "Parola",
@@ -555,6 +557,7 @@ export const tr = {
       token30d: "30g Token",
       dailyReceipts7d: "Son 7 Gün — Günlük Fiş Sayısı",
       noDataWeek: "Bu hafta henüz fiş yok.",
+      giftWheel: "Hediye Çark",
       rejectionsTitle: "🚫 Reddedilen Taramalar (30g)",
       rejectionsSub: "başarısız fiş okutma denemesi",
       rejectionReasons: {
