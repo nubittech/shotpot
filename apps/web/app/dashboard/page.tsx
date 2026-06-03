@@ -22,6 +22,7 @@ const T = {
 type Venue = {
   id: string; slug: string; name: string;
   plan: string; tier: string; active: boolean; created_at: string; billing_cycle?: string | null;
+  currency?: string | null;
 };
 
 export default async function DashboardPage() {
@@ -35,12 +36,33 @@ export default async function DashboardPage() {
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
-    .from("venues").select("id, slug, name, plan, tier, active, created_at, billing_cycle")
+    .from("venues").select("id, slug, name, plan, tier, active, created_at, billing_cycle, currency")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
   const venues = (venuesRaw ?? []) as Venue[];
   const initials = (user.email ?? "?").slice(0, 1).toUpperCase();
+
+  // ── Live feed — real recent activity across the owner's venues ──
+  type FeedItem = { kind: "receipt" | "win" | "redeem"; venue: string; label: string; at: string };
+  let feed: FeedItem[] = [];
+  if (venues.length > 0) {
+    const venueIds = venues.map((v) => v.id);
+    const nameById = new Map(venues.map((v) => [v.id, v.name]));
+    const [{ data: rcpts }, { data: wins }, { data: reds }] = await Promise.all([
+      svc.from("receipts").select("venue_id, amount, created_at").in("venue_id", venueIds).eq("is_synthetic", false).order("created_at", { ascending: false }).limit(8),
+      svc.from("spins").select("venue_id, outcome, is_jackpot, created_at").in("venue_id", venueIds).eq("win", true).order("created_at", { ascending: false }).limit(8),
+      svc.from("coupons").select("venue_id, reward_label, redeemed_at").in("venue_id", venueIds).not("redeemed_at", "is", null).order("redeemed_at", { ascending: false }).limit(8),
+    ]);
+    const cur = venues[0]?.currency === "USD" ? "$" : venues[0]?.currency === "EUR" ? "€" : "₺";
+    for (const r of (rcpts ?? []) as Array<{ venue_id: string; amount: number; created_at: string }>)
+      feed.push({ kind: "receipt", venue: nameById.get(r.venue_id) ?? "", label: `${cur}${Number(r.amount).toFixed(0)} fiş`, at: r.created_at });
+    for (const w of (wins ?? []) as Array<{ venue_id: string; outcome: string; is_jackpot: boolean; created_at: string }>)
+      feed.push({ kind: "win", venue: nameById.get(w.venue_id) ?? "", label: `${w.is_jackpot ? "🎰 JACKPOT" : "🎁"} ${w.outcome}`, at: w.created_at });
+    for (const c of (reds ?? []) as Array<{ venue_id: string; reward_label: string; redeemed_at: string }>)
+      feed.push({ kind: "redeem", venue: nameById.get(c.venue_id) ?? "", label: `✓ ${c.reward_label} kullanıldı`, at: c.redeemed_at });
+    feed = feed.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime()).slice(0, 10);
+  }
   // Admin gate — only show the admin link if this user's email is allow-listed.
   const { data: adminRow } = user.email
     ? await svc.from("admins").select("email").eq("email", user.email.toLowerCase()).maybeSingle()
@@ -513,13 +535,24 @@ export default async function DashboardPage() {
                         <div className="venue-meta-row" style={{ color: T.ink400, fontSize: 13, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontFamily: "'DM Mono', monospace", color: T.ink300 }}>/play/{v.slug}</span>
                           <span style={{ color: T.ink500 }}>·</span>
+                          {/* Single, unambiguous plan label (plan + Pro upgrade chip) */}
                           <span>{v.plan === "kampanya" ? dashboard.campaign : dashboard.business}</span>
+                          {v.tier === "pro" && (
+                            <span style={{ padding: "1px 7px", borderRadius: 999, background: "rgba(232,200,118,0.14)", border: `1px solid ${T.lineStrong}`, color: T.brass300, fontSize: 10, fontWeight: 800, letterSpacing: "0.08em" }}>PRO</span>
+                          )}
                           <span style={{ color: T.ink500 }}>·</span>
                           <StatusPill active={v.active} activeLabel={common.active} pendingLabel={common.pendingPayment} />
                         </div>
-                        <div className="venue-sub-meta" style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300, flexWrap: "wrap" }}>
-                          <span style={{ color: T.ink400 }}>{v.tier === "pro" ? dashboard.proPlan : dashboard.standardPlan}</span>
+                        <div className="venue-sub-meta" style={{ display: "flex", gap: 20, marginTop: 10, fontSize: 13, color: T.ink300, flexWrap: "wrap", alignItems: "center" }}>
                           <span>{formatSince(v.created_at)}</span>
+                          {!v.active && (
+                            <Link href={`/dashboard/billing/${v.slug}`} style={{
+                              display: "inline-flex", alignItems: "center", gap: 6,
+                              padding: "5px 12px", borderRadius: 999,
+                              background: "linear-gradient(160deg, #f0d690, #c89a4a)", color: "#1a0f06",
+                              fontSize: 12, fontWeight: 800, textDecoration: "none",
+                            }}>⚡ {dashboard.completePayment}</Link>
+                          )}
                         </div>
                       </div>
 
@@ -586,8 +619,25 @@ export default async function DashboardPage() {
               </h3>
               {venues.length === 0 ? (
                 <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>{dashboard.liveFeedEmpty}</p>
+              ) : feed.length === 0 ? (
+                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>{dashboard.liveFeedEmpty}</p>
               ) : (
-                <p style={{ margin: 0, fontSize: 13, color: T.ink400, lineHeight: 1.6 }}>{dashboard.liveFeedSoon}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {feed.map((f, i) => {
+                    const dot = f.kind === "win" ? "#7be38a" : f.kind === "redeem" ? "#e8c876" : T.ink400;
+                    return (
+                      <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                        <div style={{ width: 7, height: 7, borderRadius: "50%", background: dot, marginTop: 5, flexShrink: 0 }} />
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ fontSize: 12.5, color: T.ink200, lineHeight: 1.35, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{f.label}</div>
+                          <div style={{ fontSize: 11, color: T.ink500, marginTop: 1 }}>
+                            {f.venue} · {new Date(f.at).toLocaleString(copyText.meta.locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </aside>
           </div>
