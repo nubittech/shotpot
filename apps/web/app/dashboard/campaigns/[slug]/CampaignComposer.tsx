@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getClientCopy } from "../../../../lib/i18n/client";
 
 type Audiences = {
   all: number;
@@ -14,17 +15,18 @@ type Audiences = {
 
 type Audience = keyof Audiences;
 
-const AUDIENCE_LABELS: Record<Audience, { label: string; emoji: string; desc: string }> = {
-  all:            { label: "Tümü",            emoji: "🌐", desc: "Tüm kayıtlı müşteriler" },
-  active30:       { label: "Aktif (Son 30g)", emoji: "✨", desc: "Son 30 gün içinde ziyaret eden" },
-  dormant30:      { label: "Uyuyan (30g+)",   emoji: "😴", desc: "30 gündür ziyaret etmeyen" },
-  loyalty_silver: { label: "Silver+ Üyeler",  emoji: "🥈", desc: "Silver ve Gold seviye üyeler" },
-  loyalty_gold:   { label: "Altın Üyeler",    emoji: "🥇", desc: "Gold seviye VIP'ler" },
-  consented:      { label: "Onaylı Pazarlama",emoji: "✅", desc: "KVKK pazarlama onayı veren" },
+const AUDIENCE_EMOJI: Record<Audience, string> = {
+  all: "🌐",
+  active30: "✨",
+  dormant30: "😴",
+  loyalty_silver: "🥈",
+  loyalty_gold: "🥇",
+  consented: "✅",
 };
 
 export function CampaignComposer({ slug, venueName, audiences }: { slug: string; venueName: string; audiences: Audiences }) {
   const router = useRouter();
+  const copy = getClientCopy().dashboardPages.campaigns;
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [audience, setAudience] = useState<Audience>("consented");
@@ -36,7 +38,7 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (audiences[audience] === 0) {
-      setMsg({ ok: false, text: `Bu kitlede henüz müşteri yok.` });
+      setMsg({ ok: false, text: copy.noCustomers });
       return;
     }
     setBusy(true);
@@ -52,14 +54,14 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg({ ok: false, text: data.error ?? "Gönderilemedi." });
+        setMsg({ ok: false, text: data.error ?? copy.sendError });
         return;
       }
-      setMsg({ ok: true, text: `✓ ${data.sentCount} müşteriye gönderildi${data.withCoupons ? " + kupon eklendi" : ""}` });
+      setMsg({ ok: true, text: copy.sendSuccess.replace("{n}", String(data.sentCount)) + (data.withCoupons ? copy.sendSuccessCoupons : "") });
       setTitle(""); setBody(""); setReward("");
       setTimeout(() => router.refresh(), 800);
     } catch {
-      setMsg({ ok: false, text: "Ağ hatası." });
+      setMsg({ ok: false, text: copy.networkError });
     } finally {
       setBusy(false);
     }
@@ -70,10 +72,11 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
 
       {/* Audience selector */}
       <div>
-        <label style={labelStyle}>👥 Hedef Kitle</label>
+        <label style={labelStyle}>{copy.audienceLabel}</label>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 8 }}>
-          {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => {
-            const cfg = AUDIENCE_LABELS[a];
+          {(Object.keys(AUDIENCE_EMOJI) as Audience[]).map((a) => {
+            const cfg = copy.audience[a];
+            const emoji = AUDIENCE_EMOJI[a];
             const cnt = audiences[a];
             const sel = audience === a;
             return (
@@ -88,7 +91,7 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
                   color: "#f4efe6",
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{cfg.emoji} {cfg.label}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{emoji} {cfg.label}</div>
                 <div style={{ fontSize: 10, color: "rgba(244,239,230,0.5)", marginTop: 3 }}>{cfg.desc}</div>
                 <div style={{ fontSize: 16, fontWeight: 800, color: sel ? "#a78bfa" : "#ffd84e", marginTop: 6 }}>{cnt}</div>
               </button>
@@ -99,13 +102,13 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
 
       {/* Title */}
       <div>
-        <label style={labelStyle}>📝 Başlık</label>
+        <label style={labelStyle}>{copy.titleLabel}</label>
         <input
           required
           maxLength={80}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder={`${venueName}'den özel kampanya!`}
+          placeholder={copy.titlePlaceholder.replace("{venue}", venueName)}
           style={inputStyle}
         />
         <div style={charCount}>{title.length}/80</div>
@@ -113,14 +116,14 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
 
       {/* Body */}
       <div>
-        <label style={labelStyle}>💬 Mesaj</label>
+        <label style={labelStyle}>{copy.messageLabel}</label>
         <textarea
           required
           maxLength={400}
           rows={4}
           value={body}
           onChange={(e) => setBody(e.target.value)}
-          placeholder="Bu hafta sonu sana özel… kuponunu mağazada göster, %20 indirim al!"
+          placeholder={copy.messagePlaceholder}
           style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit", lineHeight: 1.5 }}
         />
         <div style={charCount}>{body.length}/400</div>
@@ -135,8 +138,8 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
             onChange={(e) => setWithGift(e.target.checked)}
             style={{ width: 16, height: 16, accentColor: "#a78bfa" }}
           />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "#f4efe6" }}>🎁 Hediye kupon ekle</span>
-          <span style={{ fontSize: 11, color: "rgba(244,239,230,0.4)" }}>her alıcıya benzersiz kod oluşturulur</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: "#f4efe6" }}>{copy.giftCheckbox}</span>
+          <span style={{ fontSize: 11, color: "rgba(244,239,230,0.4)" }}>{copy.giftHint}</span>
         </label>
         {withGift && (
           <input
@@ -144,7 +147,7 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
             maxLength={60}
             value={reward}
             onChange={(e) => setReward(e.target.value)}
-            placeholder="Örn: 1 bardak ev şarabı bizden"
+            placeholder={copy.rewardPlaceholder}
             style={{ ...inputStyle, marginTop: 10 }}
           />
         )}
@@ -172,7 +175,7 @@ export function CampaignComposer({ slug, venueName, audiences }: { slug: string;
           opacity: busy ? 0.6 : 1,
         }}
       >
-        {busy ? "Gönderiliyor…" : `📨 ${audiences[audience]} kişiye gönder`}
+        {busy ? copy.sending : copy.sendTo.replace("{n}", String(audiences[audience]))}
       </button>
     </form>
   );

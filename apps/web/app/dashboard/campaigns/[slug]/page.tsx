@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import type { MarketingCampaign } from "../../../../lib/supabase/types";
+import { getServerCopy } from "../../../../lib/i18n/server";
 import { CampaignComposer } from "./CampaignComposer";
 
 type Params = { params: { slug: string } };
@@ -24,6 +25,10 @@ export default async function CampaignsPage({ params }: Params) {
 
   const v = venue as { id: string; name: string; slug: string; tier: string };
   if (v.tier !== "pro") redirect(`/dashboard/customers/${v.slug}`);
+
+  const serverCopy = getServerCopy();
+  const copy = serverCopy.dashboardPages.campaigns;
+  const locale = serverCopy.meta.locale;
 
   // Audience counts
   const now = new Date();
@@ -82,23 +87,23 @@ export default async function CampaignsPage({ params }: Params) {
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Kampanyalar</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
         <div style={{ flex: 1 }} />
-        <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
-        <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>Analitik</Link>
+        <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>{copy.navCustomers}</Link>
+        <Link href={`/dashboard/analytics/${v.slug}`} style={navLink}>{copy.navAnalytics}</Link>
       </header>
 
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800 }}>Kampanya Gönder</h1>
+        <h1 style={{ margin: "0 0 24px", fontSize: 22, fontWeight: 800 }}>{copy.title}</h1>
 
         <CampaignComposer slug={v.slug} venueName={v.name} audiences={audiences} />
 
         {/* Past campaigns */}
-        <h2 style={{ margin: "40px 0 16px", fontSize: 14, fontWeight: 800, color: "rgba(244,239,230,0.65)", textTransform: "uppercase", letterSpacing: "0.12em" }}>📜 Geçmiş Kampanyalar ({campaigns.length})</h2>
+        <h2 style={{ margin: "40px 0 16px", fontSize: 14, fontWeight: 800, color: "rgba(244,239,230,0.65)", textTransform: "uppercase", letterSpacing: "0.12em" }}>{copy.pastTitle.replace("{count}", String(campaigns.length))}</h2>
 
         {campaigns.length === 0 ? (
           <div style={{ padding: "32px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 14, color: "rgba(244,239,230,0.4)", fontSize: 13 }}>
-            Henüz gönderilmiş kampanya yok.
+            {copy.pastEmpty}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -107,14 +112,14 @@ export default async function CampaignsPage({ params }: Params) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 6 }}>
                   <div style={{ fontSize: 14, fontWeight: 800 }}>{c.title}</div>
                   <div style={{ fontSize: 11, color: "rgba(244,239,230,0.4)", flexShrink: 0, whiteSpace: "nowrap" }}>
-                    {c.sent_at ? new Date(c.sent_at).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Taslak"}
+                    {c.sent_at ? new Date(c.sent_at).toLocaleString(locale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : copy.draft}
                   </div>
                 </div>
                 <div style={{ fontSize: 12, color: "rgba(244,239,230,0.55)", lineHeight: 1.5, marginBottom: 8 }}>{c.body}</div>
                 <div style={{ display: "flex", gap: 14, fontSize: 11, color: "rgba(244,239,230,0.45)" }}>
-                  <span>📤 {c.sent_count} gönderildi</span>
-                  <span>👁 {engagement.get(c.id)?.opened ?? 0} okundu</span>
-                  <span>🎟 {engagement.get(c.id)?.redeemed ?? 0} kullanıldı</span>
+                  <span>📤 {c.sent_count} {copy.sent}</span>
+                  <span>👁 {engagement.get(c.id)?.opened ?? 0} {copy.opened}</span>
+                  <span>🎟 {engagement.get(c.id)?.redeemed ?? 0} {copy.redeemed}</span>
                   {c.reward_label && <span style={{ color: "#a78bfa" }}>🎁 {c.reward_label}</span>}
                 </div>
               </div>

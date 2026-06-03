@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
 import type { CustomerMenu, CustomerMenuItem } from "../../../../lib/supabase/types";
+import { getServerCopy } from "../../../../lib/i18n/server";
 import { MenuClient, type MenuView } from "./MenuClient";
 
 type Params = { params: { slug: string } };
@@ -24,6 +25,8 @@ export default async function MenusPage({ params }: Params) {
 
   const v = venue as { id: string; name: string; slug: string; tier: string };
   if (v.tier !== "pro") redirect(`/dashboard/customers/${v.slug}`);
+
+  const copy = getServerCopy().dashboardPages.menus;
 
   const { data: menusRaw } = await svc
     .from("customer_menus")
@@ -67,18 +70,16 @@ export default async function MenusPage({ params }: Params) {
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Özel Menüler</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
         <div style={{ flex: 1 }} />
-        <Link href={`/dashboard/gifts/${v.slug}`} style={navLink}>Hediye Çark</Link>
-        <Link href={`/dashboard/campaigns/${v.slug}`} style={navLink}>Kampanyalar</Link>
+        <Link href={`/dashboard/gifts/${v.slug}`} style={navLink}>{copy.navGifts}</Link>
+        <Link href={`/dashboard/campaigns/${v.slug}`} style={navLink}>{copy.navCampaigns}</Link>
       </header>
 
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 800 }}>📋 Sana Özel Menü</h1>
+        <h1 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 800 }}>{copy.title}</h1>
         <p style={{ margin: "0 0 24px", fontSize: 13, color: "rgba(244,239,230,0.5)", lineHeight: 1.5 }}>
-          Belirli müşteri segmentlerine özel indirimli menüler yayınla. Müşteri
-          uygulamasında sadece kendi segmentindeki menüyü görür — gelmeden önce
-          o günün kampanyasına bakar.
+          {copy.desc}
         </p>
 
         <MenuClient slug={v.slug} initialMenus={menuViews} />

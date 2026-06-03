@@ -2,17 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getClientCopy } from "../../../../lib/i18n/client";
 
 type Audience = "all" | "active30" | "dormant30" | "loyalty_silver" | "loyalty_gold" | "consented";
-
-const AUDIENCE_LABELS: Record<Audience, string> = {
-  all: "🌐 Tümü",
-  active30: "✨ Aktif (30g)",
-  dormant30: "😴 Uyuyan (30g+)",
-  loyalty_silver: "🥈 Silver+ Üyeler",
-  loyalty_gold: "🥇 Altın Üyeler",
-  consented: "✅ Onaylı Pazarlama",
-};
 
 export type MenuItemView = { name: string; description: string; oldPrice: number | null; newPrice: number | null };
 export type MenuView = {
@@ -42,21 +34,26 @@ function blankMenu(): MenuView {
  * it isn't.
  */
 type MenuStatus = { label: string; color: string };
-function menuStatus(m: MenuView): MenuStatus {
-  if (!m.active) return { label: "○ Taslak", color: "rgba(244,239,230,0.4)" };
+type MenuCopy = ReturnType<typeof getClientCopy>["dashboardPages"]["menus"];
+function menuStatus(m: MenuView, copy: MenuCopy, locale: string): MenuStatus {
+  if (!m.active) return { label: copy.draft, color: "rgba(244,239,230,0.4)" };
   const today = new Date().toISOString().slice(0, 10);
   if (m.validTo && m.validTo < today) {
-    return { label: "⛔ Süresi doldu", color: "#ff7e5a" };
+    return { label: copy.expired, color: "#ff7e5a" };
   }
   if (m.validFrom && m.validFrom > today) {
-    const d = new Date(m.validFrom).toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
-    return { label: `🕓 ${d}'de başlar`, color: "#ffd84e" };
+    const d = new Date(m.validFrom).toLocaleDateString(locale, { day: "numeric", month: "long" });
+    return { label: copy.startsOn.replace("{date}", d), color: "#ffd84e" };
   }
-  return { label: "● Yayında", color: "#8ef2a1" };
+  return { label: copy.live, color: "#8ef2a1" };
 }
 
 export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus: MenuView[] }) {
   const router = useRouter();
+  const fullCopy = getClientCopy();
+  const copy = fullCopy.dashboardPages.menus;
+  const locale = fullCopy.meta.locale;
+  const AUDIENCE_LABELS = copy.audience;
   const [editing, setEditing] = useState<MenuView | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -80,7 +77,7 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
 
   async function save() {
     if (!editing) return;
-    if (!editing.title.trim()) { setMsg({ ok: false, text: "Menü başlığı gerekli." }); return; }
+    if (!editing.title.trim()) { setMsg({ ok: false, text: copy.titleRequired }); return; }
     setBusy(true);
     setMsg(null);
     try {
@@ -109,20 +106,20 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg({ ok: false, text: data.error ?? "Kaydedilemedi." });
+        setMsg({ ok: false, text: data.error ?? copy.saveError });
       } else {
         setEditing(null);
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Bağlantı hatası." });
+      setMsg({ ok: false, text: copy.connectionError });
     } finally {
       setBusy(false);
     }
   }
 
   async function remove(id: string) {
-    if (!confirm("Bu menü silinsin mi?")) return;
+    if (!confirm(copy.confirmDelete)) return;
     try {
       const res = await fetch("/api/dashboard/menus", {
         method: "DELETE",
@@ -137,7 +134,7 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
     <div style={{ display: "grid", gap: 20 }}>
       {!editing && (
         <button onClick={() => { setEditing(blankMenu()); setMsg(null); }} style={primaryBtn}>
-          + Yeni Menü Oluştur
+          {copy.newMenu}
         </button>
       )}
 
@@ -145,18 +142,18 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
       {editing && (
         <div style={cardBox}>
           <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 16 }}>
-            {editing.id ? "Menüyü Düzenle" : "Yeni Menü"}
+            {editing.id ? copy.editMenu : copy.newMenuTitle}
           </div>
 
-          <Label>Menü Başlığı</Label>
-          <input value={editing.title} onChange={(e) => patch({ title: e.target.value })} placeholder="örn. Salı Akşamı Kampanyası" style={input} />
+          <Label>{copy.menuTitleLabel}</Label>
+          <input value={editing.title} onChange={(e) => patch({ title: e.target.value })} placeholder={copy.menuTitlePlaceholder} style={input} />
 
-          <Label>Açıklama</Label>
-          <input value={editing.description} onChange={(e) => patch({ description: e.target.value })} placeholder="Kısa açıklama (opsiyonel)" style={input} />
+          <Label>{copy.descriptionLabel}</Label>
+          <input value={editing.description} onChange={(e) => patch({ description: e.target.value })} placeholder={copy.descriptionPlaceholder} style={input} />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <Label>Kime Görünsün</Label>
+              <Label>{copy.audienceLabel}</Label>
               <select value={editing.audience} onChange={(e) => patch({ audience: e.target.value as Audience })} style={input}>
                 {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => (
                   <option key={a} value={a} style={{ background: "#1a1a1c" }}>{AUDIENCE_LABELS[a]}</option>
@@ -164,42 +161,42 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
               </select>
             </div>
             <div>
-              <Label>Durum</Label>
+              <Label>{copy.statusLabel}</Label>
               <button onClick={() => patch({ active: !editing.active })} style={{ ...input, textAlign: "left", cursor: "pointer", color: editing.active ? "#8ef2a1" : "rgba(244,239,230,0.5)" }}>
-                {editing.active ? "● Yayında" : "○ Taslak"}
+                {editing.active ? copy.live : copy.draft}
               </button>
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <Label>Başlangıç (ops.)</Label>
+              <Label>{copy.startLabel}</Label>
               <input type="date" value={editing.validFrom} onChange={(e) => patch({ validFrom: e.target.value })} style={input} />
             </div>
             <div>
-              <Label>Bitiş (ops.)</Label>
+              <Label>{copy.endLabel}</Label>
               <input type="date" value={editing.validTo} onChange={(e) => patch({ validTo: e.target.value })} style={input} />
               {editing.active && editing.validTo && editing.validTo < new Date().toISOString().slice(0, 10) && (
                 <div style={{ fontSize: 11, color: "#ff7e5a", marginTop: 6, lineHeight: 1.4 }}>
-                  ⚠ Bu tarih geçmişte — kaydedersen menü müşterilere görünmez. Boş bırak = süresiz.
+                  {copy.pastDateWarning}
                 </div>
               )}
             </div>
           </div>
 
-          <Label>Menü Ürünleri</Label>
+          <Label>{copy.menuItems}</Label>
           <div style={{ display: "grid", gap: 8 }}>
             {editing.items.map((it, i) => (
               <div key={i} style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 70px 70px 28px", gap: 6, alignItems: "center" }}>
-                <input value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} placeholder="Ürün adı" style={inputSm} />
-                <input value={it.description} onChange={(e) => patchItem(i, { description: e.target.value })} placeholder="Açıklama" style={inputSm} />
-                <input type="number" value={it.oldPrice ?? ""} onChange={(e) => patchItem(i, { oldPrice: e.target.value ? Number(e.target.value) : null })} placeholder="Eski" style={inputSm} />
-                <input type="number" value={it.newPrice ?? ""} onChange={(e) => patchItem(i, { newPrice: e.target.value ? Number(e.target.value) : null })} placeholder="Yeni" style={inputSm} />
+                <input value={it.name} onChange={(e) => patchItem(i, { name: e.target.value })} placeholder={copy.itemName} style={inputSm} />
+                <input value={it.description} onChange={(e) => patchItem(i, { description: e.target.value })} placeholder={copy.itemDescription} style={inputSm} />
+                <input type="number" value={it.oldPrice ?? ""} onChange={(e) => patchItem(i, { oldPrice: e.target.value ? Number(e.target.value) : null })} placeholder={copy.itemOld} style={inputSm} />
+                <input type="number" value={it.newPrice ?? ""} onChange={(e) => patchItem(i, { newPrice: e.target.value ? Number(e.target.value) : null })} placeholder={copy.itemNew} style={inputSm} />
                 <button onClick={() => removeItem(i)} style={{ ...inputSm, cursor: "pointer", color: "#ff7e5a", textAlign: "center", padding: 0 }}>✕</button>
               </div>
             ))}
           </div>
-          <button onClick={addItem} style={{ ...ghostBtn, marginTop: 8 }}>+ Ürün ekle</button>
+          <button onClick={addItem} style={{ ...ghostBtn, marginTop: 8 }}>{copy.addItem}</button>
 
           {msg && (
             <div style={{
@@ -212,9 +209,9 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
 
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
             <button onClick={save} disabled={busy} style={{ ...primaryBtn, flex: 1, opacity: busy ? 0.6 : 1 }}>
-              {busy ? "Kaydediliyor…" : "Kaydet"}
+              {busy ? copy.saving : copy.save}
             </button>
-            <button onClick={() => { setEditing(null); setMsg(null); }} style={ghostBtn}>Vazgeç</button>
+            <button onClick={() => { setEditing(null); setMsg(null); }} style={ghostBtn}>{copy.cancel}</button>
           </div>
         </div>
       )}
@@ -223,15 +220,15 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
       {!editing && (
         <>
           <h2 style={{ margin: "8px 0 0", fontSize: 13, fontWeight: 800, color: "rgba(244,239,230,0.6)", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            Menüler ({initialMenus.length})
+            {copy.sectionTitle.replace("{count}", String(initialMenus.length))}
           </h2>
           {initialMenus.length === 0 ? (
             <div style={{ padding: "32px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 14, color: "rgba(244,239,230,0.4)", fontSize: 13 }}>
-              Henüz menü yok. İlk özel menünü oluştur.
+              {copy.empty}
             </div>
           ) : (
             initialMenus.map((m) => {
-              const status = menuStatus(m);
+              const status = menuStatus(m, copy, locale);
               const expired = m.active && !!m.validTo && m.validTo < new Date().toISOString().slice(0, 10);
               return (
               <div key={m.id} style={cardBox}>
@@ -244,18 +241,18 @@ export function MenuClient({ slug, initialMenus }: { slug: string; initialMenus:
                       </span>
                     </div>
                     <div style={{ fontSize: 12, color: "rgba(244,239,230,0.5)", marginTop: 3 }}>
-                      {AUDIENCE_LABELS[m.audience]} · {m.items.length} ürün
-                      {m.validTo && <> · bitiş {new Date(m.validTo).toLocaleDateString("tr-TR", { day: "numeric", month: "short" })}</>}
+                      {AUDIENCE_LABELS[m.audience]} · {copy.itemCount.replace("{n}", String(m.items.length))}
+                      {m.validTo && <> · {copy.ends.replace("{date}", new Date(m.validTo).toLocaleDateString(locale, { day: "numeric", month: "short" }))}</>}
                     </div>
                     {expired && (
                       <div style={{ fontSize: 11, color: "#ff7e5a", marginTop: 6, lineHeight: 1.4 }}>
-                        Bu menü müşterilere görünmüyor — bitiş tarihi geçti. Düzenleyip tarihi uzat.
+                        {copy.expiredWarning}
                       </div>
                     )}
                   </div>
                   <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                    <button onClick={() => { setEditing(m); setMsg(null); }} style={ghostBtn}>Düzenle</button>
-                    <button onClick={() => remove(m.id)} style={{ ...ghostBtn, color: "#ff7e5a" }}>Sil</button>
+                    <button onClick={() => { setEditing(m); setMsg(null); }} style={ghostBtn}>{copy.edit}</button>
+                    <button onClick={() => remove(m.id)} style={{ ...ghostBtn, color: "#ff7e5a" }}>{copy.delete}</button>
                   </div>
                 </div>
               </div>

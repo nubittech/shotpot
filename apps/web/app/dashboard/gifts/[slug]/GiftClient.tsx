@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getClientCopy } from "../../../../lib/i18n/client";
 
 type Audiences = {
   all: number;
@@ -13,13 +14,13 @@ type Audiences = {
 };
 type Audience = keyof Audiences;
 
-const AUDIENCE_LABELS: Record<Audience, { label: string; emoji: string; desc: string }> = {
-  all:            { label: "Tümü",            emoji: "🌐", desc: "Tüm kayıtlı müşteriler" },
-  active30:       { label: "Aktif (Son 30g)", emoji: "✨", desc: "Son 30 gün içinde ziyaret eden" },
-  dormant30:      { label: "Uyuyan (30g+)",   emoji: "😴", desc: "30 gündür ziyaret etmeyen" },
-  loyalty_silver: { label: "Silver+ Üyeler",  emoji: "🥈", desc: "Silver ve Gold seviye üyeler" },
-  loyalty_gold:   { label: "Altın Üyeler",    emoji: "🥇", desc: "Gold seviye VIP müşteriler" },
-  consented:      { label: "Onaylı Pazarlama",emoji: "✅", desc: "KVKK pazarlama onayı veren" },
+const AUDIENCE_EMOJI: Record<Audience, string> = {
+  all: "🌐",
+  active30: "✨",
+  dormant30: "😴",
+  loyalty_silver: "🥈",
+  loyalty_gold: "🥇",
+  consented: "✅",
 };
 
 type Stats = { pending: number; used: number; granted: number; usageRate: number };
@@ -33,6 +34,7 @@ export function GiftClient({
   stats: Stats;
 }) {
   const router = useRouter();
+  const copy = getClientCopy().dashboardPages.gifts;
   const [audience, setAudience] = useState<Audience>("all");
   const [count, setCount] = useState(1);
   const [daily, setDaily] = useState(initialDaily);
@@ -41,7 +43,7 @@ export function GiftClient({
 
   async function sendGifts() {
     if (audiences[audience] === 0) {
-      setMsg({ ok: false, text: "Bu kitlede henüz müşteri yok." });
+      setMsg({ ok: false, text: copy.noCustomers });
       return;
     }
     setBusy(true);
@@ -54,13 +56,13 @@ export function GiftClient({
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg({ ok: false, text: data.error ?? "Gönderilemedi." });
+        setMsg({ ok: false, text: data.error ?? copy.sendError });
       } else {
-        setMsg({ ok: true, text: `${data.customers} müşteriye toplam ${data.spinsGranted} çark hakkı gönderildi.` });
+        setMsg({ ok: true, text: copy.sendSuccess.replace("{customers}", String(data.customers)).replace("{spins}", String(data.spinsGranted)) });
         router.refresh();
       }
     } catch {
-      setMsg({ ok: false, text: "Bağlantı hatası." });
+      setMsg({ ok: false, text: copy.connectionError });
     } finally {
       setBusy(false);
     }
@@ -86,9 +88,9 @@ export function GiftClient({
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
         {[
-          { label: "Bekleyen", value: stats.pending, color: "#ffd84e" },
-          { label: "Kullanılan", value: stats.used, color: "#8ef2a1" },
-          { label: "Kullanım Oranı", value: `%${stats.usageRate}`, color: "#a78bfa" },
+          { label: copy.statPending, value: stats.pending, color: "#ffd84e" },
+          { label: copy.statUsed, value: stats.used, color: "#8ef2a1" },
+          { label: copy.statUsageRate, value: `%${stats.usageRate}`, color: "#a78bfa" },
         ].map((s) => (
           <div key={s.label} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "16px 18px" }}>
             <div style={{ fontSize: 24, fontWeight: 900, color: s.color }}>{s.value}</div>
@@ -105,9 +107,9 @@ export function GiftClient({
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16,
       }}>
         <div>
-          <div style={{ fontSize: 14, fontWeight: 800 }}>📅 Günlük Hediye Çark</div>
+          <div style={{ fontSize: 14, fontWeight: 800 }}>{copy.dailyTitle}</div>
           <div style={{ fontSize: 12, color: "rgba(244,239,230,0.55)", marginTop: 4, lineHeight: 1.5, maxWidth: 460 }}>
-            Açık olduğunda her kayıtlı müşteri günde 1 ücretsiz çark hakkı kazanır. Her gün otomatik sıfırlanır.
+            {copy.dailyDesc}
           </div>
         </div>
         <button
@@ -118,7 +120,7 @@ export function GiftClient({
             background: daily ? "#ffd84e" : "rgba(255,255,255,0.15)",
             transition: "background 0.15s",
           }}
-          aria-label="Günlük hediye çark"
+          aria-label={copy.dailyAria}
         >
           <span style={{
             position: "absolute", top: 3, left: daily ? 25 : 3,
@@ -130,12 +132,13 @@ export function GiftClient({
 
       {/* Manual send */}
       <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "20px" }}>
-        <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 14 }}>🎯 Manuel Çark Gönder</div>
+        <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 14 }}>{copy.manualTitle}</div>
 
-        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Kime</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>{copy.toLabel}</div>
         <div style={{ display: "grid", gap: 8, marginBottom: 18 }}>
-          {(Object.keys(AUDIENCE_LABELS) as Audience[]).map((a) => {
-            const meta = AUDIENCE_LABELS[a];
+          {(Object.keys(AUDIENCE_EMOJI) as Audience[]).map((a) => {
+            const meta = copy.audience[a];
+            const emoji = AUDIENCE_EMOJI[a];
             const cnt = audiences[a];
             const active = audience === a;
             return (
@@ -150,7 +153,7 @@ export function GiftClient({
                   color: "#f4efe6",
                 }}
               >
-                <span style={{ fontSize: 18 }}>{meta.emoji}</span>
+                <span style={{ fontSize: 18 }}>{emoji}</span>
                 <span style={{ flex: 1 }}>
                   <span style={{ fontSize: 13, fontWeight: 700 }}>{meta.label}</span>
                   <span style={{ display: "block", fontSize: 11, color: "rgba(244,239,230,0.45)" }}>{meta.desc}</span>
@@ -161,7 +164,7 @@ export function GiftClient({
           })}
         </div>
 
-        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Kişi başı çark hakkı</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: "rgba(244,239,230,0.5)", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>{copy.perPersonLabel}</div>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
           <input
             type="range" min={1} max={10} value={count}
@@ -189,7 +192,7 @@ export function GiftClient({
             cursor: busy ? "default" : "pointer", opacity: busy ? 0.6 : 1,
           }}
         >
-          {busy ? "Gönderiliyor…" : `🎁 ${AUDIENCE_LABELS[audience].label} kitlesine gönder`}
+          {busy ? copy.sending : copy.sendTo.replace("{audience}", copy.audience[audience].label)}
         </button>
       </div>
     </div>

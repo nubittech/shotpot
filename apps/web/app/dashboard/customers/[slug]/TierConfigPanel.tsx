@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { getClientCopy } from "../../../../lib/i18n/client";
 
 export type TierConfig = {
   silverVisits: number;
@@ -12,6 +13,7 @@ export type TierConfig = {
 
 export function TierConfigPanel({ slug, initial }: { slug: string; initial: TierConfig }) {
   const router = useRouter();
+  const copy = getClientCopy().dashboardPages.customers.tierConfig;
   const [open, setOpen] = useState(false);
   const [cfg, setCfg] = useState<TierConfig>(initial);
   const [busy, setBusy] = useState(false);
@@ -32,13 +34,13 @@ export function TierConfigPanel({ slug, initial }: { slug: string; initial: Tier
       });
       const data = await res.json();
       if (!res.ok) {
-        setMsg(data.error ?? "Kaydedilemedi.");
+        setMsg(data.error ?? copy.saveError);
       } else {
-        setMsg(`✓ Kaydedildi — ${data.changed} müşterinin seviyesi güncellendi.`);
+        setMsg(copy.saved.replace("{n}", String(data.changed)));
         router.refresh();
       }
     } catch {
-      setMsg("Bağlantı hatası.");
+      setMsg(copy.connectionError);
     } finally {
       setBusy(false);
     }
@@ -52,9 +54,9 @@ export function TierConfigPanel({ slug, initial }: { slug: string; initial: Tier
       >
         <span style={{ fontSize: 18 }}>👑</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 14, fontWeight: 800 }}>VIP Seviye Ayarları</div>
+          <div style={{ fontSize: 14, fontWeight: 800 }}>{copy.title}</div>
           <div style={{ fontSize: 12, color: "rgba(244,239,230,0.45)" }}>
-            Müşteriler harcama veya ziyaret eşiğini geçince otomatik seviye atlar.
+            {copy.desc}
           </div>
         </div>
         <span style={{ fontSize: 13, color: "rgba(244,239,230,0.5)" }}>{open ? "▲" : "▼"}</span>
@@ -65,29 +67,30 @@ export function TierConfigPanel({ slug, initial }: { slug: string; initial: Tier
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             {/* Silver */}
             <div style={tierBox}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>🥈 Silver eşiği</div>
-              <Field label="Ziyaret sayısı">
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>{copy.silverTitle}</div>
+              <Field label={copy.visits}>
                 <input type="number" min={1} value={cfg.silverVisits || ""} onChange={(e) => set("silverVisits", e.target.value)} style={input} />
               </Field>
-              <Field label="veya Toplam harcama (₺)">
+              <Field label={copy.orSpend.replace("{currency}", "₺")}>
                 <input type="number" min={0} value={cfg.silverSpend || ""} onChange={(e) => set("silverSpend", e.target.value)} style={input} />
               </Field>
             </div>
             {/* Gold */}
             <div style={tierBox}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>🥇 Gold eşiği</div>
-              <Field label="Ziyaret sayısı">
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>{copy.goldTitle}</div>
+              <Field label={copy.visits}>
                 <input type="number" min={1} value={cfg.goldVisits || ""} onChange={(e) => set("goldVisits", e.target.value)} style={input} />
               </Field>
-              <Field label="veya Toplam harcama (₺)">
+              <Field label={copy.orSpend.replace("{currency}", "₺")}>
                 <input type="number" min={0} value={cfg.goldSpend || ""} onChange={(e) => set("goldSpend", e.target.value)} style={input} />
               </Field>
             </div>
           </div>
 
           <p style={{ fontSize: 11.5, color: "rgba(244,239,230,0.4)", lineHeight: 1.5, margin: "12px 0 0" }}>
-            Bir müşteri, eşiklerden <strong>herhangi birini</strong> geçtiğinde o seviyeye yükselir.
-            Kaydettiğinde mevcut tüm müşterilerin seviyesi yeni eşiklere göre yeniden hesaplanır.
+            {copy.note.split(copy.noteStrong).flatMap((part, i) =>
+              i === 0 ? [part] : [<strong key={i}>{copy.noteStrong}</strong>, part]
+            )}
           </p>
 
           {msg && (
@@ -99,7 +102,7 @@ export function TierConfigPanel({ slug, initial }: { slug: string; initial: Tier
             background: "#ffd84e", color: "#1a1208", fontSize: 13, fontWeight: 800,
             cursor: "pointer", opacity: busy ? 0.6 : 1,
           }}>
-            {busy ? "Kaydediliyor…" : "Kaydet ve yeniden hesapla"}
+            {busy ? copy.saving : copy.save}
           </button>
         </div>
       )}

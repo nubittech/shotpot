@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { getServerCopy } from "../../../../lib/i18n/server";
 import { GiftClient } from "./GiftClient";
 
 type Params = { params: { slug: string } };
@@ -24,6 +25,7 @@ export default async function GiftsPage({ params }: Params) {
   const v = venue as { id: string; name: string; slug: string; tier: string; gift_daily_enabled: boolean | null };
   if (v.tier !== "pro") redirect(`/dashboard/customers/${v.slug}`);
 
+  const copy = getServerCopy().dashboardPages.gifts;
   const d30 = new Date(Date.now() - 30 * 86400_000).toISOString();
   const [
     { count: total },
@@ -68,17 +70,16 @@ export default async function GiftsPage({ params }: Params) {
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
-        <span style={{ color: "#f4efe6", fontSize: 13 }}>Hediye Çark</span>
+        <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
         <div style={{ flex: 1 }} />
-        <Link href={`/dashboard/campaigns/${v.slug}`} style={navLink}>Kampanyalar</Link>
-        <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>Müşteriler</Link>
+        <Link href={`/dashboard/campaigns/${v.slug}`} style={navLink}>{copy.navCampaigns}</Link>
+        <Link href={`/dashboard/customers/${v.slug}`} style={navLink}>{copy.navCustomers}</Link>
       </header>
 
       <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>
-        <h1 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 800 }}>🎁 Hediye Çark</h1>
+        <h1 style={{ margin: "0 0 6px", fontSize: 22, fontWeight: 800 }}>{copy.title}</h1>
         <p style={{ margin: "0 0 24px", fontSize: 13, color: "rgba(244,239,230,0.5)", lineHeight: 1.5 }}>
-          Müşterilerine fiş okutmadan çark hakkı gönder. Müşteri uygulamayı açtığında
-          parlayan bir kart görür ve çevirip kupon kazanır.
+          {copy.desc}
         </p>
 
         <GiftClient
