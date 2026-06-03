@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { sendPushToCustomers } from "../../../../lib/push";
 
 type SendBody = {
   slug: string;
@@ -121,11 +122,24 @@ export async function POST(req: NextRequest) {
       await svc.from("campaign_deliveries").insert(deliveries);
     }
 
+    // Fire web push to subscribed recipients (best-effort; no-ops without VAPID).
+    const pushRes = await sendPushToCustomers(
+      svc,
+      targetList.map((t) => t.id),
+      {
+        title: body.title,
+        body: body.body,
+        url: `/play/${body.slug}`,
+        tag: `campaign-${campaignId}`,
+      },
+    ).catch(() => ({ sent: 0 }));
+
     return NextResponse.json({
       ok: true,
       campaignId,
       sentCount: targetList.length,
       withCoupons: !!body.reward_label,
+      pushed: pushRes.sent,
     });
   } catch (e: unknown) {
     return NextResponse.json({ error: String(e) }, { status: 500 });

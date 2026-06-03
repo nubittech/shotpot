@@ -103,6 +103,17 @@ export interface Campaign {
   created_at: string;
 }
 
+/** Web push subscription (migration 016) */
+export interface PushSubscription {
+  id: string;
+  customer_id: string;
+  venue_id: string | null;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  created_at: string;
+}
+
 /** Pro tier customer account (migration 005) */
 export interface CustomerPro {
   id: string;
@@ -225,6 +236,7 @@ export interface Database {
       gift_spins:          { Row: GiftSpin;          Insert: Partial<GiftSpin>;          Update: Partial<GiftSpin>; };
       customer_menus:      { Row: CustomerMenu;      Insert: Partial<CustomerMenu>;      Update: Partial<CustomerMenu>; };
       customer_menu_items: { Row: CustomerMenuItem;  Insert: Partial<CustomerMenuItem>;  Update: Partial<CustomerMenuItem>; };
+      push_subscriptions:  { Row: PushSubscription;  Insert: Partial<PushSubscription>;  Update: Partial<PushSubscription>; };
     };
   };
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase/browser";
 import type { CustomerPro, Coupon } from "../../../lib/supabase/types";
+import { pushSupported, pushPermission, enablePush } from "../../../lib/push-client";
 
 type CouponStatus = "active" | "redeemed" | "expired";
 
@@ -53,6 +54,9 @@ export default function ProfilePage() {
   const [editName, setEditName] = useState("");
   const [editBirth, setEditBirth] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  // Web push opt-in (Android/installed-PWA only; auto-hidden where unsupported).
+  const [pushState, setPushState] = useState<NotificationPermission | "unsupported">("default");
+  const [pushBusy, setPushBusy] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -89,6 +93,18 @@ export default function ProfilePage() {
     }
     load();
   }, [slug, router]);
+
+  useEffect(() => { setPushState(pushPermission()); }, []);
+
+  async function handleEnablePush() {
+    setPushBusy(true);
+    try {
+      const ok = await enablePush(slug);
+      setPushState(ok ? "granted" : pushPermission());
+    } finally {
+      setPushBusy(false);
+    }
+  }
 
   async function handleSignOut() {
     const sb = createClient();
@@ -221,6 +237,22 @@ export default function ProfilePage() {
               <span style={{ fontSize: 15, fontWeight: 800, color: "#ffd84e" }}>
                 ₺{customer.total_spend.toLocaleString("tr-TR", { minimumFractionDigits: 0 })}
               </span>
+            </div>
+          )}
+
+          {/* Push opt-in — only on supported platforms, only when not yet granted */}
+          {pushState !== "unsupported" && pushState !== "granted" && pushState !== "denied" && (
+            <button onClick={handleEnablePush} disabled={pushBusy} style={{
+              marginTop: 12, width: "100%", padding: "11px 14px", borderRadius: 10,
+              background: "rgba(167,139,250,0.12)", border: "1px solid rgba(167,139,250,0.4)",
+              color: "#a78bfa", fontSize: 13, fontWeight: 700, cursor: "pointer",
+            }}>
+              {pushBusy ? "…" : "🔔 Bildirimleri aç — kampanya ve günlük çark"}
+            </button>
+          )}
+          {pushState === "granted" && (
+            <div style={{ marginTop: 12, fontSize: 12, color: "rgba(244,239,230,0.45)", textAlign: "center" }}>
+              🔔 Bildirimler açık
             </div>
           )}
         </div>
