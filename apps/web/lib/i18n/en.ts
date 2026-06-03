@@ -226,6 +226,7 @@ export const en: Translation = {
     proPlan: "Pro plan",
     completePayment: "Complete payment",
     more: "More",
+    chooseVenue: "Choose venue",
     deleteVenue: {
       title: "Delete venue?",
       permanent: "will be permanently deleted.",

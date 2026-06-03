@@ -224,6 +224,7 @@ export const tr = {
     proPlan: "Pro plan",
     completePayment: "Ödemeyi tamamla",
     more: "Daha fazla",
+    chooseVenue: "İşletme seç",
     deleteVenue: {
       title: "İşletmeyi sil?",
       permanent: "kalıcı olarak silinecek.",

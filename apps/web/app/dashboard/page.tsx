@@ -6,6 +6,7 @@ import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteVenueButton } from "./DeleteVenueButton";
 import { VenueMoreMenu } from "./VenueMoreMenu";
+import { SideFeatureLink } from "./SideFeatureLink";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { SnapJackLogo } from "../../components/SnapJackLogo";
 import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
@@ -74,6 +75,18 @@ export default async function DashboardPage() {
   const analyticsHref = primaryProVenue ? `/dashboard/analytics/${primaryProVenue.slug}` : "/dashboard";
   const customersHref = primaryProVenue ? `/dashboard/customers/${primaryProVenue.slug}` : "/dashboard";
   const couponsHref = venues.length > 0 ? "/dashboard/coupons" : "/dashboard";
+  // Venue-scoped feature nav: Staff works for any active venue; Gift/Menu are Pro-only.
+  const activeVenueOpts = venues.filter((v) => v.active).map((v) => ({ slug: v.slug, name: v.name }));
+  const proVenueOpts = venues.filter((v) => v.active && v.tier === "pro").map((v) => ({ slug: v.slug, name: v.name }));
+  const staffIcon = (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M3.5 16c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+  );
+  const giftIcon = (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3" y="7" width="12" height="8" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M3 9h12M9 7v8" stroke="currentColor" strokeWidth="1.5"/><path d="M9 7C7 7 6 4 7.5 3.5S9 5 9 7zM9 7c2 0 3-3 1.5-3.5S9 5 9 7z" stroke="currentColor" strokeWidth="1.3"/></svg>
+  );
+  const menuIcon = (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3.5" y="2.5" width="11" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+  );
   const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
   const formatSince = (createdAt: string) => {
     const date = new Date(createdAt).toLocaleDateString(copyText.meta.locale, { month: "short", year: "numeric" });
@@ -307,6 +320,9 @@ export default async function DashboardPage() {
                 <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
               </svg>
             }/>
+            <SideFeatureLink venues={activeVenueOpts} hrefTemplate="/scan?venue={slug}" label={dashboard.waiter} icon={staffIcon} pickTitle={dashboard.chooseVenue} />
+            <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/gifts/{slug}" label={common.gifts} icon={giftIcon} pickTitle={dashboard.chooseVenue} />
+            <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/menus/{slug}" label={common.menus} icon={menuIcon} pickTitle={dashboard.chooseVenue} />
             <SideSection label={dashboard.account} />
             <SideLink href={billingHref} label={dashboard.billing} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -380,6 +396,9 @@ export default async function DashboardPage() {
             <path d="M5 7h8M5 10h5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         }/>
+        <SideFeatureLink venues={activeVenueOpts} hrefTemplate="/scan?venue={slug}" label={dashboard.waiter} icon={staffIcon} pickTitle={dashboard.chooseVenue} />
+        <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/gifts/{slug}" label={common.gifts} icon={giftIcon} pickTitle={dashboard.chooseVenue} />
+        <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/menus/{slug}" label={common.menus} icon={menuIcon} pickTitle={dashboard.chooseVenue} />
 
         {/* Account nav */}
         <SideSection label={dashboard.account} />
@@ -568,14 +587,9 @@ export default async function DashboardPage() {
                           </>
                         )}
                         <ABtn href={`/studio?slug=${v.slug}`} label={common.edit} icon="edit" variant="gold" />
+                        {/* Staff/Gift/Menu moved to the left sidebar; More keeps Staff (per-venue, direct), Plan, Delete */}
                         <VenueMoreMenu label={dashboard.more}>
                           {v.active && <ABtn href={`/scan?venue=${v.slug}`} label={dashboard.waiter} icon="user" />}
-                          {v.active && v.tier === "pro" && (
-                            <>
-                              <ABtn href={`/dashboard/gifts/${v.slug}`} label={common.gifts} icon="gift" variant="purple" />
-                              <ABtn href={`/dashboard/menus/${v.slug}`} label={common.menus} icon="menu" variant="purple" />
-                            </>
-                          )}
                           <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />
                           <DeleteVenueButton
                             slug={v.slug}
