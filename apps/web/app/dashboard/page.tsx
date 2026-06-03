@@ -5,6 +5,7 @@ import { getServiceClient } from "../../lib/supabase/server";
 import { LogoutButton } from "./LogoutButton";
 import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteVenueButton } from "./DeleteVenueButton";
+import { VenueMoreMenu } from "./VenueMoreMenu";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { SnapJackLogo } from "../../components/SnapJackLogo";
 import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
@@ -556,36 +557,42 @@ export default async function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      {/* Actions — primary inline, the rest behind a "•••" menu */}
                       <div className="venue-actions" style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
                         {v.active && <CopyLinkButton slug={v.slug} label={dashboard.copyLink} copiedLabel={dashboard.copied} promptLabel={dashboard.copyPrompt} />}
                         {v.active && <ABtn href={`/play/${v.slug}`} target="_blank" label={common.preview} icon="eye" />}
-                        {v.active && <ABtn href={`/scan?venue=${v.slug}`} label={dashboard.waiter} icon="user" />}
                         {v.active && v.tier === "pro" && (
                           <>
                             <ABtn href={`/dashboard/analytics/${v.slug}`} label={common.analytics} icon="chart" />
                             <ABtn href={`/dashboard/customers/${v.slug}`} label={common.customers} icon="people" variant="purple" />
-                            <ABtn href={`/dashboard/gifts/${v.slug}`} label="Hediye" icon="gift" variant="purple" />
-                            <ABtn href={`/dashboard/menus/${v.slug}`} label="Menü" icon="menu" variant="purple" />
                           </>
                         )}
-                        <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />
                         <ABtn href={`/studio?slug=${v.slug}`} label={common.edit} icon="edit" variant="gold" />
-                        <DeleteVenueButton
-                          slug={v.slug}
-                          name={v.name}
-                          active={v.active}
-                          plan={v.plan}
-                          tier={v.tier}
-                          billingCycle={v.billing_cycle ?? "monthly"}
-                          label={common.delete}
-                          cancelLabel={common.cancel}
-                          closeLabel={common.cancel}
-                          monthlyLabel={common.monthly}
-                          annualLabel={common.annual}
-                          campaignLabel={dashboard.campaign}
-                          copyText={dashboard.deleteVenue}
-                        />
+                        <VenueMoreMenu label={dashboard.more}>
+                          {v.active && <ABtn href={`/scan?venue=${v.slug}`} label={dashboard.waiter} icon="user" />}
+                          {v.active && v.tier === "pro" && (
+                            <>
+                              <ABtn href={`/dashboard/gifts/${v.slug}`} label="Hediye" icon="gift" variant="purple" />
+                              <ABtn href={`/dashboard/menus/${v.slug}`} label="Menü" icon="menu" variant="purple" />
+                            </>
+                          )}
+                          <ABtn href={`/dashboard/billing/${v.slug}`} label={common.plan} icon="card" variant="brass" />
+                          <DeleteVenueButton
+                            slug={v.slug}
+                            name={v.name}
+                            active={v.active}
+                            plan={v.plan}
+                            tier={v.tier}
+                            billingCycle={v.billing_cycle ?? "monthly"}
+                            label={common.delete}
+                            cancelLabel={common.cancel}
+                            closeLabel={common.cancel}
+                            monthlyLabel={common.monthly}
+                            annualLabel={common.annual}
+                            campaignLabel={dashboard.campaign}
+                            copyText={dashboard.deleteVenue}
+                          />
+                        </VenueMoreMenu>
                       </div>
                     </div>
                   ))}
