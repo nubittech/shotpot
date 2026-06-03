@@ -5,6 +5,7 @@ import { getServiceClient } from "../../../../lib/supabase/server";
 import type { CustomerPro } from "../../../../lib/supabase/types";
 import { getServerCopy } from "../../../../lib/i18n/server";
 import { TierConfigPanel } from "./TierConfigPanel";
+import { CustomerTable } from "./CustomerTable";
 import { tierThresholdsFromVenue } from "../../../../lib/loyalty";
 
 type Params = { params: { slug: string } };
@@ -104,44 +105,29 @@ export default async function CustomersPage({ params }: Params) {
         ))}
       </div>
 
-      {/* Table */}
+      {/* Table with segment filters (all / active / at-risk / dormant / VIP / gold) */}
       {customers.length === 0 ? (
         <div style={{ padding: "48px 20px", textAlign: "center", border: "1px dashed rgba(255,255,255,0.1)", borderRadius: 16, color: "rgba(244,239,230,0.4)", fontSize: 14 }}>
           {customersCopy.empty.replace("{slug}", v.slug)}
         </div>
       ) : (
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-                {[customersCopy.table.fullName, customersCopy.table.email, customersCopy.table.level, customersCopy.table.visits, customersCopy.table.spend, customersCopy.table.lastVisit, ""].map((h) => (
-                  <th key={h} style={{ padding: "10px 12px", textAlign: "left", fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", color: "rgba(244,239,230,0.4)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((c) => (
-                <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                  <td style={td}>{c.full_name ?? "—"}</td>
-                  <td style={{ ...td, color: "rgba(244,239,230,0.55)" }}>{c.email ?? "—"}</td>
-                  <td style={td}>{loyaltyBadge[c.loyalty_tier] ?? "—"}</td>
-                  <td style={{ ...td, fontWeight: 700 }}>{c.total_visits}</td>
-                  <td style={{ ...td, color: "#ffd84e", fontWeight: 700 }}>
-                    {c.total_spend > 0 ? `₺${c.total_spend.toLocaleString(copyText.meta.locale, { maximumFractionDigits: 0 })}` : "—"}
-                  </td>
-                  <td style={{ ...td, color: "rgba(244,239,230,0.45)", whiteSpace: "nowrap" }}>
-                    {c.last_visit_at
-                      ? new Date(c.last_visit_at).toLocaleDateString(copyText.meta.locale, { day: "numeric", month: "short" })
-                      : "—"}
-                  </td>
-                  <td style={td}>
-                    <Link href={`/dashboard/customers/${v.slug}/${c.id}`} style={smallLink}>{customersCopy.detail}</Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <CustomerTable
+          slug={v.slug}
+          customers={customers.map((c) => ({
+            id: c.id, full_name: c.full_name, email: c.email, phone: c.phone,
+            loyalty_tier: c.loyalty_tier, total_visits: c.total_visits,
+            total_spend: c.total_spend, last_visit_at: c.last_visit_at,
+          }))}
+          labels={{
+            filters: customersCopy.filters,
+            table: customersCopy.table,
+            phone: customersCopy.phone,
+            detail: customersCopy.detail,
+            empty: customersCopy.empty.replace("{slug}", v.slug),
+            currencySym: "₺",
+            locale: copyText.meta.locale,
+          }}
+        />
       )}
     </Shell>
   );

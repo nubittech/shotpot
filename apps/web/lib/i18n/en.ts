@@ -621,6 +621,8 @@ export const en: Translation = {
       totalSpend: "Total Spend",
       empty: "No customers yet. Customers will appear here as they log in through /play/{slug}.",
       detail: "Details →",
+      phone: "Phone",
+      filters: { all: "All", active: "Active (30d)", risk: "At risk (30-60d)", dormant: "Dormant (60d+)", vip: "Silver+", gold: "Gold" },
       table: { fullName: "Full Name", email: "Email", level: "Level", visits: "Visits", spend: "Spend", lastVisit: "Last Visit" },
       listBack: "← Back to List",
       customerFallback: "Customer",

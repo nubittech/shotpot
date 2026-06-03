@@ -619,6 +619,8 @@ export const tr = {
       totalSpend: "Toplam Harcama",
       empty: "Henüz kayıtlı müşteri yok. Müşteriler /play/{slug} üzerinden giriş yaptıkça burada görünür.",
       detail: "Detay →",
+      phone: "Telefon",
+      filters: { all: "Tümü", active: "Aktif (30g)", risk: "Risk (30-60g)", dormant: "Uyuyan (60g+)", vip: "Silver+", gold: "Gold" },
       table: { fullName: "Ad Soyad", email: "E-posta", level: "Seviye", visits: "Ziyaret", spend: "Harcama", lastVisit: "Son Ziyaret" },
       listBack: "← Listeye Dön",
       customerFallback: "Müşteri",
