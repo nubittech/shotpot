@@ -615,7 +615,7 @@ function StudioInner() {
 
         <div style={{ marginTop: 40 }}>
           {st.step === 0 && <StepVariant st={st} update={update} onNext={() => goTo(1)} copy={studioCopy} locale={studioLocale} />}
-          {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} copy={studioCopy} />}
+          {st.step === 1 && <StepInfo st={st} update={update} onNext={() => goTo(2)} onBack={() => goTo(0)} copy={studioCopy} editSlug={editSlug} />}
           {st.step === 2 && <StepSymbols st={st} update={update} onNext={() => goTo(3)} onBack={() => goTo(1)} copy={studioCopy} locale={studioLocale} />}
           {st.step === 3 && <StepRates st={st} update={update} probabilities={probabilities} onNext={() => goTo(4)} onBack={() => goTo(2)} copy={studioCopy} locale={studioLocale} />}
           {st.step === 4 && <StepPreview st={st} probabilities={probabilities} saving={st.saving} saved={st.saved} saveError={saveError} onSave={handleSave} onBack={() => goTo(3)} copy={studioCopy} locale={studioLocale} />}
@@ -816,7 +816,23 @@ function StepVariant({ st, update, onNext, copy, locale }: { st: State; update: 
 }
 
 /* ─── Step 1: Info ───────────────────────────────────────────── */
-function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy }) {
+function StepInfo({ st, update, onNext, onBack, copy, editSlug }: { st: State; update: (p: Partial<State>) => void; onNext: () => void; onBack: () => void; copy: StudioCopy; editSlug: string | null }) {
+  // Live slug availability check (debounced). Own slug when editing = available.
+  const [slugStatus, setSlugStatus] = useState<"idle" | "checking" | "free" | "taken" | "short">("idle");
+  useEffect(() => {
+    const s = st.slug.trim();
+    if (editSlug && s === editSlug) { setSlugStatus("idle"); return; }
+    if (s.length < 2) { setSlugStatus(s.length === 0 ? "idle" : "short"); return; }
+    setSlugStatus("checking");
+    const t = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/studio/check-slug?slug=${encodeURIComponent(s)}`);
+        const d = await r.json() as { available?: boolean };
+        setSlugStatus(d.available ? "free" : "taken");
+      } catch { setSlugStatus("idle"); }
+    }, 450);
+    return () => clearTimeout(t);
+  }, [st.slug, editSlug]);
   const meta = CURRENCY_META[st.currency];
   const exampleAmount = st.currency === "TRY" ? 225 : st.currency === "USD" ? 15 : 12;
   const exampleTokens = Math.floor(exampleAmount / st.tokenThreshold);
@@ -852,8 +868,22 @@ function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p:
             onChange={(e) => update({ slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })}
             placeholder="midnight-tap"
             maxLength={48}
-            style={{ ...inputStyle, fontFamily: "monospace", fontSize: 12 }}
+            style={{
+              ...inputStyle, fontFamily: "monospace", fontSize: 12,
+              borderColor: slugStatus === "taken" ? "#ff7e5a" : slugStatus === "free" ? "rgba(126,227,138,0.5)" : (inputStyle.borderColor as string),
+            }}
           />
+          {slugStatus !== "idle" && (
+            <div style={{
+              marginTop: 6, fontSize: 11, fontWeight: 600,
+              color: slugStatus === "taken" || slugStatus === "short" ? "#ff7e5a" : slugStatus === "free" ? "#7be38a" : "rgba(244,239,230,0.4)",
+            }}>
+              {slugStatus === "checking" ? copy.slugChecking
+                : slugStatus === "free" ? copy.slugFree
+                : slugStatus === "taken" ? copy.slugTaken
+                : copy.slugShort}
+            </div>
+          )}
         </Field>
         <Field label={copy.customerInterfaceLanguage} hint={copy.customerInterfaceLanguageHelp}>
           <div style={{ display: "flex", gap: 8 }}>
@@ -1017,7 +1047,7 @@ function StepInfo({ st, update, onNext, onBack, copy }: { st: State; update: (p:
           </div>
         </Field>
       </div>
-      <NavRow onBack={onBack} onNext={onNext} nextLabel={copy.continue} backLabel={copy.back} nextDisabled={!st.name.trim() || !st.slug.trim()} />
+      <NavRow onBack={onBack} onNext={onNext} nextLabel={copy.continue} backLabel={copy.back} nextDisabled={!st.name.trim() || !st.slug.trim() || slugStatus === "taken" || slugStatus === "short"} />
     </div>
   );
 }
