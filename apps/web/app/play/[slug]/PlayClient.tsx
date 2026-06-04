@@ -9,6 +9,7 @@ import { createClient } from "../../../lib/supabase/browser";
 import type { PlayBundle } from "../../../lib/play";
 import type { SlotVariantDB, WheelVariantDB } from "../../../lib/supabase/types";
 import { tierThresholdsFromVenue } from "../../../lib/loyalty";
+import QRCode from "qrcode";
 
 const SpinWheel = dynamic(() => import("../../../components/wheel/SpinWheel"), { ssr: false });
 
@@ -1116,7 +1117,13 @@ function CouponScreen({ venue, theme, copy: playCopy, coupon, onBack, onDone }: 
   onBack: () => void; onDone: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const qrRef = useRef<HTMLCanvasElement>(null);
   async function copy() { try { await navigator.clipboard.writeText(coupon.code); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {} }
+  useEffect(() => {
+    if (!qrRef.current) return;
+    const url = `${window.location.origin}/scan?venue=${encodeURIComponent(venue.slug)}&code=${encodeURIComponent(coupon.code)}`;
+    QRCode.toCanvas(qrRef.current, url, { width: 168, margin: 1, color: { dark: "#0a0a0c", light: "#ffffff" } }).catch(() => {});
+  }, [venue.slug, coupon.code]);
   return (
     <div style={{ position: "fixed", inset: 0, display: "flex", flexDirection: "column", background: theme.bg, color: theme.text, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif", overflow: "hidden" }}>
       <div style={{ flexShrink: 0, padding: "14px 18px 8px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -1130,6 +1137,12 @@ function CouponScreen({ venue, theme, copy: playCopy, coupon, onBack, onDone }: 
         <p style={{ margin: 0, fontSize: 14, color: theme.muted, textAlign: "center", maxWidth: 340, lineHeight: 1.55 }}>{playCopy.couponHelp}</p>
         <div style={{ width: "100%", maxWidth: 360, padding: "22px 20px", background: theme.ctaCardBgIdle, border: `1.5px dashed ${theme.border}`, borderRadius: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: theme.muted, textTransform: "uppercase", textAlign: "center", fontFamily: theme.fontLabel }}>{venue.name}</div>
+          <div style={{ marginTop: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{ background: "#fff", padding: 10, borderRadius: 12, lineHeight: 0 }}>
+              <canvas ref={qrRef} />
+            </div>
+            <div style={{ fontSize: 11, color: theme.muted, textAlign: "center" }}>{playCopy.couponScanInfo}</div>
+          </div>
           <div style={{ marginTop: 14, padding: "18px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 10, fontFamily: "monospace", fontSize: 26, fontWeight: 800, color: theme.accent, letterSpacing: "0.16em", textAlign: "center", border: `1px solid ${theme.border}` }}>{coupon.code}</div>
           <button onClick={copy} style={{ marginTop: 14, width: "100%", padding: "12px", background: "transparent", border: `1px solid ${theme.border}`, borderRadius: 10, color: theme.accent, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{copied ? playCopy.copied : playCopy.copyCode}</button>
         </div>

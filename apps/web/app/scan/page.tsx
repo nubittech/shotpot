@@ -7,8 +7,9 @@ import { ScanClient } from "./ScanClient";
  * no EN→TR flash. The `venue` param is still passed through for redemption
  * scoping (security), just not for locale.
  */
-export default function ScanPage({ searchParams }: { searchParams: { venue?: string } }) {
+export default function ScanPage({ searchParams }: { searchParams: { venue?: string; code?: string } }) {
   const locale = getServerLocale();
   const venueSlug = searchParams.venue ?? null;
-  return <ScanClient locale={locale} venueSlug={venueSlug} />;
+  const initialCode = searchParams.code ?? null;
+  return <ScanClient locale={locale} venueSlug={venueSlug} initialCode={initialCode} />;
 }

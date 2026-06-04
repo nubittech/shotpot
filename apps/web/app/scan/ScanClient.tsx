@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getCopy, type Locale } from "../../lib/i18n";
+import { QrScanner } from "./QrScanner";
 
 type CouponInfo = {
   valid: boolean;
@@ -11,26 +12,43 @@ type CouponInfo = {
   reason?: string;
 };
 
+/** Pull a coupon code out of a scanned value — accepts a raw code or a URL like
+ *  `${origin}/scan?venue=...&code=WINE-B53MS`. The venue is intentionally ignored
+ *  here: redemption is always scoped to THIS panel's venue, so a coupon from
+ *  another venue is rejected as wrong_venue. */
+function extractCode(text: string): string {
+  const t = text.trim();
+  try {
+    const u = new URL(t);
+    const c = u.searchParams.get("code");
+    if (c) return c.toUpperCase();
+  } catch { /* not a URL */ }
+  return t.toUpperCase();
+}
+
 /** Staff redemption panel. Locale is resolved on the server (from the venue's
  *  interface language) and passed in, so there's no EN→TR flash on load. */
-export function ScanClient({ locale, venueSlug }: { locale: Locale; venueSlug: string | null }) {
-  const [code, setCode] = useState("");
+export function ScanClient({ locale, venueSlug, initialCode }: { locale: Locale; venueSlug: string | null; initialCode?: string | null }) {
+  const [code, setCode] = useState((initialCode ?? "").toUpperCase());
   const [info, setInfo] = useState<CouponInfo | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [scanning, setScanning] = useState(false);
+  const autoRan = useRef(false);
 
   const scanCopy = getCopy(locale).scan;
   const venueQS = venueSlug ? `?venue=${encodeURIComponent(venueSlug)}` : "";
 
-  async function lookup() {
-    if (!code.trim()) return;
+  async function lookup(override?: string) {
+    const c = (override ?? code).trim();
+    if (!c) return;
     setBusy(true); setErr(null); setInfo(null);
     try {
-      const res = await fetch(`/api/coupons/${encodeURIComponent(code.trim())}/redeem${venueQS}`);
+      const res = await fetch(`/api/coupons/${encodeURIComponent(c)}/redeem${venueQS}`);
       const data = await res.json();
       if (!res.ok) {
         setErr(data?.reason === "not_found" ? scanCopy.notFound
-          : data?.reason === "wrong_venue" ? scanCopy.notFound
+          : data?.reason === "wrong_venue" ? scanCopy.wrongVenue
           : (data?.error ?? scanCopy.error));
         return;
       }
@@ -53,7 +71,8 @@ export function ScanClient({ locale, venueSlug }: { locale: Locale; venueSlug: s
       if (!res.ok) {
         if (data?.reason === "already_redeemed") setErr(scanCopy.alreadyRedeemed);
         else if (data?.reason === "expired") setErr(scanCopy.expired);
-        else if (data?.reason === "not_found" || data?.reason === "wrong_venue") setErr(scanCopy.notFound);
+        else if (data?.reason === "wrong_venue") setErr(scanCopy.wrongVenue);
+        else if (data?.reason === "not_found") setErr(scanCopy.notFound);
         else setErr(data?.error ?? scanCopy.error);
         return;
       }
@@ -61,6 +80,22 @@ export function ScanClient({ locale, venueSlug }: { locale: Locale; venueSlug: s
     } finally {
       setBusy(false);
     }
+  }
+
+  // Auto-lookup when arriving with a pre-filled code (e.g. scanned via phone camera → /scan?code=...).
+  useEffect(() => {
+    if (!autoRan.current && initialCode && initialCode.trim()) {
+      autoRan.current = true;
+      lookup(initialCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function onScan(text: string) {
+    const c = extractCode(text);
+    setScanning(false);
+    setCode(c);
+    lookup(c);
   }
 
   function reset() { setCode(""); setInfo(null); setErr(null); }
@@ -77,16 +112,27 @@ export function ScanClient({ locale, venueSlug }: { locale: Locale; venueSlug: s
         </div>
 
         <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: 20 }}>
-          <div style={{ display: "flex", gap: 8 }}>
+          {/* Camera scan */}
+          <button onClick={() => { setErr(null); setScanning((s) => !s); }} style={{ ...scanBtn, marginBottom: 12 }}>
+            {scanning ? scanCopy.closeCamera : `📷 ${scanCopy.scanQr}`}
+          </button>
+          {scanning && (
+            <QrScanner
+              onResult={onScan}
+              onClose={() => setScanning(false)}
+              labels={{ hint: scanCopy.scanHint, cameraError: scanCopy.cameraError, close: scanCopy.closeCamera }}
+            />
+          )}
+
+          <div style={{ display: "flex", gap: 8, marginTop: scanning ? 14 : 0 }}>
             <input
-              autoFocus
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               onKeyDown={(e) => e.key === "Enter" && lookup()}
               placeholder={scanCopy.placeholder}
               style={{ flex: 1, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#f4efe6", fontSize: 15, fontFamily: "monospace", letterSpacing: "0.08em", outline: "none" }}
             />
-            <button onClick={lookup} disabled={busy || !code.trim()} style={primaryBtn}>{scanCopy.check}</button>
+            <button onClick={() => lookup()} disabled={busy || !code.trim()} style={primaryBtn}>{scanCopy.check}</button>
           </div>
 
           {err && (
@@ -130,4 +176,9 @@ const primaryBtn: React.CSSProperties = {
   padding: "14px 18px", borderRadius: 10,
   background: "#ffd84e", border: "none", color: "#111",
   fontSize: 13, fontWeight: 700, cursor: "pointer",
+};
+const scanBtn: React.CSSProperties = {
+  width: "100%", padding: "13px", borderRadius: 10,
+  background: "rgba(255,216,78,0.1)", border: "1px solid rgba(255,216,78,0.3)",
+  color: "#ffd84e", fontSize: 14, fontWeight: 700, cursor: "pointer",
 };
