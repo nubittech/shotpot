@@ -362,7 +362,13 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   // Logged-in member's loyalty stats — powers the "progress to next tier" hook.
   const [memberStats, setMemberStats]   = useState<{ tier: string; visits: number; spend: number } | null>(null);
 
-  useEffect(() => { setGuestToken(getOrCreateGuestToken()); }, []);
+  useEffect(() => {
+    const gt = getOrCreateGuestToken();
+    setGuestToken(gt);
+    // Restore any unused spin tokens for this guest from the DB on load.
+    refreshBalance({ guestToken: gt, customerId: null });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function refreshGiftStatus() {
     try {
@@ -371,6 +377,25 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
         const gd = await g.json() as { pending?: number };
         setGiftPending(gd.pending ?? 0);
       }
+    } catch { /* silent */ }
+  }
+
+  // Re-hydrate the available spin token balance from the DB (source of truth),
+  // so tokens survive a reload, language change, or any remount instead of
+  // resetting to 0. Pass explicit ids when state hasn't committed yet.
+  async function refreshBalance(opts?: { customerId?: string | null; guestToken?: string }) {
+    const cid = opts?.customerId !== undefined ? opts.customerId : customerId;
+    const gt = opts?.guestToken !== undefined ? opts.guestToken : guestToken;
+    if (!cid && !gt) return;
+    try {
+      const res = await fetch("/api/play/balance", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: venue.slug, customerId: cid ?? undefined, guestToken: gt || undefined }),
+      });
+      if (!res.ok) return;
+      const d = await res.json() as { tokens?: number; receiptId?: string | null };
+      setTokens(d.tokens ?? 0);
+      setReceiptId(d.receiptId ?? null);
     } catch { /* silent */ }
   }
 
@@ -401,6 +426,9 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       if (!res.ok) return;
       const { customer } = await res.json() as { customer: { id: string; loyalty_tier?: string; total_visits?: number; total_spend?: number } };
       setCustomerId(customer.id);
+      // Restore this member's unused spin tokens from the DB (their receipts are
+      // keyed by customer_id, not the guest token).
+      refreshBalance({ customerId: customer.id });
       setMemberStats({
         tier: customer.loyalty_tier ?? "bronze",
         visits: customer.total_visits ?? 0,
@@ -434,6 +462,9 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
       if (!res.ok) return;
       const data = (await res.json()) as SpinResponse;
       setResult(data); setTokens((t) => Math.max(0, t - 1));
+      // Reconcile with the DB: fixes the displayed balance and advances
+      // receiptId to the next receipt with remaining spins (multi-receipt).
+      refreshBalance();
     } catch { /* silent */ }
     finally { setSpinning(false); }
   }
@@ -453,6 +484,9 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   function handleScanComplete(earnedTokens: number, newReceiptId: string, info: ScannedInfo) {
     setTokens(earnedTokens); setReceiptId(newReceiptId); setScannedInfo(info); setStage("play");
+    // Reconcile with the DB so the balance reflects ALL unused receipts
+    // (e.g. leftover tokens from earlier scans), not just this one.
+    refreshBalance();
   }
 
   function handleJackpotPress() {
