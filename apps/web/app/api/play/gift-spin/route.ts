@@ -161,9 +161,9 @@ export async function POST(req: NextRequest) {
         spin_id: null,
         expires_at: expiresAt,
       })
-      .select("id, code, reward_label")
+      .select("id, code, reward_label, expires_at")
       .single();
-    const coupon = cp as { id: string; code: string; reward_label: string } | null;
+    const coupon = cp as { id: string; code: string; reward_label: string; expires_at: string | null } | null;
 
     // Mark the gift spin used
     await svc
@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
       outcome: rewardLabel,
       animationHint: "win" as const,
       coupon: coupon
-        ? { id: coupon.id, code: coupon.code, rewardLabel: coupon.reward_label }
+        ? { id: coupon.id, code: coupon.code, rewardLabel: coupon.reward_label, expiresAt: coupon.expires_at }
         : null,
     });
   } catch (e: unknown) {

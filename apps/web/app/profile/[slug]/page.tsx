@@ -30,6 +30,19 @@ function couponStatus(c: Coupon): CouponStatus {
   return "active";
 }
 
+/** Human-friendly remaining validity for an active coupon. */
+function expiryInfo(c: Coupon): { text: string; color: string } {
+  if (!c.expires_at) return { text: "♾️ Süresiz", color: "rgba(244,239,230,0.4)" };
+  const dateStr = new Date(c.expires_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" });
+  const ms = new Date(c.expires_at).getTime() - Date.now();
+  if (ms <= 0) return { text: `Bitti: ${dateStr}`, color: "#ff8060" };
+  const days = Math.ceil(ms / 86400_000);
+  if (days <= 1) return { text: "⏳ Son gün bugün!", color: "#ff8060" };
+  if (days <= 3) return { text: `⏳ ${days} gün kaldı`, color: "#ffb84e" };
+  if (days <= 7) return { text: `⏳ ${days} gün kaldı · ${dateStr}`, color: "#ffb84e" };
+  return { text: `Son kullanma: ${dateStr}`, color: "rgba(244,239,230,0.5)" };
+}
+
 const LOYALTY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
   bronze: { label: "Bronz",  emoji: "🥉", color: "#cd7f32" },
   silver: { label: "Gümüş", emoji: "🥈", color: "#a8a9ad" },
@@ -356,8 +369,12 @@ export default function ProfilePage() {
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: "#f4efe6", marginBottom: 4 }}>{c.reward_label}</div>
                       <div style={{ fontFamily: "monospace", fontSize: 12, color: "rgba(244,239,230,0.5)", letterSpacing: "0.12em" }}>{c.code}</div>
-                      <div style={{ fontSize: 11, color: "rgba(244,239,230,0.35)", marginTop: 4 }}>
-                        {new Date(c.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}
+                      {status !== "redeemed" && (() => {
+                        const e = expiryInfo(c);
+                        return <div style={{ fontSize: 11.5, fontWeight: 700, color: e.color, marginTop: 5 }}>{e.text}</div>;
+                      })()}
+                      <div style={{ fontSize: 10.5, color: "rgba(244,239,230,0.3)", marginTop: 3 }}>
+                        Kazanıldı: {new Date(c.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}
                       </div>
                     </div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: statusColor, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0, marginLeft: 12 }}>

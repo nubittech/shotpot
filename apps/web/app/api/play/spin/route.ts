@@ -171,7 +171,7 @@ export async function POST(req: NextRequest) {
       outcome,
     }).select("id").single();
 
-    let coupon: { id: string; code: string; rewardLabel: string } | null = null;
+    let coupon: { id: string; code: string; rewardLabel: string; expiresAt: string | null } | null = null;
     if (win && couponCode && rewardLabel && spinRow) {
       const { data: cp } = await sb.from("coupons").insert({
         venue_id: venue.id,
@@ -181,9 +181,9 @@ export async function POST(req: NextRequest) {
         code: couponCode,
         reward_label: rewardLabel,
         expires_at: expiresAt,
-      }).select("id, code, reward_label").single();
+      }).select("id, code, reward_label, expires_at").single();
       if (cp) {
-        coupon = { id: cp.id, code: cp.code, rewardLabel: cp.reward_label };
+        coupon = { id: cp.id, code: cp.code, rewardLabel: cp.reward_label, expiresAt: cp.expires_at };
       }
     }
 

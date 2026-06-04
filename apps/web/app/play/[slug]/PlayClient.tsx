@@ -15,7 +15,7 @@ const SpinWheel = dynamic(() => import("../../../components/wheel/SpinWheel"), {
 
 type SpinResponse = {
   outcome: string; win: boolean; isJackpot: boolean;
-  coupon: { id: string; code: string; rewardLabel: string } | null;
+  coupon: { id: string; code: string; rewardLabel: string; expiresAt?: string | null } | null;
   animationHint: "standard" | "win" | "jackpot";
 };
 type Stage = "home" | "auth" | "scan" | "play" | "coupon" | "gift" | "menu";
@@ -358,7 +358,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
   const [couponBack, setCouponBack]     = useState<Stage>("play");
   const [menus, setMenus]               = useState<PlayMenu[]>([]);
   // A coupon opened from the wallet (home screen), distinct from a just-won spin result.
-  const [viewCoupon, setViewCoupon]     = useState<{ id: string; code: string; rewardLabel: string } | null>(null);
+  const [viewCoupon, setViewCoupon]     = useState<{ id: string; code: string; rewardLabel: string; expiresAt?: string | null } | null>(null);
   // Logged-in member's loyalty stats — powers the "progress to next tier" hook.
   const [memberStats, setMemberStats]   = useState<{ tier: string; visits: number; spend: number } | null>(null);
 
@@ -571,7 +571,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   if (stage === "menu") return <MenuScreen theme={theme} copy={playCopy} menus={menus} currency={venue.currency} onBack={() => setStage("home")} isAnonymous={isPro && !customerId} onJoin={() => setStage("auth")} />;
 
-  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menus={menus} scannedInfo={scannedInfo} recentCoupons={recentCoupons} memberStats={memberStats} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel }); setCouponBack("home"); setStage("coupon"); }} />;
+  return <HomeScreen venue={venue} theme={theme} copy={playCopy} isPro={isPro} customerId={customerId} tokens={tokens} giftPending={giftPending} menus={menus} scannedInfo={scannedInfo} recentCoupons={recentCoupons} memberStats={memberStats} onJackpot={handleJackpotPress} onGift={handleGiftPress} onMenu={handleMenuPress} onProfile={() => router.push(`/profile/${venue.slug}`)} onViewCoupon={(c) => { setViewCoupon({ id: c.id, code: c.code, rewardLabel: c.rewardLabel, expiresAt: c.expiresAt }); setCouponBack("home"); setStage("coupon"); }} />;
 }
 
 /* ═══════════════════════════════════════════════
@@ -1147,9 +1147,10 @@ function ScanScreen({ venue, theme, copy, locale, guestToken, customerId, onComp
 ═══════════════════════════════════════════════ */
 function CouponScreen({ venue, theme, copy: playCopy, coupon, onBack, onDone }: {
   venue: PlayBundle["venue"]; theme: Theme; copy: ReturnType<typeof getCopy>["play"];
-  coupon: { id: string; code: string; rewardLabel: string };
+  coupon: { id: string; code: string; rewardLabel: string; expiresAt?: string | null };
   onBack: () => void; onDone: () => void;
 }) {
+  const expLabel = couponExpiryLabel(coupon.expiresAt ?? null, playCopy);
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLCanvasElement>(null);
   async function copy() { try { await navigator.clipboard.writeText(coupon.code); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {} }
@@ -1169,6 +1170,9 @@ function CouponScreen({ venue, theme, copy: playCopy, coupon, onBack, onDone }: 
         <div style={{ fontFamily: theme.fontDisplay, fontSize: "clamp(44px,12vw,72px)", fontWeight: 900, color: theme.accent, textAlign: "center", lineHeight: 1, textShadow: `0 0 32px ${theme.glow}`, animation: "pop-in 0.4s cubic-bezier(0.34,1.56,0.64,1)" }}>{playCopy.won}</div>
         <h1 style={{ margin: 0, fontSize: "clamp(22px,6vw,30px)", fontWeight: 800, textAlign: "center", color: theme.text, lineHeight: 1.15 }}>{coupon.rewardLabel}</h1>
         <p style={{ margin: 0, fontSize: 14, color: theme.muted, textAlign: "center", maxWidth: 340, lineHeight: 1.55 }}>{playCopy.couponHelp}</p>
+        {expLabel && (
+          <div style={{ fontSize: 13, fontWeight: 700, color: theme.accent, background: "rgba(255,255,255,0.05)", border: `1px solid ${theme.border}`, padding: "6px 14px", borderRadius: 999 }}>⏳ {expLabel}</div>
+        )}
         <div style={{ width: "100%", maxWidth: 360, padding: "22px 20px", background: theme.ctaCardBgIdle, border: `1.5px dashed ${theme.border}`, borderRadius: 18 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: theme.muted, textTransform: "uppercase", textAlign: "center", fontFamily: theme.fontLabel }}>{venue.name}</div>
           <div style={{ marginTop: 14, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
