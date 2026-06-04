@@ -29,6 +29,9 @@ export interface Venue {
   game_type: GameType;      // migration 007: slot | wheel
   wheel_variant: WheelVariantDB; // migration 007: boho | irish | medit
   gift_daily_enabled: boolean;   // migration 009: daily free gift wheel
+  // migration 017: independent gift wheel config
+  gift_wheel_variant: WheelVariantDB;
+  gift_wheel_cfg: Record<string, { reward: string; coupon: string; share: number }>;
   // migration 011: automatic VIP tier thresholds (reaches a tier on visits OR spend)
   tier_silver_visits: number;
   tier_silver_spend: number;

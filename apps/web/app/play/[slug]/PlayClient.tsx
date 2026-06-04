@@ -478,7 +478,7 @@ export function PlayClient({ bundle }: { bundle: PlayBundle }) {
 
   // Gift wheel — always a wheel, regardless of the venue game type
   if (stage === "gift") {
-    const giftVariant: WheelVariantDB = venue.wheel_variant ?? "boho";
+    const giftVariant: WheelVariantDB = venue.gift_wheel_variant ?? venue.wheel_variant ?? "boho";
     return (
       <div style={{ position: "fixed", inset: 0, background: "#000" }}>
         <SpinWheel

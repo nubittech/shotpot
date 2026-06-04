@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getServiceClient } from "../../../../lib/supabase/server";
+import { getWheelSegmentDefs, segDefaultPrize, type WheelVariantKey } from "../../../../components/wheel/segments";
+
+type GiftCfg = Record<string, { reward: string; coupon: string; share: number }>;
 
 /**
  * POST /api/play/gift-spin  { slug }
@@ -42,11 +45,17 @@ export async function POST(req: NextRequest) {
 
     const { data: venue } = await svc
       .from("venues")
-      .select("id, name, coupon_validity_days")
+      .select("id, name, coupon_validity_days, gift_wheel_variant, gift_wheel_cfg")
       .eq("slug", slug)
       .eq("active", true)
       .maybeSingle();
-    const v = venue as { id: string; name: string; coupon_validity_days?: number } | null;
+    const v = venue as {
+      id: string;
+      name: string;
+      coupon_validity_days?: number;
+      gift_wheel_variant?: WheelVariantKey | null;
+      gift_wheel_cfg?: GiftCfg | null;
+    } | null;
     if (!v) return NextResponse.json({ error: "venue not found" }, { status: 404 });
 
     const validityDays = Number(v.coupon_validity_days ?? 0);
@@ -78,15 +87,46 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Hediye çevirme hakkın yok.", code: "NO_GIFT" }, { status: 403 });
     }
 
-    // Reward pool — venue campaigns, weighted by share. Always a win.
+    let rewardLabel = "Sürpriz ikram";
+    let couponPrefix = "GIFT";
+
+    // Reward pool — prefer the independent gift wheel config (migration 017).
+    const giftVariant = (v.gift_wheel_variant ?? "boho") as WheelVariantKey;
+    const giftCfg = (v.gift_wheel_cfg ?? {}) as GiftCfg;
+    const defs = getWheelSegmentDefs(giftVariant);
+    const defById = new Map(defs.map((d) => [d.id, d]));
+
+    const giftPool = Object.entries(giftCfg)
+      .map(([segId, c]) => {
+        const def = defById.get(segId);
+        const share = Number(c?.share || 0);
+        if (!def || def.type === "lose" || share <= 0) return null;
+        return {
+          reward_label: (c.reward && c.reward.trim()) || segDefaultPrize(def, "tr") || rewardLabel,
+          coupon_prefix: (c.coupon && c.coupon.trim()) || def.defaultCoupon || couponPrefix,
+          share,
+        };
+      })
+      .filter((p): p is { reward_label: string; coupon_prefix: string; share: number } => p !== null);
+
+    if (giftPool.length > 0) {
+      const total = giftPool.reduce((s, p) => s + p.share, 0);
+      let roll = Math.random() * total;
+      let picked = giftPool[giftPool.length - 1];
+      for (const p of giftPool) {
+        roll -= p.share;
+        if (roll <= 0) { picked = p; break; }
+      }
+      rewardLabel = picked.reward_label || rewardLabel;
+      couponPrefix = picked.coupon_prefix || couponPrefix;
+    } else {
+    // FALLBACK — legacy behavior: venue campaigns, weighted by share. Always a win.
     const { data: camps } = await svc
       .from("campaigns")
       .select("reward_label, coupon_prefix, share")
       .eq("venue_id", v.id);
     const pool = (camps ?? []) as Array<{ reward_label: string; coupon_prefix: string; share: number }>;
 
-    let rewardLabel = "Sürpriz ikram";
-    let couponPrefix = "GIFT";
     if (pool.length > 0) {
       const total = pool.reduce((s, p) => s + Number(p.share || 0), 0) || pool.length;
       let roll = Math.random() * total;
@@ -106,6 +146,7 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
       const sc = cfg as { jackpot_reward: string; jackpot_coupon_prefix: string } | null;
       if (sc) { rewardLabel = sc.jackpot_reward || rewardLabel; couponPrefix = sc.jackpot_coupon_prefix || couponPrefix; }
+    }
     }
 
     // Create the coupon
