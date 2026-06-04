@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { SnapJackLogo } from "../../components/SnapJackLogo";
-import { ApplyForm } from "./ApplyForm";
+import { ApplyCta } from "./ApplyCta";
 import { SampleMenu } from "./SampleMenu";
 
 export const dynamic = "force-dynamic";
@@ -10,8 +10,7 @@ export const dynamic = "force-dynamic";
 const C = {
   bg0: "#08050a", bg1: "#110a08",
   line: "rgba(232,200,118,0.12)", lineS: "rgba(232,200,118,0.26)",
-  gold: "#e8c876", goldDim: "#c89a4a",
-  t100: "#fff8e8", t200: "#f0e0c0", t300: "#c8b890", t400: "#8b7d5e",
+  gold: "#e8c876", t100: "#fff8e8", t200: "#f0e0c0", t300: "#c8b890", t400: "#8b7d5e",
 };
 
 export default function QrMenuLandingPage() {
@@ -19,46 +18,75 @@ export default function QrMenuLandingPage() {
   const copy = getServerCopy().qrMenuApply;
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg0, color: C.t100, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#000", color: C.t100, fontFamily: "var(--font-inter), Inter, system-ui, sans-serif" }}>
       {/* ── Header ── */}
-      <header style={{ position: "sticky", top: 0, zIndex: 50, backdropFilter: "blur(20px) saturate(160%)", background: "rgba(8,5,10,0.8)", borderBottom: `1px solid ${C.line}` }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", height: 62, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+      <header style={{ position: "sticky", top: 0, zIndex: 60, backdropFilter: "blur(20px) saturate(160%)", background: "rgba(0,0,0,0.7)", borderBottom: `1px solid ${C.line}` }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", height: 62, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <Link href="/" style={{ display: "flex", alignItems: "center" }}><SnapJackLogo size={32} withWordmark /></Link>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Link href="/" style={{ color: C.t300, fontSize: 13, fontWeight: 600, textDecoration: "none" }} className="qm-back">{copy.backHome}</Link>
             <LanguageToggle initialLocale={locale} />
-            <a href="#basvuru" style={{ ...goldBtn, padding: "9px 16px", fontSize: 13 }}>{copy.ctaApply}</a>
+            <ApplyCta variant="small" />
           </div>
         </div>
       </header>
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
-        {/* ── Hero ── */}
-        <section style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,420px)", gap: 48, alignItems: "center", padding: "64px 0 56px" }} className="qm-hero">
-          <div>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>{copy.eyebrow}</div>
-            <h1 style={{ margin: "14px 0 0", fontSize: "clamp(34px,5vw,52px)", fontWeight: 800, lineHeight: 1.08, letterSpacing: "-0.02em" }}>{copy.title}</h1>
-            <p style={{ margin: "20px 0 0", fontSize: 17, color: C.t300, lineHeight: 1.6, maxWidth: 540 }}>{copy.subtitle}</p>
+      {/* ── Hero: image right-aligned on black, text left ── */}
+      <section className="qm-hero" style={{ position: "relative", background: "#000", overflow: "hidden" }}>
+        {/* Right photographic composition */}
+        <div className="qm-hero-img" style={{ position: "absolute", top: 0, right: 0, height: "100%", width: "60%" }}>
+          <img src="/qrmenu/hero.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "right center", display: "block" }} />
+          {/* fade the image's left edge into the black so text stays legible */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, #000 0%, rgba(0,0,0,0.85) 14%, rgba(0,0,0,0.25) 42%, transparent 70%)" }} />
+        </div>
+
+        {/* Left text */}
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 1180, margin: "0 auto", padding: "0 24px" }}>
+          <div className="qm-hero-copy" style={{ maxWidth: 540, padding: "92px 0 96px" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "6px 14px", borderRadius: 999, background: "rgba(232,200,118,0.1)", border: `1px solid ${C.line}`, fontSize: 12.5, fontWeight: 700, color: C.t200 }}>
+              ♥ {copy.eyebrow}
+            </div>
+            <h1 style={{ margin: "20px 0 0", fontSize: "clamp(36px,5.4vw,58px)", fontWeight: 800, lineHeight: 1.06, letterSpacing: "-0.02em" }}>
+              {copy.heroLine1}<br />{copy.heroLine2}<br /><span style={{ color: C.gold }}>{copy.heroLine3}</span>
+            </h1>
+            <p style={{ margin: "22px 0 0", fontSize: 17, color: C.t300, lineHeight: 1.6, maxWidth: 460 }}>{copy.subtitle}</p>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 18, margin: "26px 0 0" }}>
+              {copy.heroTicks.map((t, i) => (
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 7, fontSize: 13.5, color: C.t200, fontWeight: 600 }}>
+                  <span style={{ width: 18, height: 18, borderRadius: "50%", background: "rgba(232,200,118,0.15)", color: C.gold, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>✓</span>{t}
+                </span>
+              ))}
+            </div>
+
             <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
-              <a href="#basvuru" style={goldBtn}>{copy.ctaApply} →</a>
+              <ApplyCta variant="gold" />
               <a href="#ornek" style={ghostBtn}>{copy.ctaSample}</a>
             </div>
-          </div>
-          <div id="ornek" style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ textAlign: "center" }}>
-              <SampleMenu locale={locale} />
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontSize: 14, fontWeight: 800, color: C.t100 }}>{copy.showcaseTitle}</div>
-                <div style={{ fontSize: 12.5, color: C.t400, marginTop: 2 }}>{copy.showcaseDesc}</div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 34 }}>
+              <div style={{ display: "flex" }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} style={{ width: 34, height: 34, borderRadius: "50%", background: `linear-gradient(135deg,#c89a4a,#8b6a30)`, border: "2px solid #000", marginLeft: i ? -10 : 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>👤</div>
+                ))}
+              </div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 800, color: C.gold }}>★★★★★ 4.9/5</div>
+                <div style={{ fontSize: 12, color: C.t400 }}>{copy.socialProof}</div>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", background: "#000" }}>
         {/* ── How it works ── */}
-        <section style={{ padding: "8px 0 48px" }}>
-          <h2 style={sectionTitle}>{copy.howTitle}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginTop: 22 }} className="qm-steps">
+        <section id="nasil" style={{ padding: "62px 0 48px", scrollMarginTop: 80 }}>
+          <div style={{ textAlign: "center", marginBottom: 26 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>{copy.eyebrow}</div>
+            <h2 style={{ ...sectionTitle, marginTop: 8 }}>{copy.howTitle}</h2>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }} className="qm-steps">
             {copy.steps.map((s, i) => (
               <div key={i} style={card}>
                 <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(232,200,118,0.12)", color: C.gold, fontWeight: 800, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</div>
@@ -94,13 +122,15 @@ export default function QrMenuLandingPage() {
           </div>
         </section>
 
-        {/* ── Application form ── */}
-        <section id="basvuru" style={{ padding: "8px 0 40px", scrollMarginTop: 80 }}>
-          <div style={{ maxWidth: 560, margin: "0 auto", background: "rgba(255,255,255,0.03)", border: `1px solid ${C.lineS}`, borderRadius: 20, padding: 28 }}>
-            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0, textAlign: "center" }}>{copy.formTitle}</h2>
-            <p style={{ fontSize: 13.5, color: C.t400, margin: "8px 0 6px", textAlign: "center", lineHeight: 1.5 }}>{copy.formDesc}</p>
-            <p style={{ fontSize: 12.5, color: C.gold, margin: "0 0 18px", textAlign: "center" }}>{copy.priceNote}</p>
-            <ApplyForm copy={copy} />
+        {/* ── Showcase (code-built sample menu) ── */}
+        <section id="ornek" style={{ display: "grid", gridTemplateColumns: "1fr minmax(0,320px)", gap: 40, alignItems: "center", padding: "20px 0 56px", scrollMarginTop: 80 }} className="qm-two">
+          <div>
+            <h2 style={sectionTitle}>{copy.showcaseTitle}</h2>
+            <p style={{ fontSize: 15, color: C.t300, lineHeight: 1.6, margin: "12px 0 22px", maxWidth: 440 }}>{copy.showcaseDesc}</p>
+            <ApplyCta variant="gold" />
+          </div>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <SampleMenu locale={locale} />
           </div>
         </section>
 
@@ -120,19 +150,20 @@ export default function QrMenuLandingPage() {
         </section>
 
         {/* ── Final CTA ── */}
-        <section style={{ padding: "20px 0 80px", textAlign: "center" }}>
-          <h2 style={{ fontSize: "clamp(24px,4vw,34px)", fontWeight: 800, margin: 0 }}>{copy.finalCtaTitle}</h2>
-          <div style={{ marginTop: 22 }}>
-            <a href="#basvuru" style={{ ...goldBtn, padding: "15px 32px", fontSize: 15 }}>{copy.ctaApply} →</a>
-          </div>
+        <section style={{ padding: "20px 0 84px", textAlign: "center" }}>
+          <h2 style={{ fontSize: "clamp(24px,4vw,34px)", fontWeight: 800, margin: "0 0 22px" }}>{copy.finalCtaTitle}</h2>
+          <div style={{ display: "inline-flex" }}><ApplyCta variant="gold" /></div>
         </section>
       </main>
 
       <style>{`
+        .qm-hero{min-height:660px;}
         .faq-item summary::-webkit-details-marker{display:none;}
         .faq-item[open] summary > span:last-child{transform:rotate(45deg);display:inline-block;}
-        @media(max-width:820px){
-          .qm-hero{grid-template-columns:1fr!important;gap:36px!important;}
+        @media(max-width:900px){
+          .qm-hero-img{position:relative!important;width:100%!important;height:300px!important;}
+          .qm-hero{min-height:0!important;}
+          .qm-hero-copy{padding:48px 0 40px!important;max-width:none!important;}
           .qm-steps{grid-template-columns:1fr 1fr!important;}
           .qm-two{grid-template-columns:1fr!important;}
         }
@@ -145,17 +176,11 @@ export default function QrMenuLandingPage() {
   );
 }
 
-const goldBtn: React.CSSProperties = {
-  background: "linear-gradient(160deg,#ffe9a8 0%,#e8c876 45%,#c89a4a 100%)",
-  color: "#1a0f06", padding: "13px 24px", borderRadius: 11, fontSize: 14, fontWeight: 800,
-  textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 8,
-  boxShadow: "0 8px 22px -8px rgba(232,200,118,0.55)",
-};
 const ghostBtn: React.CSSProperties = {
-  color: C.t300, border: `1px solid ${C.lineS}`, padding: "13px 22px", borderRadius: 11,
-  fontSize: 14, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center",
+  color: C.t300, border: `1px solid ${C.lineS}`, padding: "14px 22px", borderRadius: 11,
+  fontSize: 15, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center",
 };
-const sectionTitle: React.CSSProperties = { fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: "-0.01em" };
+const sectionTitle: React.CSSProperties = { fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, margin: 0, letterSpacing: "-0.01em" };
 const card: React.CSSProperties = {
   background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`,
   border: `1px solid ${C.line}`, borderRadius: 16, padding: 20,
