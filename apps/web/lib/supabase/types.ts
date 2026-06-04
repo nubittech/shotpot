@@ -39,6 +39,39 @@ export interface Venue {
   tier_gold_spend: number;
   // migration 014: won-coupon lifetime in days (0 = never expires)
   coupon_validity_days: number;
+  // migration 018: QR digital menu add-on flag (independent of pro tier)
+  digital_menu_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** QR digital menu category (migration 018) */
+export interface DigitalMenuCategory {
+  id: string;
+  venue_id: string;
+  name: string;
+  name_en: string | null;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** QR digital menu item (migration 018) */
+export interface DigitalMenuItem {
+  id: string;
+  venue_id: string;
+  category_id: string | null;
+  name: string;
+  name_en: string | null;
+  description: string | null;
+  description_en: string | null;
+  price: number | null;
+  image_url: string | null;
+  tags: string[];
+  is_available: boolean;
+  sort_order: number;
+  active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -240,6 +273,8 @@ export interface Database {
       customer_menus:      { Row: CustomerMenu;      Insert: Partial<CustomerMenu>;      Update: Partial<CustomerMenu>; };
       customer_menu_items: { Row: CustomerMenuItem;  Insert: Partial<CustomerMenuItem>;  Update: Partial<CustomerMenuItem>; };
       push_subscriptions:  { Row: PushSubscription;  Insert: Partial<PushSubscription>;  Update: Partial<PushSubscription>; };
+      digital_menu_categories: { Row: DigitalMenuCategory; Insert: Partial<DigitalMenuCategory>; Update: Partial<DigitalMenuCategory>; };
+      digital_menu_items:      { Row: DigitalMenuItem;     Insert: Partial<DigitalMenuItem>;     Update: Partial<DigitalMenuItem>; };
     };
   };
 }

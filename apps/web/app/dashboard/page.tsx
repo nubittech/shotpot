@@ -24,7 +24,7 @@ const T = {
 type Venue = {
   id: string; slug: string; name: string;
   plan: string; tier: string; active: boolean; created_at: string; billing_cycle?: string | null;
-  currency?: string | null;
+  currency?: string | null; digital_menu_enabled?: boolean | null;
 };
 
 export default async function DashboardPage() {
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
 
   const svc = getServiceClient();
   const { data: venuesRaw } = await svc
-    .from("venues").select("id, slug, name, plan, tier, active, created_at, billing_cycle, currency")
+    .from("venues").select("id, slug, name, plan, tier, active, created_at, billing_cycle, currency, digital_menu_enabled")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -78,6 +78,8 @@ export default async function DashboardPage() {
   // Venue-scoped feature nav: Staff works for any active venue; Gift/Menu are Pro-only.
   const activeVenueOpts = venues.filter((v) => v.active).map((v) => ({ slug: v.slug, name: v.name }));
   const proVenueOpts = venues.filter((v) => v.active && v.tier === "pro").map((v) => ({ slug: v.slug, name: v.name }));
+  // QR digital menu is an add-on gated by digital_menu_enabled (not tier).
+  const digitalMenuOpts = venues.filter((v) => v.active && v.digital_menu_enabled).map((v) => ({ slug: v.slug, name: v.name }));
   const staffIcon = (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="6" r="3" stroke="currentColor" strokeWidth="1.5"/><path d="M3.5 16c0-3 2.5-5 5.5-5s5.5 2 5.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
   );
@@ -86,6 +88,9 @@ export default async function DashboardPage() {
   );
   const menuIcon = (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="3.5" y="2.5" width="11" height="13" rx="1.5" stroke="currentColor" strokeWidth="1.5"/><path d="M6 6h6M6 9h6M6 12h4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+  );
+  const qrIcon = (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="10.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="2.5" y="10.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.5"/><path d="M10.5 10.5h2v2M15.5 10.5v5M12.5 15.5h3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
   );
   const billingHref = primaryVenue ? `/dashboard/billing/${primaryVenue.slug}` : "/dashboard";
   const formatSince = (createdAt: string) => {
@@ -323,6 +328,7 @@ export default async function DashboardPage() {
             <SideFeatureLink venues={activeVenueOpts} hrefTemplate="/scan?venue={slug}" label={dashboard.waiter} icon={staffIcon} pickTitle={dashboard.chooseVenue} />
             <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/gifts/{slug}" label={common.gifts} icon={giftIcon} pickTitle={dashboard.chooseVenue} />
             <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/menus/{slug}" label={common.menus} icon={menuIcon} pickTitle={dashboard.chooseVenue} />
+            <SideFeatureLink venues={digitalMenuOpts} hrefTemplate="/dashboard/digital-menu/{slug}" label={common.qrMenu} icon={qrIcon} pickTitle={dashboard.chooseVenue} />
             <SideSection label={dashboard.account} />
             <SideLink href={billingHref} label={dashboard.billing} icon={
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -399,6 +405,7 @@ export default async function DashboardPage() {
         <SideFeatureLink venues={activeVenueOpts} hrefTemplate="/scan?venue={slug}" label={dashboard.waiter} icon={staffIcon} pickTitle={dashboard.chooseVenue} />
         <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/gifts/{slug}" label={common.gifts} icon={giftIcon} pickTitle={dashboard.chooseVenue} />
         <SideFeatureLink venues={proVenueOpts} hrefTemplate="/dashboard/menus/{slug}" label={common.menus} icon={menuIcon} pickTitle={dashboard.chooseVenue} />
+            <SideFeatureLink venues={digitalMenuOpts} hrefTemplate="/dashboard/digital-menu/{slug}" label={common.qrMenu} icon={qrIcon} pickTitle={dashboard.chooseVenue} />
 
         {/* Account nav */}
         <SideSection label={dashboard.account} />

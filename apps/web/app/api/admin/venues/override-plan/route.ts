@@ -8,6 +8,7 @@ type Body = {
   tier?: "standard" | "pro";
   billingCycle?: "monthly" | "yearly";
   active?: boolean;
+  digitalMenuEnabled?: boolean;
   note?: string;
 };
 
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
   const svc = getServiceClient();
   const { data: existing, error: selErr } = await svc
     .from("venues")
-    .select("id, plan, tier, billing_cycle, active, stripe_subscription_id")
+    .select("id, plan, tier, billing_cycle, active, digital_menu_enabled, stripe_subscription_id")
     .eq("slug", body.slug)
     .maybeSingle();
   if (selErr) return NextResponse.json({ error: selErr.message }, { status: 500 });
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
 
   const e = existing as {
     id: string; plan: string; tier: string; billing_cycle: string;
-    active: boolean | null; stripe_subscription_id: string | null;
+    active: boolean | null; digital_menu_enabled: boolean | null; stripe_subscription_id: string | null;
   };
 
   const update: Record<string, unknown> = {};
@@ -49,6 +50,7 @@ export async function POST(req: NextRequest) {
   if (body.tier !== undefined) update.tier = body.tier;
   if (body.billingCycle !== undefined) update.billing_cycle = body.billingCycle;
   if (body.active !== undefined) update.active = body.active;
+  if (body.digitalMenuEnabled !== undefined) update.digital_menu_enabled = body.digitalMenuEnabled;
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: "no fields to update" }, { status: 400 });
@@ -64,7 +66,8 @@ export async function POST(req: NextRequest) {
     payload: {
       before: {
         plan: e.plan, tier: e.tier, billing_cycle: e.billing_cycle,
-        active: e.active, stripe_subscription_id: e.stripe_subscription_id,
+        active: e.active, digital_menu_enabled: e.digital_menu_enabled,
+        stripe_subscription_id: e.stripe_subscription_id,
       },
       after: update,
       note: body.note ?? null,

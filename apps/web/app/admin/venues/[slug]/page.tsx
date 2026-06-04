@@ -64,7 +64,7 @@ export default async function AdminVenueDetail({ params }: { params: { slug: str
   const { venue, metrics, recentReceipts, recentAudit } = data;
   const v = venue as unknown as {
     id: string; slug: string; name: string; plan: string; tier: string; billing_cycle: string;
-    active: boolean | null; stripe_subscription_id: string | null;
+    active: boolean | null; digital_menu_enabled: boolean | null; stripe_subscription_id: string | null;
   };
 
   return (
@@ -94,6 +94,7 @@ export default async function AdminVenueDetail({ params }: { params: { slug: str
         tier: v.tier as "standard" | "pro",
         billingCycle: v.billing_cycle as "monthly" | "yearly",
         active: !!v.active,
+        digitalMenuEnabled: !!v.digital_menu_enabled,
         hasPaddle: !!v.stripe_subscription_id,
       }} />
 

@@ -9,6 +9,7 @@ type Props = {
     tier: "standard" | "pro";
     billingCycle: "monthly" | "yearly";
     active: boolean;
+    digitalMenuEnabled: boolean;
     hasPaddle: boolean;
   };
 };
@@ -18,6 +19,7 @@ export default function VenueAdminControls({ venue }: Props) {
   const [tier,    setTier]    = useState(venue.tier);
   const [cycle,   setCycle]   = useState(venue.billingCycle);
   const [active,  setActive]  = useState(venue.active);
+  const [digitalMenu, setDigitalMenu] = useState(venue.digitalMenuEnabled);
   const [note,    setNote]    = useState("");
   const [tokens,  setTokens]  = useState(10);
   const [guestToken, setGuestToken] = useState("");
@@ -30,7 +32,7 @@ export default function VenueAdminControls({ venue }: Props) {
     try {
       const res = await fetch("/api/admin/venues/override-plan", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: venue.slug, plan, tier, billingCycle: cycle, active, note: note || undefined }),
+        body: JSON.stringify({ slug: venue.slug, plan, tier, billingCycle: cycle, active, digitalMenuEnabled: digitalMenu, note: note || undefined }),
       });
       const d = await res.json();
       if (!res.ok) throw new Error(d.error ?? "fail");
@@ -99,6 +101,12 @@ export default function VenueAdminControls({ venue }: Props) {
           <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
             <span style={{ fontSize: 12, color: "#bbb" }}>{active ? "aktif" : "pasif"}</span>
+          </label>
+        </Field>
+        <Field label="QR Menü (eklenti)">
+          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input type="checkbox" checked={digitalMenu} onChange={(e) => setDigitalMenu(e.target.checked)} />
+            <span style={{ fontSize: 12, color: "#bbb" }}>{digitalMenu ? "açık" : "kapalı"}</span>
           </label>
         </Field>
         <button onClick={saveOverride} disabled={busy} style={btnPrimary}>
