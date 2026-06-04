@@ -57,6 +57,23 @@ export interface DigitalMenuCategory {
   updated_at: string;
 }
 
+/** QR digital menu service application (migration 019) */
+export interface DigitalMenuApplication {
+  id: string;
+  business_name: string;
+  contact_name: string | null;
+  phone: string | null;
+  email: string | null;
+  city: string | null;
+  message: string | null;
+  photo_urls: string[];
+  status: "new" | "contacted" | "done" | "rejected";
+  venue_id: string | null;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** QR digital menu item (migration 018) */
 export interface DigitalMenuItem {
   id: string;
@@ -275,6 +292,7 @@ export interface Database {
       push_subscriptions:  { Row: PushSubscription;  Insert: Partial<PushSubscription>;  Update: Partial<PushSubscription>; };
       digital_menu_categories: { Row: DigitalMenuCategory; Insert: Partial<DigitalMenuCategory>; Update: Partial<DigitalMenuCategory>; };
       digital_menu_items:      { Row: DigitalMenuItem;     Insert: Partial<DigitalMenuItem>;     Update: Partial<DigitalMenuItem>; };
+      digital_menu_applications: { Row: DigitalMenuApplication; Insert: Partial<DigitalMenuApplication>; Update: Partial<DigitalMenuApplication>; };
     };
   };
 }
