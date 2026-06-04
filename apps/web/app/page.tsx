@@ -70,6 +70,9 @@ a{text-decoration:none;}
 .btn-primary-lg{background:linear-gradient(160deg,#f0d690 0%,#c89a4a 50%,#8b6a30 100%);color:#1a0f06;padding:15px 32px;border-radius:12px;font-size:15px;font-weight:700;display:inline-flex;align-items:center;gap:10px;box-shadow:inset 0 1px 0 rgba(255,244,212,0.6),inset 0 -1px 0 rgba(74,52,20,0.5),0 8px 24px -8px rgba(232,200,118,0.5);}
 .btn-ghost-lg{color:#c8b890;border:1px solid rgba(232,200,118,0.22);padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;display:inline-flex;align-items:center;gap:8px;}
 .btn-ghost-lg:hover{border-color:#e8c876;color:#e8c876;}
+.btn-qrmenu{color:#1a0f06;background:linear-gradient(160deg,#ffe9a8 0%,#e8c876 45%,#c89a4a 100%);border:1px solid rgba(255,244,212,0.55);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:800;display:inline-flex;align-items:center;gap:7px;box-shadow:0 6px 18px -6px rgba(232,200,118,0.5);animation:qrmenu-glow 2.6s ease-in-out infinite;}
+.btn-qrmenu:hover{filter:brightness(1.07);}
+@keyframes qrmenu-glow{0%,100%{box-shadow:0 6px 16px -7px rgba(232,200,118,0.45)}50%{box-shadow:0 8px 26px -5px rgba(232,200,118,0.9)}}
 @media(max-width:900px){
   .hero-grid{grid-template-columns:1fr!important;}
   .slot-stage{max-width:360px;margin:0 auto;}
@@ -82,6 +85,8 @@ a{text-decoration:none;}
   nav .container > a:first-child span{font-size:15px!important;}
   nav .container > a:first-child div{width:30px!important;height:30px!important;font-size:15px!important;}
   .btn-ghost,.btn-primary{padding:9px 12px!important;font-size:12px!important;}
+  .btn-qrmenu{padding:9px 12px!important;font-size:12px!important;}
+  .btn-qrmenu .qm-label{display:none!important;}
   .hero-section{padding:76px 0 70px!important;}
   .hero-grid{gap:34px!important;}
   .hero-copy{position:relative;z-index:1;}
@@ -145,6 +150,10 @@ export default async function HomePage() {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            <Link href="/qr-menu" className="btn-qrmenu">
+              <svg width="15" height="15" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><rect x="10.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><rect x="2.5" y="10.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><path d="M10.5 10.5h2v2M15.5 10.5v5M12.5 15.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
+              <span className="qm-label">{landing.nav.qrMenu}</span>
+            </Link>
             <LanguageToggle initialLocale={locale} />
             {user ? (
               <Link href="/dashboard" className="btn-primary">{common.goDashboard}</Link>
