@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { createClient } from "../../../lib/supabase/browser";
 import type { CustomerPro, Coupon } from "../../../lib/supabase/types";
 import { pushSupported, pushPermission, enablePush } from "../../../lib/push-client";
+import QRCode from "qrcode";
 
 type CouponStatus = "active" | "redeemed" | "expired";
 
@@ -59,6 +60,7 @@ export default function ProfilePage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<CouponStatus | "all">("all");
+  const [openCoupon, setOpenCoupon] = useState<Coupon | null>(null);
   const [tab, setTab] = useState<Tab>("coupons");
   const [userEmail, setUserEmail] = useState("");
   // Profile editing (name + birthday) — fixes nameless members and collects
@@ -365,7 +367,7 @@ export default function ProfilePage() {
                 const status = couponStatus(c);
                 const statusColor = status === "active" ? "#4ade80" : status === "redeemed" ? "rgba(244,239,230,0.35)" : "#ff8060";
                 return (
-                  <div key={c.id} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${status === "active" ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: status === "expired" ? 0.55 : 1 }}>
+                  <div key={c.id} onClick={status === "active" ? () => setOpenCoupon(c) : undefined} style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${status === "active" ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.06)"}`, borderRadius: 14, padding: "16px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", opacity: status === "expired" ? 0.55 : 1, cursor: status === "active" ? "pointer" : "default" }}>
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: "#f4efe6", marginBottom: 4 }}>{c.reward_label}</div>
                       <div style={{ fontFamily: "monospace", fontSize: 12, color: "rgba(244,239,230,0.5)", letterSpacing: "0.12em" }}>{c.code}</div>
@@ -377,8 +379,13 @@ export default function ProfilePage() {
                         Kazanıldı: {new Date(c.created_at).toLocaleDateString("tr-TR", { day: "numeric", month: "short", year: "numeric" })}
                       </div>
                     </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: statusColor, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0, marginLeft: 12 }}>
-                      {status === "active" ? "✓ Aktif" : status === "redeemed" ? "Kullanıldı" : "Süresi Geçti"}
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0, marginLeft: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: statusColor, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                        {status === "active" ? "✓ Aktif" : status === "redeemed" ? "Kullanıldı" : "Süresi Geçti"}
+                      </div>
+                      {status === "active" && (
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#ffd84e" }}>Kod & QR ›</div>
+                      )}
                     </div>
                   </div>
                 );
@@ -394,6 +401,47 @@ export default function ProfilePage() {
             Hesabımdan çıkış yap
           </button>
         </div>
+      </div>
+
+      {openCoupon && <CouponDetailModal coupon={openCoupon} slug={slug} onClose={() => setOpenCoupon(null)} />}
+    </div>
+  );
+}
+
+/** Full-screen coupon detail with QR + code — opened from the coupon list.
+ *  QR encodes the staff redemption URL so staff can scan it. */
+function CouponDetailModal({ coupon, slug, onClose }: { coupon: Coupon; slug: string; onClose: () => void }) {
+  const qrRef = useRef<HTMLCanvasElement>(null);
+  const [copied, setCopied] = useState(false);
+  const e = expiryInfo(coupon);
+
+  useEffect(() => {
+    if (!qrRef.current) return;
+    const url = `${window.location.origin}/scan?venue=${encodeURIComponent(slug)}&code=${encodeURIComponent(coupon.code)}`;
+    QRCode.toCanvas(qrRef.current, url, { width: 200, margin: 1, color: { dark: "#0a0a0c", light: "#ffffff" } }).catch(() => {});
+  }, [slug, coupon.code]);
+
+  async function copy() {
+    try { await navigator.clipboard.writeText(coupon.code); setCopied(true); setTimeout(() => setCopied(false), 1800); } catch {}
+  }
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div onClick={(ev) => ev.stopPropagation()} style={{ width: "100%", maxWidth: 380, background: "#141416", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "26px 22px", textAlign: "center", position: "relative" }}>
+        <button onClick={onClose} aria-label="Kapat" style={{ position: "absolute", top: 12, right: 14, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#f4efe6", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+
+        <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(244,239,230,0.5)", textTransform: "uppercase" }}>Kuponun</div>
+        <h2 style={{ margin: "8px 0 16px", fontSize: 22, fontWeight: 800, color: "#f4efe6" }}>{coupon.reward_label}</h2>
+
+        <div style={{ background: "#fff", padding: 12, borderRadius: 14, display: "inline-block", lineHeight: 0 }}>
+          <canvas ref={qrRef} />
+        </div>
+        <div style={{ fontSize: 11.5, color: "rgba(244,239,230,0.5)", margin: "10px 0 0" }}>Garson QR'ı taratarak doğrular</div>
+
+        <div style={{ marginTop: 16, padding: "16px 12px", background: "rgba(0,0,0,0.4)", borderRadius: 12, fontFamily: "monospace", fontSize: 24, fontWeight: 800, color: "#ffd84e", letterSpacing: "0.16em", border: "1px solid rgba(255,255,255,0.1)" }}>{coupon.code}</div>
+        <button onClick={copy} style={{ marginTop: 12, width: "100%", padding: "12px", background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, color: "#ffd84e", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>{copied ? "✓ Kopyalandı" : "Kodu Kopyala"}</button>
+
+        <div style={{ marginTop: 14, fontSize: 12.5, fontWeight: 700, color: e.color }}>{e.text}</div>
       </div>
     </div>
   );
