@@ -5,6 +5,7 @@ import { LanguageToggle } from "../components/LanguageToggle";
 import { LandingPricing } from "./LandingPricing";
 import { HeroShowcase } from "../components/landing/HeroShowcase";
 import { SnapJackLogo } from "../components/SnapJackLogo";
+import { ChatWidget } from "./ChatWidget";
 
 /* ─── Design tokens ─── */
 const C = {
@@ -363,6 +364,7 @@ export default async function HomePage() {
           </div>
         </div>
       </footer>
+      <ChatWidget />
     </>
   );
 }

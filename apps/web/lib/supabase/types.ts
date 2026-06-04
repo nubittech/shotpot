@@ -57,6 +57,30 @@ export interface DigitalMenuCategory {
   updated_at: string;
 }
 
+/** Live chat conversation (migration 020) */
+export interface ChatConversation {
+  id: string;
+  visitor_id: string;
+  visitor_name: string | null;
+  visitor_email: string | null;
+  status: "open" | "closed";
+  mode: "ai" | "human";
+  locale: string;
+  last_message_at: string;
+  last_visitor_at: string | null;
+  admin_seen_at: string | null;
+  created_at: string;
+}
+
+/** Live chat message (migration 020) */
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  role: "visitor" | "ai" | "admin";
+  content: string;
+  created_at: string;
+}
+
 /** QR digital menu service application (migration 019) */
 export interface DigitalMenuApplication {
   id: string;
@@ -293,6 +317,8 @@ export interface Database {
       digital_menu_categories: { Row: DigitalMenuCategory; Insert: Partial<DigitalMenuCategory>; Update: Partial<DigitalMenuCategory>; };
       digital_menu_items:      { Row: DigitalMenuItem;     Insert: Partial<DigitalMenuItem>;     Update: Partial<DigitalMenuItem>; };
       digital_menu_applications: { Row: DigitalMenuApplication; Insert: Partial<DigitalMenuApplication>; Update: Partial<DigitalMenuApplication>; };
+      chat_conversations:      { Row: ChatConversation;    Insert: Partial<ChatConversation>;    Update: Partial<ChatConversation>; };
+      chat_messages:           { Row: ChatMessage;         Insert: Partial<ChatMessage>;         Update: Partial<ChatMessage>; };
     };
   };
 }
