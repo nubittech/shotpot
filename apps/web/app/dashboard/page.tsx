@@ -7,6 +7,7 @@ import { CopyLinkButton } from "./CopyLinkButton";
 import { DeleteVenueButton } from "./DeleteVenueButton";
 import { VenueMoreMenu } from "./VenueMoreMenu";
 import { SideFeatureLink } from "./SideFeatureLink";
+import { QrMenuBanner } from "./QrMenuBanner";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { SnapJackLogo } from "../../components/SnapJackLogo";
 import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
@@ -502,6 +503,15 @@ export default async function DashboardPage() {
               {dashboard.newVenue}
             </Link>
           </div>
+
+          {/* QR menu management entry — prominent banner for venues with the add-on */}
+          <QrMenuBanner
+            venues={digitalMenuOpts}
+            title={dashboard.qrMenuPanelTitle}
+            desc={dashboard.qrMenuPanelDesc}
+            cta={dashboard.qrMenuPanelOpen}
+            pickTitle={dashboard.chooseVenue}
+          />
 
           {/* KPI strip — mocked totals across venues */}
           <div className="dashboard-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16, marginBottom: 32 }}>

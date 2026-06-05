@@ -227,6 +227,9 @@ export const tr = {
     completePayment: "Ödemeyi tamamla",
     more: "Daha fazla",
     chooseVenue: "İşletme seç",
+    qrMenuPanelTitle: "QR Menü Yönetim Paneli",
+    qrMenuPanelDesc: "Dijital menünü düzenle, ürün/fiyat güncelle, masa QR kodunu indir.",
+    qrMenuPanelOpen: "Paneli Aç",
     deleteVenue: {
       title: "İşletmeyi sil?",
       permanent: "kalıcı olarak silinecek.",

@@ -229,6 +229,9 @@ export const en: Translation = {
     completePayment: "Complete payment",
     more: "More",
     chooseVenue: "Choose venue",
+    qrMenuPanelTitle: "QR Menu Management Panel",
+    qrMenuPanelDesc: "Edit your digital menu, update items/prices, download the table QR code.",
+    qrMenuPanelOpen: "Open Panel",
     deleteVenue: {
       title: "Delete venue?",
       permanent: "will be permanently deleted.",
