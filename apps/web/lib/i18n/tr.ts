@@ -865,6 +865,12 @@ export const tr = {
       moveUp: "Yukarı taşı",
       moveDown: "Aşağı taşı",
       itemCount: "{n} ürün",
+      show: "Göster",
+      hide: "Gizle",
+      hiddenLabel: "Gizli",
+      livePreview: "Canlı Önizleme",
+      previewEmpty: "Menüye kategori ve ürün ekledikçe burada görünür.",
+      dragHint: "Sürükleyerek sırala",
     },
   },
   menuPublic: {

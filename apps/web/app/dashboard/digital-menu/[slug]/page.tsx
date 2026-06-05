@@ -35,7 +35,7 @@ export default async function DigitalMenuPage({ params }: Params) {
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
       </header>
-      <main style={{ maxWidth: 900, margin: "0 auto", padding: "32px 24px" }}>{inner}</main>
+      <main style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 24px" }}>{inner}</main>
     </div>
   );
 
@@ -82,6 +82,7 @@ export default async function DigitalMenuPage({ params }: Params) {
     imageUrl: it.image_url ?? "",
     tags: Array.isArray(it.tags) ? it.tags : [],
     isAvailable: it.is_available,
+    active: it.active,
   }));
 
   return shell(

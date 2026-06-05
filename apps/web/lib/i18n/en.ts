@@ -867,6 +867,12 @@ export const en: Translation = {
       moveUp: "Move up",
       moveDown: "Move down",
       itemCount: "{n} items",
+      show: "Show",
+      hide: "Hide",
+      hiddenLabel: "Hidden",
+      livePreview: "Live Preview",
+      previewEmpty: "Add categories and items to see them here.",
+      dragHint: "Drag to reorder",
     },
   },
   menuPublic: {

@@ -73,7 +73,7 @@ function cleanTags(tags?: string[]): string[] {
 /** Returns the next sort_order for a table scoped to a venue (and optional category). */
 async function nextSort(svc: ReturnType<typeof getServiceClient>, table: string, venueId: string, categoryId?: string | null) {
   let q = svc.from(table).select("sort_order").eq("venue_id", venueId).order("sort_order", { ascending: false }).limit(1);
-  if (table === "digital_menu_items" && categoryId) q = q.eq("category_id", categoryId);
+  if (table === "digital_menu_items") q = categoryId ? q.eq("category_id", categoryId) : q.is("category_id", null);
   const { data } = await q.maybeSingle();
   const top = (data as { sort_order?: number } | null)?.sort_order;
   return typeof top === "number" ? top + 1 : 0;
