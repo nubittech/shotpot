@@ -3,7 +3,6 @@ import { getServerCopy, getServerLocale } from "../../lib/i18n/server";
 import { LanguageToggle } from "../../components/LanguageToggle";
 import { SnapJackLogo } from "../../components/SnapJackLogo";
 import { ApplyCta } from "./ApplyCta";
-import { SampleMenu } from "./SampleMenu";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +60,6 @@ export default function QrMenuLandingPage() {
 
             <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
               <ApplyCta variant="gold" />
-              <a href="#ornek" style={ghostBtn}>{copy.ctaSample}</a>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 34 }}>
@@ -122,18 +120,6 @@ export default function QrMenuLandingPage() {
           </div>
         </section>
 
-        {/* ── Showcase (code-built sample menu) ── */}
-        <section id="ornek" style={{ display: "grid", gridTemplateColumns: "1fr minmax(0,320px)", gap: 40, alignItems: "center", padding: "20px 0 56px", scrollMarginTop: 80 }} className="qm-two">
-          <div>
-            <h2 style={sectionTitle}>{copy.showcaseTitle}</h2>
-            <p style={{ fontSize: 15, color: C.t300, lineHeight: 1.6, margin: "12px 0 22px", maxWidth: 440 }}>{copy.showcaseDesc}</p>
-            <ApplyCta variant="gold" />
-          </div>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <SampleMenu locale={locale} />
-          </div>
-        </section>
-
         {/* ── FAQ ── */}
         <section style={{ padding: "8px 0 48px", maxWidth: 720, margin: "0 auto" }}>
           <h2 style={{ ...sectionTitle, textAlign: "center" }}>{copy.faqTitle}</h2>
@@ -176,11 +162,7 @@ export default function QrMenuLandingPage() {
   );
 }
 
-const ghostBtn: React.CSSProperties = {
-  color: C.t300, border: `1px solid ${C.lineS}`, padding: "14px 22px", borderRadius: 11,
-  fontSize: 15, fontWeight: 600, textDecoration: "none", display: "inline-flex", alignItems: "center",
-};
-const sectionTitle: React.CSSProperties = { fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, margin: 0, letterSpacing: "-0.01em" };
+const sectionTitle: React.CSSProperties ={ fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, margin: 0, letterSpacing: "-0.01em" };
 const card: React.CSSProperties = {
   background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`,
   border: `1px solid ${C.line}`, borderRadius: 16, padding: 20,
