@@ -77,23 +77,26 @@ export default function QrMenuLandingPage() {
         </div>
       </section>
 
-      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", background: "#000" }}>
-        {/* ── How it works ── */}
-        <section id="nasil" style={{ padding: "62px 0 48px", scrollMarginTop: 80 }}>
-          <div style={{ textAlign: "center", marginBottom: 26 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>{copy.eyebrow}</div>
-            <h2 style={{ ...sectionTitle, marginTop: 8 }}>{copy.howTitle}</h2>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 16 }} className="qm-steps">
-            {copy.steps.map((s, i) => (
-              <div key={i} style={card}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(232,200,118,0.12)", color: C.gold, fontWeight: 800, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>{i + 1}</div>
-                <div style={{ fontSize: 15, fontWeight: 800, marginTop: 12 }}>{s.title}</div>
-                <div style={{ fontSize: 13, color: C.t300, marginTop: 6, lineHeight: 1.5 }}>{s.desc}</div>
+      {/* ── Why QR menu — 5 value features (cream, full-width) ── */}
+      <section style={{ background: "#f7f3ec", color: "#1a140d" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "66px 24px 64px", textAlign: "center" }}>
+          <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.2em", color: "#c89a4a", textTransform: "uppercase" }}>{copy.whyEyebrow}</div>
+          <h2 style={{ fontSize: "clamp(24px,3.4vw,34px)", fontWeight: 800, margin: "10px 0 0", color: "#1a140d", letterSpacing: "-0.01em" }}>{copy.whyTitle}</h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 24, marginTop: 46 }} className="qm-feat">
+            {copy.features.map((f, i) => (
+              <div key={i} style={{ textAlign: "center" }}>
+                <div style={{ width: 66, height: 66, margin: "0 auto", borderRadius: "50%", background: "linear-gradient(180deg,#efe7d8,#e2d5be)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8a6a2e", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)" }}>
+                  {FEATURE_ICONS[i]}
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 800, marginTop: 16, color: "#1a140d" }}>{f.title}</div>
+                <div style={{ fontSize: 13, color: "#6b5e49", marginTop: 8, lineHeight: 1.55 }}>{f.desc}</div>
               </div>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
+
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", background: "#000" }}>
 
         {/* ── Included + Deploy ── */}
         <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, padding: "8px 0 48px" }} className="qm-two">
@@ -150,12 +153,12 @@ export default function QrMenuLandingPage() {
           .qm-hero-img{position:relative!important;width:100%!important;height:300px!important;}
           .qm-hero{min-height:0!important;}
           .qm-hero-copy{padding:48px 0 40px!important;max-width:none!important;}
-          .qm-steps{grid-template-columns:1fr 1fr!important;}
+          .qm-feat{grid-template-columns:repeat(3,1fr)!important;row-gap:36px!important;}
           .qm-two{grid-template-columns:1fr!important;}
         }
         @media(max-width:520px){
           .qm-back{display:none!important;}
-          .qm-steps{grid-template-columns:1fr!important;}
+          .qm-feat{grid-template-columns:repeat(2,1fr)!important;}
         }
       `}</style>
     </div>
@@ -167,3 +170,16 @@ const card: React.CSSProperties = {
   background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`,
   border: `1px solid ${C.line}`, borderRadius: 16, padding: 20,
 };
+
+const FEATURE_ICONS = [
+  // Upload menu design — image
+  <svg key="0" width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="16" rx="2.5" stroke="currentColor" strokeWidth="1.6"/><circle cx="8.5" cy="9.5" r="1.6" stroke="currentColor" strokeWidth="1.4"/><path d="M5 18l4.5-4.5 3 3L16 13l3 3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  // Edit — pencil
+  <svg key="1" width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 20h4l10-10a2.5 2.5 0 0 0-3.5-3.5L4.5 16.5 4 20Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M13.5 7.5l3 3" stroke="currentColor" strokeWidth="1.6"/></svg>,
+  // Share via QR — phone
+  <svg key="2" width="26" height="26" viewBox="0 0 24 24" fill="none"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" stroke="currentColor" strokeWidth="1.6"/><path d="M10.5 5.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><rect x="9.5" y="9" width="2.5" height="2.5" rx="0.5" stroke="currentColor" strokeWidth="1.2"/><path d="M13 12.5h1.5V14M14.5 9v2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+  // Update instantly — clock
+  <svg key="3" width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6"/><path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  // Track performance — bar chart
+  <svg key="4" width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><rect x="6" y="11" width="3" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="7" width="3" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="16" y="13" width="3" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>,
+];
