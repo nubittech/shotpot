@@ -118,6 +118,31 @@ export default function QrMenuLandingPage() {
           </div>
         </section>
 
+        {/* ── CTA band ── */}
+        <section style={{ padding: "8px 0 48px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 28, flexWrap: "wrap", padding: "32px 36px", borderRadius: 20, background: "linear-gradient(180deg,#100b08 0%,#0a0706 100%)", border: `1px solid ${C.line}` }} className="qm-band">
+            <div style={{ minWidth: 240 }}>
+              <div style={{ fontSize: "clamp(18px,2.2vw,24px)", fontWeight: 800, color: C.t100, lineHeight: 1.35 }}>{copy.ctaBandLine1}</div>
+              <div style={{ fontSize: "clamp(18px,2.2vw,24px)", fontWeight: 800, color: C.gold, lineHeight: 1.35 }}>{copy.ctaBandLine2}</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <ApplyCta variant="gold" />
+              <div style={{ fontSize: 11.5, color: C.t400, marginTop: 8, maxWidth: 220 }}>{copy.ctaBandNote}</div>
+            </div>
+            <div style={{ display: "flex", gap: 26, flexWrap: "wrap" }}>
+              {copy.trust.map((t, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(232,200,118,0.1)", border: `1px solid ${C.line}`, color: C.gold, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{TRUST_ICONS[i]}</div>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: C.t100 }}>{t.title}</div>
+                    <div style={{ fontSize: 11.5, color: C.t400 }}>{t.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── FAQ ── */}
         <section style={{ padding: "8px 0 48px", maxWidth: 720, margin: "0 auto" }}>
           <h2 style={{ ...sectionTitle, textAlign: "center" }}>{copy.faqTitle}</h2>
@@ -150,6 +175,7 @@ export default function QrMenuLandingPage() {
           .qm-hero-copy{padding:48px 0 40px!important;max-width:none!important;}
           .qm-feat{grid-template-columns:repeat(3,1fr)!important;row-gap:36px!important;}
           .qm-two{grid-template-columns:1fr!important;}
+          .qm-band{flex-direction:column!important;align-items:flex-start!important;text-align:left!important;}
         }
         @media(max-width:520px){
           .qm-back{display:none!important;}
@@ -173,4 +199,13 @@ const FEATURE_ICONS = [
   <svg key="3" width="26" height="26" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.6"/><path d="M12 7.5V12l3 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   // Track performance — bar chart
   <svg key="4" width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M4 20h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/><rect x="6" y="11" width="3" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="11" y="7" width="3" height="10" rx="1" stroke="currentColor" strokeWidth="1.5"/><rect x="16" y="13" width="3" height="4" rx="1" stroke="currentColor" strokeWidth="1.5"/></svg>,
+];
+
+const TRUST_ICONS = [
+  // Easy setup — check circle
+  <svg key="0" width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7"/><path d="M8.5 12l2.3 2.3L15.5 9.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  // Support — headset
+  <svg key="1" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 13v-1a7 7 0 0 1 14 0v1" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/><rect x="3.5" y="12.5" width="3.5" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6"/><rect x="17" y="12.5" width="3.5" height="6" rx="1.5" stroke="currentColor" strokeWidth="1.6"/><path d="M19 18.5c0 1.7-1.6 2.5-3.5 2.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>,
+  // Secure — shield
+  <svg key="2" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6l7-3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>,
 ];
