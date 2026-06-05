@@ -98,6 +98,26 @@ export default function QrMenuLandingPage() {
 
       <main style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", background: "#000" }}>
 
+        {/* ── Editor showcase (dark): text left, editor mockup right ── */}
+        <section style={{ display: "grid", gridTemplateColumns: "minmax(0,0.85fr) minmax(0,1.15fr)", gap: 44, alignItems: "center", padding: "66px 0 56px" }} className="qm-two">
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: "0.2em", color: C.gold, textTransform: "uppercase" }}>{copy.editorEyebrow}</div>
+            <h2 style={{ ...sectionTitle, marginTop: 12, fontSize: "clamp(24px,3.2vw,34px)", lineHeight: 1.15 }}>{copy.editorTitle}</h2>
+            <p style={{ fontSize: 15, color: C.t300, lineHeight: 1.6, margin: "16px 0 0", maxWidth: 420 }}>{copy.editorDesc}</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "20px 0 26px", display: "grid", gap: 12 }}>
+              {copy.editorTicks.map((t, i) => (
+                <li key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14.5, color: C.t200, fontWeight: 600 }}>
+                  <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(232,200,118,0.15)", color: C.gold, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 12, flexShrink: 0 }}>✓</span>{t}
+                </li>
+              ))}
+            </ul>
+            <ApplyCta variant="gold" />
+          </div>
+          <div style={{ borderRadius: 16, overflow: "hidden", border: `1px solid ${C.lineS}`, boxShadow: "0 30px 70px -28px rgba(0,0,0,0.9), 0 0 0 1px rgba(232,200,118,0.06)", background: "#0a0a0c" }}>
+            <img src="/qrmenu/editor.png" alt="" style={{ width: "100%", height: "auto", display: "block" }} />
+          </div>
+        </section>
+
         {/* ── Included + Deploy ── */}
         <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, padding: "8px 0 48px" }} className="qm-two">
           <div style={{ ...card, padding: 28 }}>
