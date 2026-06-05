@@ -118,31 +118,6 @@ export default function QrMenuLandingPage() {
           </div>
         </section>
 
-        {/* ── Included + Deploy ── */}
-        <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, padding: "8px 0 48px" }} className="qm-two">
-          <div style={{ ...card, padding: 28 }}>
-            <h2 style={{ ...sectionTitle, margin: 0 }}>{copy.benefitsTitle}</h2>
-            <ul style={{ listStyle: "none", padding: 0, margin: "18px 0 0", display: "grid", gap: 12 }}>
-              {copy.benefits.map((b, i) => (
-                <li key={i} style={{ display: "flex", gap: 10, fontSize: 14.5, color: C.t200, lineHeight: 1.5 }}>
-                  <span style={{ color: C.gold, fontWeight: 800 }}>✓</span><span>{b}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div style={{ ...card, padding: 28 }}>
-            <h2 style={{ ...sectionTitle, margin: 0 }}>{copy.deployTitle}</h2>
-            <p style={{ fontSize: 14, color: C.t300, lineHeight: 1.55, margin: "12px 0 0" }}>{copy.deployDesc}</p>
-            <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0", display: "grid", gap: 10 }}>
-              {copy.deployPoints.map((p, i) => (
-                <li key={i} style={{ display: "flex", gap: 10, fontSize: 14, color: C.t200, lineHeight: 1.5 }}>
-                  <span style={{ color: C.gold }}>◆</span><span>{p}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
         {/* ── FAQ ── */}
         <section style={{ padding: "8px 0 48px", maxWidth: 720, margin: "0 auto" }}>
           <h2 style={{ ...sectionTitle, textAlign: "center" }}>{copy.faqTitle}</h2>
@@ -186,10 +161,6 @@ export default function QrMenuLandingPage() {
 }
 
 const sectionTitle: React.CSSProperties ={ fontSize: "clamp(22px,3vw,30px)", fontWeight: 800, margin: 0, letterSpacing: "-0.01em" };
-const card: React.CSSProperties = {
-  background: `linear-gradient(180deg, ${C.bg1} 0%, ${C.bg0} 100%)`,
-  border: `1px solid ${C.line}`, borderRadius: 16, padding: 20,
-};
 
 const FEATURE_ICONS = [
   // Upload menu design — image
