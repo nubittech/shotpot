@@ -34,7 +34,7 @@ export default function QrMenuLandingPage() {
       <section className="qm-hero" style={{ position: "relative", background: "#000", overflow: "hidden" }}>
         {/* Right photographic composition */}
         <div className="qm-hero-img" style={{ position: "absolute", top: 0, right: 0, height: "100%", width: "60%" }}>
-          <img src="/qrmenu/hero.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "right center", display: "block" }} />
+          <img src={locale === "en" ? "/qrmenu/hero-en.png" : "/qrmenu/hero.png"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "right center", display: "block" }} />
           {/* fade the image's left edge into the black so text stays legible */}
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, #000 0%, rgba(0,0,0,0.85) 14%, rgba(0,0,0,0.25) 42%, transparent 70%)" }} />
         </div>
