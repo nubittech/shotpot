@@ -30,7 +30,6 @@ export function QrMenuBanner({ venues, title, desc, cta, pickTitle }: {
       background: "linear-gradient(135deg, rgba(232,200,118,0.14) 0%, rgba(200,154,74,0.06) 60%, rgba(0,0,0,0) 100%)",
       border: "1px solid rgba(232,200,118,0.28)",
       boxShadow: "0 10px 30px -16px rgba(232,200,118,0.4)",
-      overflow: "hidden",
     }}>
       <div style={{ width: 46, height: 46, borderRadius: 12, background: "rgba(232,200,118,0.16)", border: "1px solid rgba(232,200,118,0.3)", color: "#e8c876", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
         <svg width="24" height="24" viewBox="0 0 18 18" fill="none"><rect x="2.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><rect x="10.5" y="2.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><rect x="2.5" y="10.5" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.6"/><path d="M10.5 10.5h2v2M15.5 10.5v5M12.5 15.5h3" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>
