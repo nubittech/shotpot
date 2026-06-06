@@ -1,7 +1,8 @@
 import { getServiceClient } from "../../../lib/supabase/server";
-import type { DigitalMenuCategory, DigitalMenuItem } from "../../../lib/supabase/types";
+import type { DigitalMenuCategory, DigitalMenuItem, MenuDesign } from "../../../lib/supabase/types";
 import { getServerCopy } from "../../../lib/i18n/server";
 import { PublicMenu, type PublicCategory } from "./PublicMenu";
+import { MenuDesignView } from "../../../components/MenuDesignView";
 
 export const dynamic = "force-dynamic";
 
@@ -15,13 +16,13 @@ export default async function PublicMenuPage({ params }: Params) {
 
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, currency, interface_language, digital_menu_enabled")
+    .select("id, name, currency, interface_language, digital_menu_enabled, menu_design")
     .eq("slug", params.slug)
     .eq("active", true)
     .maybeSingle();
   const v = venue as {
     id: string; name: string; currency: string;
-    interface_language: "tr" | "en"; digital_menu_enabled: boolean;
+    interface_language: "tr" | "en"; digital_menu_enabled: boolean; menu_design: MenuDesign;
   } | null;
 
   const wrap = (msg: string) => (
@@ -32,6 +33,19 @@ export default async function PublicMenuPage({ params }: Params) {
 
   if (!v) return wrap(copy.notFound);
   if (!v.digital_menu_enabled) return wrap(copy.notAvailable);
+
+  // Visual overlay design takes precedence when a background image is set.
+  const design = v.menu_design;
+  if (design && design.bgUrl && (design.layers?.length ?? 0) >= 0) {
+    return (
+      <div style={pageWrap}>
+        <div style={{ padding: "16px 12px 40px" }}>
+          <MenuDesignView design={design} maxWidth={640} />
+          <div style={{ textAlign: "center", marginTop: 20, fontSize: 11, color: "rgba(244,239,230,0.25)", letterSpacing: "0.05em" }}>{copy.poweredBy}</div>
+        </div>
+      </div>
+    );
+  }
 
   const { data: catsRaw } = await svc
     .from("digital_menu_categories")

@@ -2,13 +2,16 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
-import type { DigitalMenuCategory, DigitalMenuItem } from "../../../../lib/supabase/types";
-import { getServerCopy } from "../../../../lib/i18n/server";
+import type { DigitalMenuCategory, DigitalMenuItem, MenuDesign } from "../../../../lib/supabase/types";
+import { getServerCopy, getServerLocale } from "../../../../lib/i18n/server";
 import { MenuBuilderClient, type CategoryView, type ItemView } from "./MenuBuilderClient";
+import { MenuDesigner } from "./MenuDesigner";
 
-type Params = { params: { slug: string } };
+type Params = { params: { slug: string }; searchParams: { mode?: string } };
 
-export default async function DigitalMenuPage({ params }: Params) {
+export default async function DigitalMenuPage({ params, searchParams }: Params) {
+  const structured = searchParams.mode === "structured";
+  const en = getServerLocale() === "en";
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login");
@@ -17,13 +20,13 @@ export default async function DigitalMenuPage({ params }: Params) {
 
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, slug, currency, digital_menu_enabled")
+    .select("id, name, slug, currency, digital_menu_enabled, menu_design")
     .eq("slug", params.slug)
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!venue) redirect("/dashboard");
 
-  const v = venue as { id: string; name: string; slug: string; currency: string; digital_menu_enabled: boolean };
+  const v = venue as { id: string; name: string; slug: string; currency: string; digital_menu_enabled: boolean; menu_design: MenuDesign };
   const copy = getServerCopy().dashboardPages.digitalMenu;
 
   const shell = (inner: React.ReactNode) => (
@@ -34,8 +37,13 @@ export default async function DigitalMenuPage({ params }: Params) {
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
+        <div style={{ flex: 1 }} />
+        <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", borderRadius: 999, padding: 3 }}>
+          <Link href={`/dashboard/digital-menu/${v.slug}`} style={tab(!structured)}>{en ? "Visual" : "Görsel"}</Link>
+          <Link href={`/dashboard/digital-menu/${v.slug}?mode=structured`} style={tab(structured)}>{en ? "Structured" : "Yapılandırılmış"}</Link>
+        </div>
       </header>
-      <main style={{ maxWidth: 1160, margin: "0 auto", padding: "32px 24px" }}>{inner}</main>
+      <main style={{ maxWidth: 1160, margin: "0 auto", padding: "28px 24px" }}>{inner}</main>
     </div>
   );
 
@@ -86,11 +94,16 @@ export default async function DigitalMenuPage({ params }: Params) {
   }));
 
   return shell(
-    <MenuBuilderClient
-      slug={v.slug}
-      currency={v.currency}
-      initialCategories={categoryViews}
-      initialItems={itemViews}
-    />
+    structured
+      ? <MenuBuilderClient slug={v.slug} currency={v.currency} initialCategories={categoryViews} initialItems={itemViews} />
+      : <MenuDesigner slug={v.slug} initialDesign={v.menu_design ?? {}} />
   );
+}
+
+function tab(active: boolean): React.CSSProperties {
+  return {
+    padding: "6px 14px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, textDecoration: "none",
+    background: active ? "#ffd84e" : "transparent",
+    color: active ? "#0a0a0c" : "rgba(244,239,230,0.6)",
+  };
 }

@@ -41,8 +41,33 @@ export interface Venue {
   coupon_validity_days: number;
   // migration 018: QR digital menu add-on flag (independent of pro tier)
   digital_menu_enabled: boolean;
+  // migration 021: visual overlay menu editor design (bg image + text layers)
+  menu_design: MenuDesign;
   created_at: string;
   updated_at: string;
+}
+
+/** Visual overlay menu design (migration 021) */
+export interface MenuTextLayer {
+  id: string;
+  content: string;
+  xPct: number;        // top-left X as % of canvas width
+  yPct: number;        // top-left Y as % of canvas height
+  widthPct: number;    // box width as % of canvas width
+  fontSizePct: number; // font size in cqw (% of canvas width)
+  fontFamily: string;
+  color: string;
+  align: "left" | "center" | "right";
+  letterSpacing: number; // em
+  lineHeight: number;    // unitless
+  opacity: number;       // 0..1
+  weight: number;        // 400..900
+  visible: boolean;
+}
+export interface MenuDesign {
+  bgUrl?: string;
+  aspect?: number;       // height / width of the background
+  layers?: MenuTextLayer[];
 }
 
 /** QR digital menu category (migration 018) */
