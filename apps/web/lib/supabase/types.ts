@@ -43,6 +43,8 @@ export interface Venue {
   digital_menu_enabled: boolean;
   // migration 021: visual overlay menu editor design (bg image + text layers)
   menu_design: MenuDesign;
+  // migration 022: entry/landing page config (multi-menu)
+  menu_landing: MenuLanding;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +70,31 @@ export interface MenuDesign {
   bgUrl?: string;
   aspect?: number;       // height / width of the background
   layers?: MenuTextLayer[];
+}
+
+/** One menu (Breakfast, Drinks, ...) with its own visual design (migration 022) */
+export interface DigitalMenu {
+  id: string;
+  venue_id: string;
+  title: string;
+  title_en: string | null;
+  icon: string | null;
+  design: MenuDesign;
+  sort_order: number;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Entry/landing page config per venue (migration 022) */
+export interface MenuLanding {
+  bgUrl?: string;
+  logoUrl?: string;
+  headline?: string;
+  headlineEn?: string;
+  showPlay?: boolean;
+  playLabel?: string;
+  playLabelEn?: string;
 }
 
 /** QR digital menu category (migration 018) */
@@ -341,6 +368,7 @@ export interface Database {
       push_subscriptions:  { Row: PushSubscription;  Insert: Partial<PushSubscription>;  Update: Partial<PushSubscription>; };
       digital_menu_categories: { Row: DigitalMenuCategory; Insert: Partial<DigitalMenuCategory>; Update: Partial<DigitalMenuCategory>; };
       digital_menu_items:      { Row: DigitalMenuItem;     Insert: Partial<DigitalMenuItem>;     Update: Partial<DigitalMenuItem>; };
+      digital_menus:           { Row: DigitalMenu;         Insert: Partial<DigitalMenu>;         Update: Partial<DigitalMenu>; };
       digital_menu_applications: { Row: DigitalMenuApplication; Insert: Partial<DigitalMenuApplication>; Update: Partial<DigitalMenuApplication>; };
       chat_conversations:      { Row: ChatConversation;    Insert: Partial<ChatConversation>;    Update: Partial<ChatConversation>; };
       chat_messages:           { Row: ChatMessage;         Insert: Partial<ChatMessage>;         Update: Partial<ChatMessage>; };

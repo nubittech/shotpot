@@ -2,31 +2,28 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "../../../../lib/supabase/server-rsc";
 import { getServiceClient } from "../../../../lib/supabase/server";
-import type { DigitalMenuCategory, DigitalMenuItem, MenuDesign } from "../../../../lib/supabase/types";
-import { getServerCopy, getServerLocale } from "../../../../lib/i18n/server";
+import type { DigitalMenuCategory, DigitalMenuItem, DigitalMenu, MenuLanding, MenuDesign } from "../../../../lib/supabase/types";
+import { getServerCopy } from "../../../../lib/i18n/server";
 import { MenuBuilderClient, type CategoryView, type ItemView } from "./MenuBuilderClient";
 import { MenuDesigner } from "./MenuDesigner";
+import { MenuManager } from "./MenuManager";
 
-type Params = { params: { slug: string }; searchParams: { mode?: string } };
+type Params = { params: { slug: string }; searchParams: { mode?: string; menu?: string } };
 
 export default async function DigitalMenuPage({ params, searchParams }: Params) {
-  const structured = searchParams.mode === "structured";
-  const en = getServerLocale() === "en";
   const sb = createClient();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) redirect("/login");
 
   const svc = getServiceClient();
-
   const { data: venue } = await svc
     .from("venues")
-    .select("id, name, slug, currency, digital_menu_enabled, menu_design")
+    .select("id, name, slug, currency, digital_menu_enabled, menu_landing")
     .eq("slug", params.slug)
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!venue) redirect("/dashboard");
-
-  const v = venue as { id: string; name: string; slug: string; currency: string; digital_menu_enabled: boolean; menu_design: MenuDesign };
+  const v = venue as { id: string; name: string; slug: string; currency: string; digital_menu_enabled: boolean; menu_landing: MenuLanding };
   const copy = getServerCopy().dashboardPages.digitalMenu;
 
   const shell = (inner: React.ReactNode) => (
@@ -37,11 +34,6 @@ export default async function DigitalMenuPage({ params, searchParams }: Params) 
         <span style={{ color: "rgba(244,239,230,0.5)", fontSize: 13 }}>{v.name}</span>
         <span style={{ color: "rgba(255,255,255,0.2)" }}>›</span>
         <span style={{ color: "#f4efe6", fontSize: 13 }}>{copy.breadcrumb}</span>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.05)", borderRadius: 999, padding: 3 }}>
-          <Link href={`/dashboard/digital-menu/${v.slug}`} style={tab(!structured)}>{en ? "Visual" : "Görsel"}</Link>
-          <Link href={`/dashboard/digital-menu/${v.slug}?mode=structured`} style={tab(structured)}>{en ? "Structured" : "Yapılandırılmış"}</Link>
-        </div>
       </header>
       <main style={{ maxWidth: 1160, margin: "0 auto", padding: "28px 24px" }}>{inner}</main>
     </div>
@@ -58,52 +50,43 @@ export default async function DigitalMenuPage({ params, searchParams }: Params) 
     );
   }
 
-  const { data: catsRaw } = await svc
-    .from("digital_menu_categories")
-    .select("*")
-    .eq("venue_id", v.id)
-    .order("sort_order", { ascending: true });
-  const cats = (catsRaw ?? []) as DigitalMenuCategory[];
+  // Legacy structured builder (kept, reachable via ?mode=structured)
+  if (searchParams.mode === "structured") {
+    const [{ data: catsRaw }, { data: itemsRaw }] = await Promise.all([
+      svc.from("digital_menu_categories").select("*").eq("venue_id", v.id).order("sort_order", { ascending: true }),
+      svc.from("digital_menu_items").select("*").eq("venue_id", v.id).order("sort_order", { ascending: true }),
+    ]);
+    const cats = (catsRaw ?? []) as DigitalMenuCategory[];
+    const items = (itemsRaw ?? []) as DigitalMenuItem[];
+    const categoryViews: CategoryView[] = cats.map((c) => ({ id: c.id, name: c.name, nameEn: c.name_en ?? "", active: c.active }));
+    const itemViews: ItemView[] = items.map((it) => ({
+      id: it.id, categoryId: it.category_id, name: it.name, nameEn: it.name_en ?? "",
+      description: it.description ?? "", descriptionEn: it.description_en ?? "", price: it.price,
+      imageUrl: it.image_url ?? "", tags: Array.isArray(it.tags) ? it.tags : [], isAvailable: it.is_available, active: it.active,
+    }));
+    return shell(<MenuBuilderClient slug={v.slug} currency={v.currency} initialCategories={categoryViews} initialItems={itemViews} />);
+  }
 
-  const { data: itemsRaw } = await svc
-    .from("digital_menu_items")
-    .select("*")
-    .eq("venue_id", v.id)
-    .order("sort_order", { ascending: true });
-  const items = (itemsRaw ?? []) as DigitalMenuItem[];
+  // Load menus
+  const { data: menusRaw } = await svc.from("digital_menus").select("*").eq("venue_id", v.id).order("sort_order", { ascending: true });
+  const menus = (menusRaw ?? []) as DigitalMenu[];
 
-  const categoryViews: CategoryView[] = cats.map((c) => ({
-    id: c.id,
-    name: c.name,
-    nameEn: c.name_en ?? "",
-    active: c.active,
-  }));
+  // Per-menu visual editor
+  if (searchParams.menu) {
+    const m = menus.find((x) => x.id === searchParams.menu);
+    if (m) {
+      return shell(
+        <MenuDesigner
+          slug={v.slug}
+          menuId={m.id}
+          menuTitle={m.title}
+          backHref={`/dashboard/digital-menu/${v.slug}`}
+          initialDesign={(m.design ?? {}) as MenuDesign}
+        />
+      );
+    }
+  }
 
-  const itemViews: ItemView[] = items.map((it) => ({
-    id: it.id,
-    categoryId: it.category_id,
-    name: it.name,
-    nameEn: it.name_en ?? "",
-    description: it.description ?? "",
-    descriptionEn: it.description_en ?? "",
-    price: it.price,
-    imageUrl: it.image_url ?? "",
-    tags: Array.isArray(it.tags) ? it.tags : [],
-    isAvailable: it.is_available,
-    active: it.active,
-  }));
-
-  return shell(
-    structured
-      ? <MenuBuilderClient slug={v.slug} currency={v.currency} initialCategories={categoryViews} initialItems={itemViews} />
-      : <MenuDesigner slug={v.slug} initialDesign={v.menu_design ?? {}} />
-  );
-}
-
-function tab(active: boolean): React.CSSProperties {
-  return {
-    padding: "6px 14px", borderRadius: 999, fontSize: 12.5, fontWeight: 700, textDecoration: "none",
-    background: active ? "#ffd84e" : "transparent",
-    color: active ? "#0a0a0c" : "rgba(244,239,230,0.6)",
-  };
+  // Manager (menus list + entry page)
+  return shell(<MenuManager slug={v.slug} initialMenus={menus} initialLanding={v.menu_landing ?? {}} />);
 }

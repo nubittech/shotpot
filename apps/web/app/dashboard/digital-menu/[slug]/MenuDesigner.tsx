@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { getClientLocale } from "../../../../lib/i18n/client";
 import type { MenuDesign, MenuTextLayer } from "../../../../lib/supabase/types";
 import { MENU_FONTS, layerStyle } from "../../../../components/MenuDesignView";
-import { MenuQR } from "./MenuQR";
 
 const FONT_KEYS = Object.keys(MENU_FONTS);
 const SWATCHES = ["#e8c876", "#fff8e8", "#c8b890", "#ffffff", "#1a140d", "#000000"];
@@ -46,7 +46,7 @@ function T(locale: string) {
   };
 }
 
-export function MenuDesigner({ slug, initialDesign }: { slug: string; initialDesign: MenuDesign }) {
+export function MenuDesigner({ slug, menuId, menuTitle, backHref, initialDesign }: { slug: string; menuId: string; menuTitle: string; backHref: string; initialDesign: MenuDesign }) {
   const L = T(getClientLocale());
   const [bgUrl, setBgUrl] = useState(initialDesign.bgUrl ?? "");
   const [aspect, setAspect] = useState(initialDesign.aspect ?? 1.414);
@@ -131,9 +131,9 @@ export function MenuDesigner({ slug, initialDesign }: { slug: string; initialDes
     setBusy(true); setMsg("");
     try {
       const design: MenuDesign = { bgUrl: bgUrl || undefined, aspect, layers };
-      const res = await fetch("/api/dashboard/menu-design", {
+      const res = await fetch("/api/dashboard/qr-menus", {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug, design }),
+        body: JSON.stringify({ slug, kind: "menu", id: menuId, design }),
       });
       if (!res.ok) throw new Error();
       setMsg(L.saved); setTimeout(() => setMsg(""), 2000);
@@ -145,7 +145,8 @@ export function MenuDesigner({ slug, initialDesign }: { slug: string; initialDes
     <div>
       <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
         <div>
-          <h1 style={{ margin: "0 0 4px", fontSize: 22, fontWeight: 800 }}>{L.title}</h1>
+          <Link href={backHref} style={{ color: "#ffd84e", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>← {getClientLocale() === "en" ? "Menus" : "Menüler"}</Link>
+          <h1 style={{ margin: "6px 0 4px", fontSize: 22, fontWeight: 800 }}>{menuTitle || L.title}</h1>
           <p style={{ margin: 0, fontSize: 13, color: "rgba(244,239,230,0.5)" }}>{L.desc}</p>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -153,8 +154,6 @@ export function MenuDesigner({ slug, initialDesign }: { slug: string; initialDes
           <button onClick={save} disabled={busy} style={btnPrimary}>{busy ? L.saving : `💾 ${L.save}`}</button>
         </div>
       </div>
-
-      <MenuQR slug={slug} copy={qrCopy(getClientLocale())} />
 
       <div className="md-grid" style={{ display: "grid", gridTemplateColumns: "240px minmax(0,1fr) 240px", gap: 16, alignItems: "start", marginTop: 16 }}>
         {/* LEFT — properties */}
@@ -277,19 +276,6 @@ function Slider({ label, value, min, max, step, onChange, fixed, suffix }: { lab
       <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} style={{ width: "100%", accentColor: "#ffd84e" }} />
     </div>
   );
-}
-
-function qrCopy(locale: string) {
-  const en = locale === "en";
-  return {
-    qrTitle: en ? "Table QR Code" : "Masa QR Kodu",
-    qrDesc: en ? "Place this on your tables; scanning opens your menu." : "Bunu masalara koy; okutunca menün açılır.",
-    qrDownloadPng: en ? "Download PNG" : "PNG İndir",
-    qrDownloadSvg: en ? "Download SVG" : "SVG İndir",
-    qrCopyLink: en ? "Copy Link" : "Linki Kopyala",
-    qrCopied: en ? "✓ Copied" : "✓ Kopyalandı",
-    previewMenu: en ? "Preview Menu ↗" : "Menüyü Önizle ↗",
-  };
 }
 
 const panel: React.CSSProperties = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 14 };
